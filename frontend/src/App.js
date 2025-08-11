@@ -111,7 +111,7 @@ const AppContent = () => {
               animate={{ x: 0 }}
               exit={{ x: -300 }}
               transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              className="fixed inset-y-16 left-0 z-40 w-64 bg-white shadow-lg lg:relative lg:inset-y-0 lg:z-auto lg:shadow-none lg:border-r"
+              className="fixed inset-y-0 left-0 z-40 w-64 bg-white shadow-lg lg:relative lg:inset-y-0 lg:z-auto lg:shadow-none lg:border-r"
             >
               <Sidebar onClose={() => setSidebarOpen(false)} />
             </motion.div>

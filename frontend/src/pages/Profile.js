@@ -26,8 +26,7 @@ const Profile = () => {
     course: '',
     department: '',
     year: '',
-    bio: '',
-    studentId: ''
+    bio: ''
   });
 
   const departmentsByCourse = {
@@ -280,8 +279,7 @@ const Profile = () => {
           course: response.data.profile.course || '',
           department: response.data.profile.department || '',
           year: response.data.profile.year || '',
-          bio: response.data.profile.bio || '',
-          studentId: response.data.profile.studentId || ''
+          bio: response.data.profile.bio || ''
         });
         console.log('🆔 EditData studentId set to:', response.data.profile.studentId || '');
       } else {
@@ -455,23 +453,10 @@ const Profile = () => {
                 
                 <p className="text-gray-600 text-sm sm:text-base break-words">{profile.email}</p>
                 
-                {/* Student ID */}
-                {editing ? (
-                  <div className="mt-2">
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Student ID:</label>
-                    <input
-                      type="text"
-                      value={editData.studentId}
-                      onChange={(e) => setEditData({...editData, studentId: e.target.value})}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Enter Student ID"
-                    />
-                  </div>
-                ) : (
-                  <p className="text-gray-600 text-sm sm:text-base mt-1">
-                    Student ID: {profile.studentId || 'Not provided'}
-                  </p>
-                )}
+                {/* Student ID - Display only, no editing */}
+                <p className="text-gray-600 text-sm sm:text-base mt-1">
+                  Student ID: {profile.studentId || 'Not provided'}
+                </p>
               </div>
             </div>
             

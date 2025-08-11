@@ -72,8 +72,8 @@ const Sidebar = ({ onClose }) => {
 
   return (
     <div className="h-full bg-white border-r border-gray-200 flex flex-col">
-      {/* Header - Fixed at top of sidebar, below navbar */}
-      <div className="flex-shrink-0 flex items-center justify-between p-4 border-b border-gray-200 bg-white shadow-sm">
+      {/* Header - Fixed at top of sidebar, below navbar with proper mobile spacing */}
+      <div className="flex-shrink-0 flex items-center justify-between p-4 border-b border-gray-200 bg-white shadow-sm mt-16 lg:mt-0">
         <h2 className="text-lg font-semibold text-gray-900">Menu</h2>
         <button
           onClick={onClose}
@@ -84,11 +84,23 @@ const Sidebar = ({ onClose }) => {
         </button>
       </div>
 
-      {/* Scrollable content - independent of header */}
-      <div className="flex-1 overflow-y-auto bg-white">
+      {/* Scrollable content - independent of header with mobile navbar spacing */}
+      <div className="flex-1 overflow-y-auto bg-white lg:pt-0">
         <div className="p-4 space-y-6 pb-6">
+          {/* Mobile Search Bar - only visible on mobile */}
+          <div className="md:hidden">
+            <div className="relative">
+              <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search posts, polls, events..."
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 focus:bg-white transition-colors text-sm"
+              />
+            </div>
+          </div>
+
           {/* User info */}
-        <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+        <div className="flex items-center space-x-3 bg-gray-50 rounded-lg">
           <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
             <span className="text-white font-medium">
               {user?.firstName?.charAt(0) || 'U'}
