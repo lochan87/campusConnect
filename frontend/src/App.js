@@ -42,6 +42,20 @@ const AppContent = () => {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [sidebarOpen]);
 
+  // Prevent body scroll when sidebar is open on mobile
+  useEffect(() => {
+    if (sidebarOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    // Cleanup on unmount
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [sidebarOpen]);
+
   useEffect(() => {
     if (user) {
       // Initialize socket connection when user logs in
@@ -80,13 +94,16 @@ const AppContent = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
+      {/* Navbar - fixed at top */}
       <Navbar 
         onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
         sidebarOpen={sidebarOpen}
       />
       
-      <div className="flex pt-16">
+      {/* Main layout container */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Sidebar */}
         <AnimatePresence>
           {sidebarOpen && (
             <motion.div
@@ -94,23 +111,23 @@ const AppContent = () => {
               animate={{ x: 0 }}
               exit={{ x: -300 }}
               transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              className="fixed inset-y-0 left-0 z-40 w-64 bg-white shadow-lg"
+              className="fixed inset-y-16 left-0 z-40 w-64 bg-white shadow-lg lg:relative lg:inset-y-0 lg:z-auto lg:shadow-none lg:border-r"
             >
               <Sidebar onClose={() => setSidebarOpen(false)} />
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Overlay - always show when sidebar is open */}
+        {/* Overlay - only show on mobile when sidebar is open */}
         {sidebarOpen && (
           <div 
-            className="fixed inset-0 bg-black bg-opacity-50 z-30"
+            className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
             onClick={() => setSidebarOpen(false)}
           />
         )}
 
-        {/* Main content */}
-        <main className="flex-1 min-w-0">
+        {/* Main content - independent scroll area with navbar spacing */}
+        <main className="flex-1 overflow-y-auto pt-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <AnimatePresence mode="wait">
               <Routes>

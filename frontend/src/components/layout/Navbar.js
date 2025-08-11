@@ -37,8 +37,12 @@ const Navbar = ({ onToggleSidebar, sidebarOpen }) => {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <nav className={`fixed top-0 right-0 bg-white shadow-sm border-b border-gray-200 z-50 transition-all duration-300 ${
+      sidebarOpen ? 'left-0 lg:left-64' : 'left-0'
+    }`}>
+      <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 transition-all duration-300 ${
+        sidebarOpen ? 'lg:ml-0' : ''
+      }`}>
         <div className="flex justify-between items-center h-16">
           {/* Left section */}
           <div className="flex items-center space-x-4">

@@ -71,20 +71,23 @@ const Sidebar = ({ onClose }) => {
   };
 
   return (
-    <div className="h-full bg-white border-r border-gray-200 overflow-y-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200 lg:hidden">
+    <div className="h-full bg-white border-r border-gray-200 flex flex-col">
+      {/* Header - Fixed at top of sidebar, below navbar */}
+      <div className="flex-shrink-0 flex items-center justify-between p-4 border-b border-gray-200 bg-white shadow-sm">
         <h2 className="text-lg font-semibold text-gray-900">Menu</h2>
         <button
           onClick={onClose}
-          className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+          className="p-2 rounded-lg hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+          aria-label="Close sidebar"
         >
-          <FiX className="w-5 h-5 text-gray-500" />
+          <FiX className="w-5 h-5 text-gray-600 hover:text-gray-800" />
         </button>
       </div>
 
-      <div className="p-4 space-y-6">
-        {/* User info */}
+      {/* Scrollable content - independent of header */}
+      <div className="flex-1 overflow-y-auto bg-white">
+        <div className="p-4 space-y-6 pb-6">
+          {/* User info */}
         <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
           <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
             <span className="text-white font-medium">
@@ -259,6 +262,7 @@ const Sidebar = ({ onClose }) => {
                 <span>Connected</span>
               </div>
             </div>
+          </div>
           </div>
         </div>
       </div>
