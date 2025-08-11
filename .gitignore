@@ -1,0 +1,8 @@
+RUN_INSTRUCTIONS.md
+QUICK_START.md
+DEVELOPMENT_STATUS.md
+.github/
+backend/.env
+backend/node_modules/
+frontend/.env
+frontend/node_modules/

@@ -1,0 +1,161 @@
+/* Custom app styles */
+.App {
+  text-align: center;
+}
+
+/* Loading animations */
+@keyframes shimmer {
+  0% {
+    background-position: -468px 0;
+  }
+  100% {
+    background-position: 468px 0;
+  }
+}
+
+.shimmer {
+  animation: shimmer 1.2s ease-in-out infinite;
+  background: linear-gradient(to right, #f6f7f8 8%, #edeef1 18%, #f6f7f8 33%);
+  background-size: 800px 104px;
+}
+
+/* Post animations */
+.post-enter {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.post-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 300ms, transform 300ms;
+}
+
+.post-exit {
+  opacity: 1;
+}
+
+.post-exit-active {
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: opacity 300ms, transform 300ms;
+}
+
+/* Custom scrollbar for feed */
+.feed-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.feed-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.feed-container::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.feed-container::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Image upload preview */
+.image-upload-container {
+  position: relative;
+  display: inline-block;
+}
+
+.image-upload-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.image-upload-container:hover .image-upload-overlay {
+  opacity: 1;
+}
+
+/* Emoji picker positioning */
+.emoji-picker-container {
+  position: absolute;
+  z-index: 1000;
+  top: 100%;
+  right: 0;
+}
+
+/* Poll progress bars */
+.poll-progress {
+  position: relative;
+  background: #f3f4f6;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.poll-progress-bar {
+  height: 100%;
+  background: linear-gradient(to right, #3b82f6, #1d4ed8);
+  transition: width 0.5s ease-out;
+}
+
+/* Notification toast overrides */
+.react-hot-toast {
+  max-width: 400px;
+}
+
+/* Mobile-specific styles */
+@media (max-width: 640px) {
+  .mobile-card {
+    margin: 0 -1rem;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+  
+  .mobile-full-width {
+    width: calc(100vw);
+    margin-left: calc(-50vw + 50%);
+  }
+}
+
+/* Dark mode support (future enhancement) */
+@media (prefers-color-scheme: dark) {
+  .dark-mode {
+    background-color: #1f2937;
+    color: #f9fafb;
+  }
+}
+
+/* Focus states for accessibility */
+.focus-ring:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .btn-primary {
+    border: 2px solid #000;
+  }
+  
+  .card {
+    border: 2px solid #000;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
