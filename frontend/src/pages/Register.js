@@ -26,8 +26,10 @@ const Register = () => {
     password: '',
     confirmPassword: '',
     studentId: '',
+    course: '',
     department: '',
     year: '',
+    bio: '',
     campusId: 'demo-campus'
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -38,34 +40,279 @@ const Register = () => {
   const [usernameAvailable, setUsernameAvailable] = useState(null);
   const [usernameError, setUsernameError] = useState('');
 
-  const departments = [
-    'Computer Science',
-    'Engineering',
-    'Business Administration',
-    'Arts & Humanities',
-    'Natural Sciences',
-    'Medicine',
-    'Law',
-    'Education',
-    'Psychology',
-    'Other'
+  const courses = [
+    'B.E (Bachelor of Engineering)',
+    'M.Tech (Master of Technology)',
+    'MBA (Master of Business Administration)',
+    'BBA (Bachelor of Business Administration)',
+    'B.Com (Bachelor of Commerce)',
+    'M.Com (Master of Commerce)',
+    'Ph.D (Doctor of Philosophy)',
+    'BCA (Bachelor of Computer Applications)',
+    'MCA (Master of Computer Applications)',
+    'Dental (Bachelor of Dental Surgery)',
+    'MBBS (Bachelor of Medicine and Bachelor of Surgery)',
+    'B.Sc (Bachelor of Science)',
+    'M.Sc (Master of Science)',
+    'BA (Bachelor of Arts)',
+    'MA (Master of Arts)',
+    'LLB (Bachelor of Laws)',
+    'LLM (Master of Laws)',
+    'B.Ed (Bachelor of Education)',
+    'M.Ed (Master of Education)',
   ];
+
+  const departmentsByCourse = {
+    'B.E (Bachelor of Engineering)': [
+      'Artificial Intelligence and Machine Learning',
+      'Computer Science & Engineering (Data Science)',
+      'Information Science and Engineering',
+      'Computer Science & Engineering (Internet of Things and Cyber Security including Block Chain Technology)',
+      'Electronics and Instrumentation Engineering',
+      'Computer Science and Design',
+      'Mechanical Engineering',
+      'Computer Science and Engineering',
+      'Medical Electronics Engineering',
+      'Computer Science and Business Systems',
+      'Electronics and Telecommunication Engineering',
+      'Computer Science & Engineering (Cyber Security)',
+      'Robotics and Artificial Intelligence',
+      'Aeronautical Engineering',
+      'Chemical Engineering',
+      'Automobile Engineering',
+      'Civil Engineering',
+      'Biotechnology',
+      'Electrical & Electronics Engineering',
+      'Electronics & Communication Engineering'
+    ],
+    'M.Tech (Master of Technology)': [
+      'Artificial Intelligence and Machine Learning',
+      'Computer Science & Engineering (Data Science)',
+      'Information Science and Engineering',
+      'Computer Science & Engineering (Internet of Things and Cyber Security including Block Chain Technology)',
+      'Electronics and Instrumentation Engineering',
+      'Computer Science and Design',
+      'Mechanical Engineering',
+      'Computer Science and Engineering',
+      'Medical Electronics Engineering',
+      'Computer Science and Business Systems',
+      'Electronics and Telecommunication Engineering',
+      'Computer Science & Engineering (Cyber Security)',
+      'Robotics and Artificial Intelligence',
+      'Aeronautical Engineering',
+      'Chemical Engineering',
+      'Automobile Engineering',
+      'Civil Engineering',
+      'Biotechnology',
+      'Electrical & Electronics Engineering',
+      'Electronics & Communication Engineering'
+    ],
+    'MBA (Master of Business Administration)': [
+      'Finance',
+      'Marketing',
+      'Human Resources',
+      'Operations Management',
+      'International Business',
+      'Business Analytics',
+      'Entrepreneurship',
+      'Supply Chain Management'
+    ],
+    'BBA (Bachelor of Business Administration)': [
+      'Finance',
+      'Marketing',
+      'Human Resources',
+      'Operations Management',
+      'International Business',
+      'Business Analytics',
+      'Entrepreneurship',
+      'Supply Chain Management'
+    ],
+    'B.Com (Bachelor of Commerce)': [
+      'Accounting',
+      'Banking & Finance',
+      'Taxation',
+      'Economics',
+      'Business Mathematics',
+      'Corporate Secretaryship'
+    ],
+    'M.Com (Master of Commerce)': [
+      'Accounting',
+      'Banking & Finance',
+      'Taxation',
+      'Economics',
+      'Business Mathematics',
+      'Corporate Secretaryship'
+    ],
+    'BCA (Bachelor of Computer Applications)': [
+      'Software Development',
+      'Database Management',
+      'Web Technologies',
+      'Mobile Application Development',
+      'System Analysis and Design',
+      'Network Administration'
+    ],
+    'MCA (Master of Computer Applications)': [
+      'Software Development',
+      'Database Management',
+      'Web Technologies',
+      'Mobile Application Development',
+      'System Analysis and Design',
+      'Network Administration'
+    ],
+    'MBBS (Bachelor of Medicine and Bachelor of Surgery)': [
+      'General Medicine',
+      'Surgery',
+      'Pediatrics',
+      'Cardiology',
+      'Neurology',
+      'Orthopedics',
+      'Dermatology',
+      'Radiology',
+      'Anesthesiology',
+      'Pathology'
+    ],
+    'Dental (Bachelor of Dental Surgery)': [
+      'Oral & Maxillofacial Surgery',
+      'Orthodontics',
+      'Periodontics',
+      'Endodontics',
+      'Prosthodontics',
+      'Oral Medicine'
+    ],
+    'B.Sc (Bachelor of Science)': [
+      'Physics',
+      'Chemistry',
+      'Mathematics',
+      'Biology',
+      'Microbiology',
+      'Biochemistry',
+      'Zoology',
+      'Botany',
+      'Environmental Science',
+      'Statistics'
+    ],
+    'M.Sc (Master of Science)': [
+      'Physics',
+      'Chemistry',
+      'Mathematics',
+      'Biology',
+      'Microbiology',
+      'Biochemistry',
+      'Zoology',
+      'Botany',
+      'Environmental Science',
+      'Statistics'
+    ],
+    'BA (Bachelor of Arts)': [
+      'English Literature',
+      'Hindi Literature',
+      'History',
+      'Political Science',
+      'Sociology',
+      'Philosophy',
+      'Psychology',
+      'Geography',
+      'Journalism & Mass Communication',
+      'Fine Arts',
+      'Music',
+      'Dance'
+    ],
+    'MA (Master of Arts)': [
+      'English Literature',
+      'Hindi Literature',
+      'History',
+      'Political Science',
+      'Sociology',
+      'Philosophy',
+      'Psychology',
+      'Geography',
+      'Journalism & Mass Communication',
+      'Fine Arts',
+      'Music',
+      'Dance'
+    ],
+    'LLB (Bachelor of Laws)': [
+      'Constitutional Law',
+      'Criminal Law',
+      'Corporate Law',
+      'International Law',
+      'Civil Law',
+      'Intellectual Property Law',
+      'Environmental Law'
+    ],
+    'LLM (Master of Laws)': [
+      'Constitutional Law',
+      'Criminal Law',
+      'Corporate Law',
+      'International Law',
+      'Civil Law',
+      'Intellectual Property Law',
+      'Environmental Law'
+    ],
+    'B.Ed (Bachelor of Education)': [
+      'Primary Education',
+      'Secondary Education',
+      'Special Education',
+      'Educational Psychology',
+      'Curriculum Development',
+      'Educational Technology',
+      'Physical Education'
+    ],
+    'M.Ed (Master of Education)': [
+      'Primary Education',
+      'Secondary Education',
+      'Special Education',
+      'Educational Psychology',
+      'Curriculum Development',
+      'Educational Technology',
+      'Physical Education'
+    ],
+    'Ph.D (Doctor of Philosophy)': [
+      'Engineering & Technology',
+      'Business & Management',
+      'Commerce & Economics',
+      'Computer Applications',
+      'Medical Sciences',
+      'Basic Sciences',
+      'Arts & Humanities',
+      'Law',
+      'Education'
+    ]
+  };
+
+  // Get available departments based on selected course
+  const getAvailableDepartments = () => {
+    if (!formData.course) return [];
+    return departmentsByCourse[formData.course] || [];
+  };
 
   const years = [
     '1st Year',
     '2nd Year',
     '3rd Year',
     '4th Year',
+    '5th Year',
     'Graduate',
-    'PhD'
+    'Post Graduate',
+    'Ph.D'
   ];
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value
-    });
+    
+    // If course changes, reset department
+    if (name === 'course') {
+      setFormData({
+        ...formData,
+        [name]: value,
+        department: '' // Reset department when course changes
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [name]: value
+      });
+    }
 
     // Check username availability when username changes
     if (name === 'username') {
@@ -171,10 +418,15 @@ const Register = () => {
   };
 
   const validateStep2 = () => {
-    const { studentId, department, year } = formData;
+    const { studentId, course, department, year } = formData;
     
     if (!studentId.trim()) {
       toast.error('Please enter your student ID');
+      return false;
+    }
+    
+    if (!course) {
+      toast.error('Please select your course');
       return false;
     }
     
@@ -230,7 +482,7 @@ const Register = () => {
   return (
     <div className="min-h-screen flex">
       {/* Left side - Registration form */}
-      <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8">
+      <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -238,7 +490,7 @@ const Register = () => {
           className="max-w-md w-full space-y-8"
         >
           {/* Header */}
-          <div className="text-center">
+          <div className="text-center pt-2">
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
@@ -494,6 +746,26 @@ const Register = () => {
                   </div>
                 </div>
 
+                {/* Course */}
+                <div>
+                  <label htmlFor="course" className="block text-sm font-medium text-gray-700 mb-1">
+                    Course
+                  </label>
+                  <select
+                    id="course"
+                    name="course"
+                    required
+                    value={formData.course}
+                    onChange={handleChange}
+                    className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  >
+                    <option value="">Select your course</option>
+                    {courses.map((course) => (
+                      <option key={course} value={course}>{course}</option>
+                    ))}
+                  </select>
+                </div>
+
                 {/* Department */}
                 <div>
                   <label htmlFor="department" className="block text-sm font-medium text-gray-700 mb-1">
@@ -505,10 +777,15 @@ const Register = () => {
                     required
                     value={formData.department}
                     onChange={handleChange}
-                    className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    disabled={!formData.course}
+                    className={`w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
+                      !formData.course ? 'bg-gray-100 cursor-not-allowed' : ''
+                    }`}
                   >
-                    <option value="">Select your department</option>
-                    {departments.map((dept) => (
+                    <option value="">
+                      {formData.course ? 'Select your department' : 'Select course first'}
+                    </option>
+                    {getAvailableDepartments().map((dept) => (
                       <option key={dept} value={dept}>{dept}</option>
                     ))}
                   </select>
@@ -532,6 +809,25 @@ const Register = () => {
                       <option key={year} value={year}>{year}</option>
                     ))}
                   </select>
+                </div>
+
+                {/* Bio */}
+                <div>
+                  <label htmlFor="bio" className="block text-sm font-medium text-gray-700 mb-1">
+                    Bio (Optional)
+                  </label>
+                  <textarea
+                    id="bio"
+                    name="bio"
+                    rows={3}
+                    value={formData.bio}
+                    onChange={handleChange}
+                    className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none"
+                    placeholder="Tell us about yourself..."
+                  />
+                  <p className="mt-1 text-sm text-gray-500">
+                    Write a brief introduction about yourself (optional)
+                  </p>
                 </div>
               </motion.div>
             )}
@@ -568,7 +864,7 @@ const Register = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
-            className="text-center"
+            className="text-center pb-8"
           >
             <p className="text-sm text-gray-600">
               Already have an account?{' '}

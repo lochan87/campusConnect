@@ -133,6 +133,8 @@ export const apiService = {
   // Profile
   getUserProfile: (id) => api.get(`/users/profile/${id}`),
   updateUserProfile: (id, profileData) => api.put(`/users/profile/${id}`, profileData),
+  changePassword: (passwordData) => api.put('/users/change-password', passwordData),
+  changeEmail: (emailData) => api.put('/users/change-email', emailData),
   
   // Leaderboard
   getLeaderboardData: () => api.get('/leaderboard'),

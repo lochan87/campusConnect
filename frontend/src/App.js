@@ -13,6 +13,7 @@ import CreatePost from './pages/CreatePost';
 import CreatePoll from './pages/CreatePoll';
 import PostDetail from './pages/PostDetail';
 import Leaderboard from './pages/Leaderboard';
+import Settings from './pages/Settings';
 
 // Services
 import { socketService } from './services/socket';
@@ -120,6 +121,7 @@ const AppContent = () => {
                 <Route path="/create-poll" element={<CreatePoll />} />
                 <Route path="/post/:postId" element={<PostDetail />} />
                 <Route path="/leaderboard" element={<Leaderboard />} />
+                <Route path="/settings" element={<Settings />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </AnimatePresence>

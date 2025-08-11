@@ -23,11 +23,236 @@ const Profile = () => {
   const [editing, setEditing] = useState(false);
   const [editData, setEditData] = useState({
     displayName: '',
-    username: '',
+    course: '',
     department: '',
     year: '',
-    bio: ''
+    bio: '',
+    studentId: ''
   });
+
+  const departmentsByCourse = {
+    'B.E (Bachelor of Engineering)': [
+      'Artificial Intelligence and Machine Learning',
+      'Computer Science & Engineering (Data Science)',
+      'Information Science and Engineering',
+      'Computer Science & Engineering (Internet of Things and Cyber Security including Block Chain Technology)',
+      'Electronics and Instrumentation Engineering',
+      'Computer Science and Design',
+      'Mechanical Engineering',
+      'Computer Science and Engineering',
+      'Medical Electronics Engineering',
+      'Computer Science and Business Systems',
+      'Electronics and Telecommunication Engineering',
+      'Computer Science & Engineering (Cyber Security)',
+      'Robotics and Artificial Intelligence',
+      'Aeronautical Engineering',
+      'Chemical Engineering',
+      'Automobile Engineering',
+      'Civil Engineering',
+      'Biotechnology',
+      'Electrical & Electronics Engineering',
+      'Electronics & Communication Engineering'
+    ],
+    'M.Tech (Master of Technology)': [
+      'Artificial Intelligence and Machine Learning',
+      'Computer Science & Engineering (Data Science)',
+      'Information Science and Engineering',
+      'Computer Science & Engineering (Internet of Things and Cyber Security including Block Chain Technology)',
+      'Electronics and Instrumentation Engineering',
+      'Computer Science and Design',
+      'Mechanical Engineering',
+      'Computer Science and Engineering',
+      'Medical Electronics Engineering',
+      'Computer Science and Business Systems',
+      'Electronics and Telecommunication Engineering',
+      'Computer Science & Engineering (Cyber Security)',
+      'Robotics and Artificial Intelligence',
+      'Aeronautical Engineering',
+      'Chemical Engineering',
+      'Automobile Engineering',
+      'Civil Engineering',
+      'Biotechnology',
+      'Electrical & Electronics Engineering',
+      'Electronics & Communication Engineering'
+    ],
+    'MBA (Master of Business Administration)': [
+      'Finance',
+      'Marketing',
+      'Human Resources',
+      'Operations Management',
+      'International Business',
+      'Business Analytics',
+      'Entrepreneurship',
+      'Supply Chain Management'
+    ],
+    'BBA (Bachelor of Business Administration)': [
+      'Finance',
+      'Marketing',
+      'Human Resources',
+      'Operations Management',
+      'International Business',
+      'Business Analytics',
+      'Entrepreneurship',
+      'Supply Chain Management'
+    ],
+    'B.Com (Bachelor of Commerce)': [
+      'Accounting',
+      'Banking & Finance',
+      'Taxation',
+      'Economics',
+      'Business Mathematics',
+      'Corporate Secretaryship'
+    ],
+    'M.Com (Master of Commerce)': [
+      'Accounting',
+      'Banking & Finance',
+      'Taxation',
+      'Economics',
+      'Business Mathematics',
+      'Corporate Secretaryship'
+    ],
+    'BCA (Bachelor of Computer Applications)': [
+      'Software Development',
+      'Database Management',
+      'Web Technologies',
+      'Mobile Application Development',
+      'System Analysis and Design',
+      'Network Administration'
+    ],
+    'MCA (Master of Computer Applications)': [
+      'Software Development',
+      'Database Management',
+      'Web Technologies',
+      'Mobile Application Development',
+      'System Analysis and Design',
+      'Network Administration'
+    ],
+    'MBBS (Bachelor of Medicine and Bachelor of Surgery)': [
+      'General Medicine',
+      'Surgery',
+      'Pediatrics',
+      'Cardiology',
+      'Neurology',
+      'Orthopedics',
+      'Dermatology',
+      'Radiology',
+      'Anesthesiology',
+      'Pathology'
+    ],
+    'Dental (Bachelor of Dental Surgery)': [
+      'Oral & Maxillofacial Surgery',
+      'Orthodontics',
+      'Periodontics',
+      'Endodontics',
+      'Prosthodontics',
+      'Oral Medicine'
+    ],
+    'B.Sc (Bachelor of Science)': [
+      'Physics',
+      'Chemistry',
+      'Mathematics',
+      'Biology',
+      'Microbiology',
+      'Biochemistry',
+      'Zoology',
+      'Botany',
+      'Environmental Science',
+      'Statistics'
+    ],
+    'M.Sc (Master of Science)': [
+      'Physics',
+      'Chemistry',
+      'Mathematics',
+      'Biology',
+      'Microbiology',
+      'Biochemistry',
+      'Zoology',
+      'Botany',
+      'Environmental Science',
+      'Statistics'
+    ],
+    'BA (Bachelor of Arts)': [
+      'English Literature',
+      'Hindi Literature',
+      'History',
+      'Political Science',
+      'Sociology',
+      'Philosophy',
+      'Psychology',
+      'Geography',
+      'Journalism & Mass Communication',
+      'Fine Arts',
+      'Music',
+      'Dance'
+    ],
+    'MA (Master of Arts)': [
+      'English Literature',
+      'Hindi Literature',
+      'History',
+      'Political Science',
+      'Sociology',
+      'Philosophy',
+      'Psychology',
+      'Geography',
+      'Journalism & Mass Communication',
+      'Fine Arts',
+      'Music',
+      'Dance'
+    ],
+    'LLB (Bachelor of Laws)': [
+      'Constitutional Law',
+      'Criminal Law',
+      'Corporate Law',
+      'International Law',
+      'Civil Law',
+      'Intellectual Property Law',
+      'Environmental Law'
+    ],
+    'LLM (Master of Laws)': [
+      'Constitutional Law',
+      'Criminal Law',
+      'Corporate Law',
+      'International Law',
+      'Civil Law',
+      'Intellectual Property Law',
+      'Environmental Law'
+    ],
+    'B.Ed (Bachelor of Education)': [
+      'Primary Education',
+      'Secondary Education',
+      'Special Education',
+      'Educational Psychology',
+      'Curriculum Development',
+      'Educational Technology',
+      'Physical Education'
+    ],
+    'M.Ed (Master of Education)': [
+      'Primary Education',
+      'Secondary Education',
+      'Special Education',
+      'Educational Psychology',
+      'Curriculum Development',
+      'Educational Technology',
+      'Physical Education'
+    ],
+    'Ph.D (Doctor of Philosophy)': [
+      'Engineering & Technology',
+      'Business & Management',
+      'Commerce & Economics',
+      'Computer Applications',
+      'Medical Sciences',
+      'Basic Sciences',
+      'Arts & Humanities',
+      'Law',
+      'Education'
+    ]
+  };
+
+  // Get available departments based on selected course
+  const getAvailableDepartments = () => {
+    if (!editData.course) return [];
+    return departmentsByCourse[editData.course] || [];
+  };
 
   const currentUserId = userId || user?.uid;
   const isOwnProfile = user && currentUserId === user.uid;
@@ -41,20 +266,24 @@ const Profile = () => {
   const fetchProfile = async () => {
     try {
       setLoading(true);
-      console.log('👤 Fetching profile for:', currentUserId);
       
       const response = await apiService.getUserProfile(currentUserId);
-      console.log('✅ Profile data received:', response.data);
       
       if (response.data.success) {
+        console.log('📋 Full profile data received:', response.data.profile);
+        console.log('🆔 Student ID in profile:', response.data.profile.studentId);
+        console.log('🆔 Student ID type:', typeof response.data.profile.studentId);
+        console.log('🆔 Student ID empty check:', !response.data.profile.studentId);
         setProfile(response.data.profile);
         setEditData({
           displayName: response.data.profile.displayName || '',
-          username: response.data.profile.username || '',
+          course: response.data.profile.course || '',
           department: response.data.profile.department || '',
           year: response.data.profile.year || '',
-          bio: response.data.profile.bio || ''
+          bio: response.data.profile.bio || '',
+          studentId: response.data.profile.studentId || ''
         });
+        console.log('🆔 EditData studentId set to:', response.data.profile.studentId || '');
       } else {
         console.error('❌ Profile fetch failed:', response.data);
         toast.error('Failed to load profile');
@@ -80,8 +309,6 @@ const Profile = () => {
 
   const handleSaveProfile = async () => {
     try {
-      console.log('💾 Saving profile updates...');
-      
       const response = await apiService.updateUserProfile(currentUserId, editData);
       
       if (response.data.success) {
@@ -98,12 +325,42 @@ const Profile = () => {
   };
 
   const formatDate = (date) => {
-    if (!date) return 'Unknown';
-    return new Date(date).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
+    if (!date) {
+      return 'Unknown';
+    }
+    
+    try {
+      // Handle different date formats
+      let dateObj;
+      
+      if (date instanceof Date) {
+        dateObj = date;
+      } else if (typeof date === 'string' || typeof date === 'number') {
+        dateObj = new Date(date);
+      } else if (date.seconds) {
+        // Firestore timestamp format
+        dateObj = new Date(date.seconds * 1000);
+      } else if (date.toDate && typeof date.toDate === 'function') {
+        // Firestore timestamp with toDate method
+        dateObj = date.toDate();
+      } else {
+        return 'Unknown';
+      }
+      
+      // Check if the date is valid
+      if (isNaN(dateObj.getTime())) {
+        return 'Unknown';
+      }
+      
+      return dateObj.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    } catch (error) {
+      console.error('❌ Error formatting date:', error, 'Date value:', date);
+      return 'Unknown';
+    }
   };
 
   if (loading) {
@@ -163,155 +420,236 @@ const Profile = () => {
       <motion.div
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="bg-white rounded-lg border border-gray-200 p-6 mb-6"
+        className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 mb-6"
       >
-        <div className="flex items-start justify-between mb-6">
-          <div className="flex items-center space-x-4">
-            <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-              <span className="text-2xl font-bold text-white">
-                {profile.displayName.charAt(0).toUpperCase()}
-              </span>
-            </div>
-            <div className="flex-1">
-              {editing ? (
-                <div className="space-y-2">
+        {/* Profile Header */}
+        <div className="space-y-4">
+          {/* Mobile/Desktop Header with Edit Button */}
+          <div className="flex flex-col space-y-4 sm:flex-row sm:items-start sm:justify-between sm:space-y-0">
+            {/* Profile Info */}
+            <div className="flex items-start space-x-3 sm:space-x-4 flex-1">
+              {/* Avatar */}
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
+                <span className="text-xl sm:text-2xl font-bold text-white">
+                  {profile.displayName.charAt(0).toUpperCase()}
+                </span>
+              </div>
+              
+              {/* Basic Info */}
+              <div className="flex-1 min-w-0">
+                {editing ? (
                   <input
                     type="text"
                     value={editData.displayName}
                     onChange={(e) => setEditData({...editData, displayName: e.target.value})}
-                    className="text-2xl font-bold text-gray-900 border-b border-gray-300 focus:border-blue-500 outline-none bg-transparent w-full"
+                    className="text-xl sm:text-2xl font-bold text-gray-900 border-b border-gray-300 focus:border-blue-500 outline-none bg-transparent w-full mb-1"
                     placeholder="Display Name"
                   />
-                  <input
-                    type="text"
-                    value={editData.username}
-                    onChange={(e) => setEditData({...editData, username: e.target.value})}
-                    className="text-blue-600 font-medium border-b border-gray-300 focus:border-blue-500 outline-none bg-transparent"
-                    placeholder="username"
-                  />
-                </div>
-              ) : (
-                <h2 className="text-2xl font-bold text-gray-900">{profile.displayName}</h2>
-              )}
-              {!editing && profile.username && (
-                <p className="text-blue-600 font-medium">@{profile.username}</p>
-              )}
-              <p className="text-gray-600">{profile.email}</p>
-              <div className="flex items-center space-x-4 text-sm text-gray-500 mt-2">
-                {editing ? (
-                  <>
-                    <select
-                      value={editData.department}
-                      onChange={(e) => setEditData({...editData, department: e.target.value})}
-                      className="border border-gray-300 rounded px-2 py-1"
-                    >
-                      <option value="">Select Department</option>
-                      <option value="Computer Science">Computer Science</option>
-                      <option value="Engineering">Engineering</option>
-                      <option value="Business">Business</option>
-                      <option value="Arts">Arts</option>
-                      <option value="Science">Science</option>
-                    </select>
-                    <select
-                      value={editData.year}
-                      onChange={(e) => setEditData({...editData, year: e.target.value})}
-                      className="border border-gray-300 rounded px-2 py-1"
-                    >
-                      <option value="">Select Year</option>
-                      <option value="Freshman">Freshman</option>
-                      <option value="Sophomore">Sophomore</option>
-                      <option value="Junior">Junior</option>
-                      <option value="Senior">Senior</option>
-                      <option value="Graduate">Graduate</option>
-                    </select>
-                  </>
                 ) : (
-                  <>
-                    {profile.department && (
-                      <span className="flex items-center">
-                        <AcademicCapIcon className="w-4 h-4 mr-1" />
-                        {profile.department}
-                      </span>
-                    )}
-                    {profile.year && (
-                      <span className="flex items-center">
-                        <CalendarIcon className="w-4 h-4 mr-1" />
-                        {profile.year}
-                      </span>
-                    )}
-                  </>
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900 break-words">{profile.displayName}</h2>
+                )}
+                
+                {profile.username && (
+                  <p className="text-blue-600 font-medium text-sm sm:text-base break-words">@{profile.username}</p>
+                )}
+                
+                <p className="text-gray-600 text-sm sm:text-base break-words">{profile.email}</p>
+                
+                {/* Student ID */}
+                {editing ? (
+                  <div className="mt-2">
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Student ID:</label>
+                    <input
+                      type="text"
+                      value={editData.studentId}
+                      onChange={(e) => setEditData({...editData, studentId: e.target.value})}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Enter Student ID"
+                    />
+                  </div>
+                ) : (
+                  <p className="text-gray-600 text-sm sm:text-base mt-1">
+                    Student ID: {profile.studentId || 'Not provided'}
+                  </p>
                 )}
               </div>
             </div>
-          </div>
-          {isOwnProfile && (
-            <div className="flex space-x-2">
-              {editing ? (
-                <>
-                  <button
-                    onClick={() => setEditing(false)}
-                    className="px-3 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleSaveProfile}
-                    className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                  >
-                    Save
-                  </button>
-                </>
-              ) : (
+            
+            {/* Edit Button - Responsive */}
+            {isOwnProfile && !editing && (
+              <div className="flex justify-center sm:justify-end">
                 <button
                   onClick={() => setEditing(true)}
-                  className="flex items-center space-x-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-md w-full sm:w-auto justify-center"
                 >
                   <PencilIcon className="w-4 h-4" />
-                  <span>Edit Profile</span>
+                  <span className="font-medium">Edit Profile</span>
                 </button>
-              )}
-            </div>
-          )}
+              </div>
+            )}
+          </div>
+          
+          {/* Academic Info */}
+          <div className="border-t pt-4">
+            {editing ? (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Course</label>
+                    <select
+                      value={editData.course}
+                      onChange={(e) => setEditData({...editData, course: e.target.value, department: ''})}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">Select Course</option>
+                      <option value="B.E (Bachelor of Engineering)">B.E (Bachelor of Engineering)</option>
+                      <option value="M.Tech (Master of Technology)">M.Tech (Master of Technology)</option>
+                      <option value="MBA (Master of Business Administration)">MBA (Master of Business Administration)</option>
+                      <option value="BBA (Bachelor of Business Administration)">BBA (Bachelor of Business Administration)</option>
+                      <option value="B.Com (Bachelor of Commerce)">B.Com (Bachelor of Commerce)</option>
+                      <option value="M.Com (Master of Commerce)">M.Com (Master of Commerce)</option>
+                      <option value="Ph.D (Doctor of Philosophy)">Ph.D (Doctor of Philosophy)</option>
+                      <option value="BCA (Bachelor of Computer Applications)">BCA (Bachelor of Computer Applications)</option>
+                      <option value="MCA (Master of Computer Applications)">MCA (Master of Computer Applications)</option>
+                      <option value="Dental (Bachelor of Dental Surgery)">Dental (Bachelor of Dental Surgery)</option>
+                      <option value="MBBS (Bachelor of Medicine and Bachelor of Surgery)">MBBS (Bachelor of Medicine and Bachelor of Surgery)</option>
+                      <option value="B.Sc (Bachelor of Science)">B.Sc (Bachelor of Science)</option>
+                      <option value="M.Sc (Master of Science)">M.Sc (Master of Science)</option>
+                      <option value="BA (Bachelor of Arts)">BA (Bachelor of Arts)</option>
+                      <option value="MA (Master of Arts)">MA (Master of Arts)</option>
+                      <option value="LLB (Bachelor of Laws)">LLB (Bachelor of Laws)</option>
+                      <option value="LLM (Master of Laws)">LLM (Master of Laws)</option>
+                      <option value="B.Ed (Bachelor of Education)">B.Ed (Bachelor of Education)</option>
+                      <option value="M.Ed (Master of Education)">M.Ed (Master of Education)</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Department</label>
+                    <select
+                      value={editData.department}
+                      onChange={(e) => setEditData({...editData, department: e.target.value})}
+                      disabled={!editData.course}
+                      className={`w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                        !editData.course ? 'bg-gray-100 cursor-not-allowed' : ''
+                      }`}
+                    >
+                      <option value="">
+                        {editData.course ? 'Select Department' : 'Select course first'}
+                      </option>
+                      {getAvailableDepartments().map((dept) => (
+                        <option key={dept} value={dept}>{dept}</option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Year</label>
+                    <select
+                      value={editData.year}
+                      onChange={(e) => setEditData({...editData, year: e.target.value})}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">Select Year</option>
+                      <option value="1st Year">1st Year</option>
+                      <option value="2nd Year">2nd Year</option>
+                      <option value="3rd Year">3rd Year</option>
+                      <option value="4th Year">4th Year</option>
+                      <option value="5th Year">5th Year</option>
+                      <option value="Graduate">Graduate</option>
+                      <option value="Post Graduate">Post Graduate</option>
+                      <option value="Ph.D">Ph.D</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                {profile.course && (
+                  <span className="flex items-center bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs sm:text-sm mb-4">
+                    <AcademicCapIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                    {profile.course}
+                  </span>
+                )}
+                {profile.department && (
+                  <span className="flex items-center bg-green-50 text-green-700 px-3 py-1 rounded-full text-xs sm:text-sm mb-4">
+                    <AcademicCapIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                    {profile.department}
+                  </span>
+                )}
+                {profile.year && (
+                  <span className="flex items-center bg-purple-50 text-purple-700 px-3 py-1 rounded-full text-xs sm:text-sm mb-4">
+                    <CalendarIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                    {profile.year}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Bio Section */}
-        <div className="mb-6">
-          <h3 className="text-sm font-medium text-gray-700 mb-2">Bio</h3>
-          {editing ? (
-            <textarea
-              value={editData.bio}
-              onChange={(e) => setEditData({...editData, bio: e.target.value})}
-              className="w-full p-3 border border-gray-300 rounded-lg resize-none"
-              rows={3}
-              placeholder="Tell us about yourself..."
-            />
-          ) : (
-            <p className="text-gray-600">
-              {profile.bio || 'No bio available.'}
-            </p>
-          )}
+        <div className="border-t pt-4">
+          <div className="space-y-4">
+            <div className="mb-6">
+              <h3 className="text-sm font-medium text-gray-700 mb-2">Bio</h3>
+              {editing ? (
+                <>
+                  <textarea
+                    value={editData.bio}
+                    onChange={(e) => setEditData({...editData, bio: e.target.value})}
+                    className="w-full p-3 border border-gray-300 rounded-lg resize-none mb-4"
+                    rows={3}
+                    placeholder="Tell us about yourself..."
+                  />
+                  
+                  {/* Save/Cancel buttons for editing mode */}
+                  {isOwnProfile && (
+                    <div className="flex justify-end space-x-3">
+                      <button
+                        onClick={() => setEditing(false)}
+                        className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleSaveProfile}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      >
+                        Save Changes
+                      </button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <p className="text-gray-600">
+                  {profile.bio || 'No bio available.'}
+                </p>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="text-center p-4 bg-yellow-50 rounded-lg">
             <TrophyIcon className="w-6 h-6 text-yellow-600 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-gray-900">{profile.reputation}</div>
+            <div className="text-2xl font-bold text-gray-900">{profile.reputation || 0}</div>
             <div className="text-sm text-gray-600">Reputation</div>
           </div>
           <div className="text-center p-4 bg-blue-50 rounded-lg">
             <DocumentTextIcon className="w-6 h-6 text-blue-600 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-gray-900">{profile.stats.totalPosts}</div>
+            <div className="text-2xl font-bold text-gray-900">{profile.stats?.totalPosts || 0}</div>
             <div className="text-sm text-gray-600">Posts</div>
           </div>
           <div className="text-center p-4 bg-green-50 rounded-lg">
             <ChatBubbleLeftRightIcon className="w-6 h-6 text-green-600 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-gray-900">{profile.stats.totalPolls}</div>
+            <div className="text-2xl font-bold text-gray-900">{profile.stats?.totalPolls || 0}</div>
             <div className="text-sm text-gray-600">Polls</div>
           </div>
           <div className="text-center p-4 bg-red-50 rounded-lg">
             <FireIcon className="w-6 h-6 text-red-600 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-gray-900">{profile.stats.recentActivity}</div>
+            <div className="text-2xl font-bold text-gray-900">{profile.stats?.recentActivity || 0}</div>
             <div className="text-sm text-gray-600">Recent Activity</div>
           </div>
         </div>

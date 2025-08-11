@@ -1,5 +1,6 @@
 const express = require('express');
 const { getFirestore, getAuth } = require('../config/firebase');
+const admin = require('firebase-admin');
 const geminiService = require('../services/geminiService');
 const router = express.Router();
 
@@ -63,8 +64,10 @@ router.post('/register', async (req, res) => {
       username,
       studentId,
       campusId,
+      course,
       department,
-      year
+      year,
+      bio
     } = req.body;
 
     // Validate required fields
@@ -120,9 +123,11 @@ router.post('/register', async (req, res) => {
       username: username.toLowerCase(),
       studentId,
       campusId,
+      course: course || '',
       department: department || '',
       year: year || '',
       displayName: `${firstName} ${lastName}`,
+      bio: bio || '', // Use provided bio or empty string
       isActive: true,
       isVerified: false,
       reputation: 0,
@@ -516,8 +521,6 @@ router.post('/:id/report', async (req, res) => {
 router.get('/profile/:id', async (req, res) => {
   try {
     const userId = req.params.id;
-    console.log('👤 Fetching user profile for:', userId);
-    
     const db = getFirestore();
     
     // Get user data
@@ -525,18 +528,19 @@ router.get('/profile/:id', async (req, res) => {
     
     if (!userDoc.exists) {
       // Create a basic user profile for demo users
-      console.log('📝 Creating basic profile for user:', userId);
       const basicUserData = {
         uid: userId,
         email: `demo-user-${userId}@campus.edu`,
         username: `demo_${userId.substring(0, 8)}`,
         displayName: 'Demo User',
-        department: 'Computer Science',
+        studentId: `DEMO${userId.substring(0, 6).toUpperCase()}`,
+        course: 'B.E (Bachelor of Engineering)',
+        department: 'Computer Science and Engineering',
         year: '1st Year',
         bio: 'Welcome to CampusConnect!',
         reputation: 0,
         postCount: 0,
-        createdAt: new Date(),
+        joinedAt: new Date(),
         isActive: true
       };
       
@@ -551,12 +555,14 @@ router.get('/profile/:id', async (req, res) => {
           displayName: basicUserData.displayName,
           username: basicUserData.username,
           email: basicUserData.email,
+          studentId: basicUserData.studentId,
+          course: basicUserData.course,
           department: basicUserData.department,
           year: basicUserData.year,
           bio: basicUserData.bio,
           reputation: basicUserData.reputation,
           postCount: 0,
-          joinedAt: basicUserData.createdAt,
+          joinedAt: basicUserData.joinedAt,
           stats: {
             totalPosts: 0,
             totalPolls: 0,
@@ -570,6 +576,14 @@ router.get('/profile/:id', async (req, res) => {
     }
 
     const userData = userDoc.data();
+    
+    console.log('👤 User data from database:', {
+      uid: userId,
+      studentId: userData.studentId,
+      hasStudentId: !!userData.studentId,
+      studentIdType: typeof userData.studentId,
+      allFields: Object.keys(userData)
+    });
     
     // Get user's posts (simplified query to avoid index requirement)
     const postsQuery = db.collection('posts')
@@ -651,23 +665,29 @@ router.get('/profile/:id', async (req, res) => {
       displayName: userData.displayName || userData.email,
       username: userData.username || null,
       email: userData.email,
+      studentId: userData.studentId || '',
+      course: userData.course || '',
       department: userData.department || '',
       year: userData.year || '',
       bio: userData.bio || '',
       reputation: userData.reputation || 0,
       postCount: userData.postCount || totalPosts,
-      joinedAt: userData.createdAt?.toDate?.() || userData.createdAt,
+      joinedAt: userData.joinedAt?.toDate?.() || userData.joinedAt || userData.createdAt?.toDate?.() || userData.createdAt || new Date(),
       stats: {
-        totalPosts,
-        totalPolls,
-        totalLikes,
-        recentActivity: recentPosts.length + recentPolls.length
+        totalPosts: totalPosts || 0,
+        totalPolls: totalPolls || 0,
+        totalLikes: totalLikes || 0,
+        recentActivity: (recentPosts.length + recentPolls.length) || 0
       },
-      recentPosts: userPosts.slice(0, 10),
-      recentPolls: userPolls.slice(0, 10)
+      recentPosts: userPosts.slice(0, 10) || [],
+      recentPolls: userPolls.slice(0, 10) || []
     };
 
-    console.log('✅ User profile fetched:', userId);
+    console.log('📤 Sending profile response:', {
+      userId,
+      studentId: profile.studentId,
+      hasStudentId: !!profile.studentId
+    });
 
     res.json({
       success: true,
@@ -687,9 +707,7 @@ router.get('/profile/:id', async (req, res) => {
 router.put('/profile/:id', async (req, res) => {
   try {
     const userId = req.params.id;
-    const { displayName, username, department, year, bio } = req.body;
-    
-    console.log('✏️ Updating user profile for:', userId);
+    const { displayName, username, course, department, year, bio, studentId } = req.body;
     
     const db = getFirestore();
     
@@ -733,15 +751,22 @@ router.put('/profile/:id', async (req, res) => {
     const updateData = {};
     if (displayName !== undefined) updateData.displayName = displayName;
     if (username !== undefined && username.trim()) updateData.username = username.toLowerCase().trim();
+    if (course !== undefined) updateData.course = course;
     if (department !== undefined) updateData.department = department;
     if (year !== undefined) updateData.year = year;
     if (bio !== undefined) updateData.bio = bio;
+    if (studentId !== undefined) updateData.studentId = studentId;
     
     updateData.updatedAt = new Date();
     
-    await db.collection('users').doc(userId).update(updateData);
+    console.log('💾 Updating user profile:', {
+      userId,
+      updateData,
+      studentId: updateData.studentId,
+      hasStudentId: !!updateData.studentId
+    });
     
-    console.log('✅ User profile updated:', userId);
+    await db.collection('users').doc(userId).update(updateData);
     
     res.json({
       success: true,
@@ -796,6 +821,159 @@ router.get('/digest/:campusId', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to generate campus digest'
+    });
+  }
+});
+
+// PUT /api/users/change-password - Change user password
+router.put('/change-password', async (req, res) => {
+  try {
+    const { userId, currentPassword, newPassword } = req.body;
+    
+    if (!userId || !currentPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields'
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        error: 'New password must be at least 6 characters'
+      });
+    }
+    
+    const auth = getAuth();
+    
+    try {
+      // In a real implementation, you would verify the current password
+      // For this demo, we'll just update the password directly
+      await auth.updateUser(userId, {
+        password: newPassword
+      });
+      
+      res.json({
+        success: true,
+        message: 'Password updated successfully'
+      });
+
+    } catch (authError) {
+      console.error('❌ Firebase Auth error:', authError);
+      
+      if (authError.code === 'auth/user-not-found') {
+        return res.status(404).json({
+          success: false,
+          error: 'User not found'
+        });
+      }
+      
+      if (authError.code === 'auth/weak-password') {
+        return res.status(400).json({
+          success: false,
+          error: 'Password is too weak'
+        });
+      }
+      
+      throw authError;
+    }
+
+  } catch (error) {
+    console.error('❌ Error changing password:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to change password'
+    });
+  }
+});
+
+// PUT /api/users/change-email - Change user email
+router.put('/change-email', async (req, res) => {
+  try {
+    const { userId, newEmail, password } = req.body;
+    
+    if (!userId || !newEmail || !password) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields'
+      });
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newEmail)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid email format'
+      });
+    }
+    
+    const auth = getAuth();
+    
+    try {
+      // Check if the new email is already in use
+      try {
+        await auth.getUserByEmail(newEmail);
+        return res.status(400).json({
+          success: false,
+          error: 'Email address is already in use'
+        });
+      } catch (checkError) {
+        // If user is not found, email is available (this is what we want)
+        if (checkError.code !== 'auth/user-not-found') {
+          throw checkError;
+        }
+      }
+      
+      // Update the user's email in Firebase Auth
+      await auth.updateUser(userId, {
+        email: newEmail
+      });
+      
+      // Update email in Firestore user profile
+      const userRef = db.collection('users').doc(userId);
+      await userRef.update({
+        email: newEmail,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      });
+      
+      res.json({
+        success: true,
+        message: 'Email updated successfully'
+      });
+
+    } catch (authError) {
+      console.error('❌ Firebase Auth error:', authError);
+      
+      if (authError.code === 'auth/user-not-found') {
+        return res.status(404).json({
+          success: false,
+          error: 'User not found'
+        });
+      }
+      
+      if (authError.code === 'auth/email-already-exists') {
+        return res.status(400).json({
+          success: false,
+          error: 'Email address is already in use'
+        });
+      }
+      
+      if (authError.code === 'auth/invalid-email') {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid email address'
+        });
+      }
+      
+      throw authError;
+    }
+
+  } catch (error) {
+    console.error('❌ Error changing email:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to change email'
     });
   }
 });

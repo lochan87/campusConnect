@@ -11,7 +11,7 @@ import LoadingSkeleton from '../components/ui/LoadingSkeleton';
 import toast from 'react-hot-toast';
 
 const Home = () => {
-  const { posts, polls, loading, fetchPosts, fetchPolls, refreshPosts, voteOnPost, deletePost, editPost } = usePosts();
+  const { posts, polls, loading, fetchPosts, fetchPolls, refreshPosts, voteOnPost, voteOnPoll, deletePost, editPost } = usePosts();
   const { user } = useAuth();
   const [commentModal, setCommentModal] = useState({ isOpen: false, post: null });
 
@@ -31,6 +31,14 @@ const Home = () => {
       await voteOnPost(postId, voteType);
     } catch (error) {
       console.error('Error voting on post:', error);
+    }
+  };
+
+  const handlePollVote = async (pollId, optionIndex) => {
+    try {
+      await voteOnPoll(pollId, [optionIndex]); // Backend expects array of option indexes
+    } catch (error) {
+      console.error('Error voting on poll:', error);
     }
   };
 
@@ -214,11 +222,8 @@ const Home = () => {
                     <PollCard
                       key={poll.id}
                       poll={poll}
-                      onVote={(pollId, optionIndex) => {
-                        // Handle poll voting
-                        console.log('Poll vote:', pollId, optionIndex);
-                      }}
-                      hasVoted={false} // This would come from user context
+                      onVote={handlePollVote}
+                      hasVoted={poll.hasVoted}
                     />
                   ))}
                 </div>

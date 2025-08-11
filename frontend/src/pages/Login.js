@@ -60,7 +60,7 @@ const Login = () => {
   return (
     <div className="min-h-screen flex">
       {/* Left side - Login form */}
-      <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8">
+      <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -68,7 +68,7 @@ const Login = () => {
           className="max-w-md w-full space-y-8"
         >
           {/* Header */}
-          <div className="text-center">
+          <div className="text-center pt-2">
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
@@ -227,7 +227,7 @@ const Login = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
-            className="text-center"
+            className="text-center pb-8"
           >
             <p className="text-sm text-gray-600">
               Don't have an account?{' '}

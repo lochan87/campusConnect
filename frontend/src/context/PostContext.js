@@ -259,7 +259,8 @@ export const PostProvider = ({ children }) => {
       const params = {
         campusId: user?.campusId,
         isActive: true,
-        limit: 10
+        limit: 10,
+        userId: user?.uid // Add current user ID to check vote status
       };
 
       const response = await apiService.getPolls(params);

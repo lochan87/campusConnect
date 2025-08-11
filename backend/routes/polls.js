@@ -13,7 +13,8 @@ router.get('/', async (req, res) => {
       isActive = true,
       sortBy = 'createdAt',
       order = 'desc',
-      limit = 20
+      limit = 20,
+      userId // Current user ID for checking vote status
     } = req.query;
 
     let query = db.collection('polls');
@@ -27,11 +28,38 @@ router.get('/', async (req, res) => {
 
     snapshot.forEach(doc => {
       const pollData = doc.data();
+      
+      // Process options to remove voter information and add vote counts
+      const processedOptions = pollData.options?.map(option => ({
+        text: option.text,
+        votes: option.votes || 0
+        // Remove voters array for privacy
+      })) || [];
+
+      // Check if current user has voted (if userId provided)
+      let hasVoted = false;
+      if (userId && pollData.options) {
+        hasVoted = pollData.options.some(option => 
+          option.voters && option.voters.includes(userId)
+        );
+      }
+
       polls.push({
         id: doc.id,
-        ...pollData,
+        question: pollData.question,
+        description: pollData.description,
+        options: processedOptions,
+        userName: pollData.userName,
+        authorId: pollData.authorId,
+        campusId: pollData.campusId,
+        location: pollData.location,
+        isAnonymous: pollData.isAnonymous,
+        isActive: pollData.isActive,
+        allowMultiple: pollData.allowMultiple,
+        totalVotes: pollData.totalVotes || 0,
         createdAt: pollData.createdAt?.toDate?.() || pollData.createdAt,
-        expiresAt: pollData.expiresAt?.toDate?.() || pollData.expiresAt
+        expiresAt: pollData.expiresAt?.toDate?.() || pollData.expiresAt,
+        hasVoted // Add user-specific vote status
       });
     });
 

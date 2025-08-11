@@ -4,6 +4,7 @@ import { FiBarChart2, FiClock, FiUsers } from 'react-icons/fi';
 
 const PollCard = ({ poll, onVote, hasVoted = false }) => {
   const [selectedOption, setSelectedOption] = useState(null);
+  const [isVoting, setIsVoting] = useState(false);
   const {
     id,
     question,
@@ -15,11 +16,20 @@ const PollCard = ({ poll, onVote, hasVoted = false }) => {
     isAnonymous
   } = poll;
 
-  const handleVote = (optionIndex) => {
-    if (!hasVoted && !selectedOption) {
+  const handleVote = async (optionIndex) => {
+    if (!hasVoted && !selectedOption && !isVoting) {
+      setIsVoting(true);
       setSelectedOption(optionIndex);
-      if (onVote) {
-        onVote(id, optionIndex);
+      try {
+        if (onVote) {
+          await onVote(id, optionIndex);
+        }
+      } catch (error) {
+        // Reset state if vote failed
+        setSelectedOption(null);
+        console.error('Vote failed:', error);
+      } finally {
+        setIsVoting(false);
       }
     }
   };
@@ -47,7 +57,7 @@ const PollCard = ({ poll, onVote, hasVoted = false }) => {
     return `${Math.floor(diffMs / (1000 * 60))}m remaining`;
   };
 
-  const canVote = !hasVoted && !isExpired() && selectedOption === null;
+  const canVote = !hasVoted && !isExpired() && selectedOption === null && !isVoting;
 
   return (
     <motion.div
@@ -112,7 +122,7 @@ const PollCard = ({ poll, onVote, hasVoted = false }) => {
                       : showResults
                       ? 'border-gray-200 bg-gray-50'
                       : 'border-gray-200 bg-white'
-                  }`}
+                  } ${isVoting ? 'opacity-50' : ''}`}
                 >
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-sm font-medium text-gray-900">
