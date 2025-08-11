@@ -14,9 +14,11 @@ import {
   FiX,
   FiSmile,
   FiSearch,
+  FiBox,
   FiSpeaker,
   FiPackage
 } from 'react-icons/fi';
+import { id } from 'date-fns/locale';
 
 const Sidebar = ({ onClose }) => {
   const { user } = useAuth();
@@ -37,17 +39,23 @@ const Sidebar = ({ onClose }) => {
     { id: 'lost_found', name: 'Lost & Found', icon: FiSearch, color: 'text-yellow-600' },
     { id: 'food', name: 'Food', icon: FiPackage, color: 'text-green-600' },
     { id: 'memes', name: 'Memes', icon: FiSmile, color: 'text-purple-600' },
-    { id: 'announcements', name: 'Announcements', icon: FiSpeaker, color: 'text-red-600' }
+    { id: 'announcements', name: 'Announcements', icon: FiSpeaker, color: 'text-red-600' },
+    { id: 'general', name: 'General', icon: FiBox, color: 'text-gray-600' }
   ];
 
   const locations = [
     { id: 'all', name: 'All Locations', icon: FiMapPin },
+    { id: 'heritage_building', name: 'Heritage Building', icon: FiMapPin },
+    { id: 'auditorium', name: 'Auditorium', icon: FiMapPin },
     { id: 'library', name: 'Library', icon: FiMapPin },
-    { id: 'cafeteria', name: 'Cafeteria', icon: FiMapPin },
-    { id: 'main_building', name: 'Main Building', icon: FiMapPin },
-    { id: 'sports_complex', name: 'Sports Complex', icon: FiMapPin },
-    { id: 'dormitory', name: 'Dormitory', icon: FiMapPin },
-    { id: 'parking', name: 'Parking', icon: FiMapPin }
+    { id: 'parking', name: 'Parking', icon: FiMapPin },
+    { id: 'canteen', name: 'Canteen', icon: FiMapPin },
+    { id: 'conveno', name: 'Conveno', icon: FiMapPin },
+    { id: 'iem_block', name: 'IEM Block', icon: FiMapPin },
+    { id: 'grounds', name: 'Grounds', icon: FiMapPin },
+    { id: 'amphitheater', name: 'Amphitheater', icon: FiMapPin },
+    { id: 'bb_block', name: 'BB Block', icon: FiMapPin },
+    { id: 'rock_garden', name: 'Rock Garden', icon: FiMapPin }
   ];
 
   const handleCategoryChange = (categoryId) => {

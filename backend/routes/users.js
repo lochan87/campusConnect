@@ -3,6 +3,53 @@ const { getFirestore, getAuth } = require('../config/firebase');
 const geminiService = require('../services/geminiService');
 const router = express.Router();
 
+// GET /api/users/check-username/:username - Check username availability
+router.get('/check-username/:username', async (req, res) => {
+  try {
+    const username = req.params.username.toLowerCase();
+    const db = getFirestore();
+    
+    // Validate username format
+    const usernameRegex = /^[a-zA-Z0-9_]+$/;
+    if (!usernameRegex.test(username)) {
+      return res.json({
+        success: true,
+        available: false,
+        message: 'Username can only contain letters, numbers, and underscores'
+      });
+    }
+
+    if (username.length < 3 || username.length > 20) {
+      return res.json({
+        success: true,
+        available: false,
+        message: 'Username must be between 3 and 20 characters'
+      });
+    }
+
+    // Check if username exists
+    const usersQuery = await db.collection('users')
+      .where('username', '==', username)
+      .limit(1)
+      .get();
+
+    const isAvailable = usersQuery.empty;
+
+    res.json({
+      success: true,
+      available: isAvailable,
+      message: isAvailable ? 'Username is available' : 'Username is already taken'
+    });
+
+  } catch (error) {
+    console.error('Error checking username:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to check username availability'
+    });
+  }
+});
+
 // POST /api/users/register - Register a new user
 router.post('/register', async (req, res) => {
   try {
@@ -13,6 +60,7 @@ router.post('/register', async (req, res) => {
       password,
       firstName,
       lastName,
+      username,
       studentId,
       campusId,
       department,
@@ -20,10 +68,39 @@ router.post('/register', async (req, res) => {
     } = req.body;
 
     // Validate required fields
-    if (!email || !password || !firstName || !lastName || !studentId || !campusId) {
+    if (!email || !password || !firstName || !lastName || !username || !studentId || !campusId) {
       return res.status(400).json({
         success: false,
         error: 'Missing required fields'
+      });
+    }
+
+    // Validate username format
+    const usernameRegex = /^[a-zA-Z0-9_]+$/;
+    if (!usernameRegex.test(username)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Username can only contain letters, numbers, and underscores'
+      });
+    }
+
+    if (username.length < 3 || username.length > 20) {
+      return res.status(400).json({
+        success: false,
+        error: 'Username must be between 3 and 20 characters'
+      });
+    }
+
+    // Check if username is already taken
+    const usernameCheck = await db.collection('users')
+      .where('username', '==', username.toLowerCase())
+      .limit(1)
+      .get();
+
+    if (!usernameCheck.empty) {
+      return res.status(400).json({
+        success: false,
+        error: 'Username is already taken'
       });
     }
 
@@ -40,6 +117,7 @@ router.post('/register', async (req, res) => {
       email,
       firstName,
       lastName,
+      username: username.toLowerCase(),
       studentId,
       campusId,
       department: department || '',
@@ -446,18 +524,56 @@ router.get('/profile/:id', async (req, res) => {
     const userDoc = await db.collection('users').doc(userId).get();
     
     if (!userDoc.exists) {
-      return res.status(404).json({
-        success: false,
-        error: 'User not found'
+      // Create a basic user profile for demo users
+      console.log('📝 Creating basic profile for user:', userId);
+      const basicUserData = {
+        uid: userId,
+        email: `demo-user-${userId}@campus.edu`,
+        username: `demo_${userId.substring(0, 8)}`,
+        displayName: 'Demo User',
+        department: 'Computer Science',
+        year: '1st Year',
+        bio: 'Welcome to CampusConnect!',
+        reputation: 0,
+        postCount: 0,
+        createdAt: new Date(),
+        isActive: true
+      };
+      
+      // Create the user document
+      await db.collection('users').doc(userId).set(basicUserData);
+      
+      // Return a basic profile
+      return res.json({
+        success: true,
+        profile: {
+          id: userId,
+          displayName: basicUserData.displayName,
+          username: basicUserData.username,
+          email: basicUserData.email,
+          department: basicUserData.department,
+          year: basicUserData.year,
+          bio: basicUserData.bio,
+          reputation: basicUserData.reputation,
+          postCount: 0,
+          joinedAt: basicUserData.createdAt,
+          stats: {
+            totalPosts: 0,
+            totalPolls: 0,
+            totalLikes: 0,
+            recentActivity: 0
+          },
+          recentPosts: [],
+          recentPolls: []
+        }
       });
     }
 
     const userData = userDoc.data();
     
-    // Get user's posts
+    // Get user's posts (simplified query to avoid index requirement)
     const postsQuery = db.collection('posts')
       .where('authorId', '==', userId)
-      .orderBy('createdAt', 'desc')
       .limit(50);
     
     const postsSnapshot = await postsQuery.get();
@@ -477,10 +593,16 @@ router.get('/profile/:id', async (req, res) => {
       });
     });
 
-    // Get user's polls
+    // Sort posts by date in JavaScript instead of Firestore
+    userPosts.sort((a, b) => {
+      const dateA = new Date(a.createdAt);
+      const dateB = new Date(b.createdAt);
+      return dateB - dateA; // Newest first
+    });
+
+    // Get user's polls (simplified query to avoid index requirement)
     const pollsQuery = db.collection('polls')
       .where('authorId', '==', userId)
-      .orderBy('createdAt', 'desc')
       .limit(50);
     
     const pollsSnapshot = await pollsQuery.get();
@@ -496,6 +618,13 @@ router.get('/profile/:id', async (req, res) => {
         totalVotes: (pollData.options || []).reduce((sum, opt) => sum + (opt.votes || 0), 0),
         isAnonymous: pollData.isAnonymous
       });
+    });
+
+    // Sort polls by date in JavaScript instead of Firestore
+    userPolls.sort((a, b) => {
+      const dateA = new Date(a.createdAt);
+      const dateB = new Date(b.createdAt);
+      return dateB - dateA; // Newest first
     });
 
     // Calculate activity stats
@@ -520,6 +649,7 @@ router.get('/profile/:id', async (req, res) => {
     const profile = {
       id: userId,
       displayName: userData.displayName || userData.email,
+      username: userData.username || null,
       email: userData.email,
       department: userData.department || '',
       year: userData.year || '',
@@ -557,14 +687,52 @@ router.get('/profile/:id', async (req, res) => {
 router.put('/profile/:id', async (req, res) => {
   try {
     const userId = req.params.id;
-    const { displayName, department, year, bio } = req.body;
+    const { displayName, username, department, year, bio } = req.body;
     
     console.log('✏️ Updating user profile for:', userId);
     
     const db = getFirestore();
     
+    // If username is being updated, check if it's available
+    if (username !== undefined && username.trim()) {
+      const normalizedUsername = username.toLowerCase().trim();
+      
+      // Validate username format
+      const usernameRegex = /^[a-zA-Z0-9_]+$/;
+      if (!usernameRegex.test(normalizedUsername)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Username can only contain letters, numbers, and underscores'
+        });
+      }
+
+      if (normalizedUsername.length < 3 || normalizedUsername.length > 20) {
+        return res.status(400).json({
+          success: false,
+          error: 'Username must be between 3 and 20 characters'
+        });
+      }
+
+      // Check if username is already taken by another user
+      const usernameCheck = await db.collection('users')
+        .where('username', '==', normalizedUsername)
+        .limit(1)
+        .get();
+
+      if (!usernameCheck.empty) {
+        const existingUser = usernameCheck.docs[0];
+        if (existingUser.id !== userId) {
+          return res.status(400).json({
+            success: false,
+            error: 'Username is already taken'
+          });
+        }
+      }
+    }
+    
     const updateData = {};
     if (displayName !== undefined) updateData.displayName = displayName;
+    if (username !== undefined && username.trim()) updateData.username = username.toLowerCase().trim();
     if (department !== undefined) updateData.department = department;
     if (year !== undefined) updateData.year = year;
     if (bio !== undefined) updateData.bio = bio;

@@ -19,13 +19,17 @@ const CreatePost = () => {
 
   // Location options
   const locationOptions = [
-    { value: 'main_building', label: 'Main Building' },
+    { value: 'heritage_building', label: 'Heritage Building' },
+    { value: 'auditorium', label: 'Auditorium' },
     { value: 'library', label: 'Library' },
-    { value: 'cafeteria', label: 'Cafeteria' },
-    { value: 'sports_complex', label: 'Sports Complex' },
-    { value: 'dormitory', label: 'Dormitory' },
     { value: 'parking', label: 'Parking' },
-    { value: 'auditorium', label: 'Auditorium' }
+    { value: 'canteen', label: 'Canteen' },
+    { value: 'conveno', label: 'Conveno' },
+    { value: 'iem_block', label: 'IEM Block' },
+    { value: 'grounds', label: 'Grounds' },
+    { value: 'amphitheater', label: 'Amphitheater' },
+    { value: 'bb_block', label: 'BB Block' },
+    { value: 'rock_garden', label: 'Rock Garden' }
   ];
   
   const [formData, setFormData] = useState({
@@ -60,9 +64,9 @@ const CreatePost = () => {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error('Image size should be less than 5MB');
+      // Validate file size (max 1MB)
+      if (file.size > 1 * 1024 * 1024) {
+        toast.error('Image size should be less than 1MB');
         return;
       }
 
@@ -298,7 +302,7 @@ const CreatePost = () => {
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
                   <PhotoIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                   <p className="text-sm text-gray-600">Click to upload an image</p>
-                  <p className="text-xs text-gray-500 mt-1">PNG, JPG up to 5MB</p>
+                  <p className="text-xs text-gray-500 mt-1">PNG, JPG up to 1MB</p>
                 </div>
                 <input
                   type="file"

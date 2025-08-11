@@ -23,6 +23,7 @@ const Profile = () => {
   const [editing, setEditing] = useState(false);
   const [editData, setEditData] = useState({
     displayName: '',
+    username: '',
     department: '',
     year: '',
     bio: ''
@@ -49,16 +50,29 @@ const Profile = () => {
         setProfile(response.data.profile);
         setEditData({
           displayName: response.data.profile.displayName || '',
+          username: response.data.profile.username || '',
           department: response.data.profile.department || '',
           year: response.data.profile.year || '',
           bio: response.data.profile.bio || ''
         });
       } else {
+        console.error('❌ Profile fetch failed:', response.data);
         toast.error('Failed to load profile');
       }
     } catch (error) {
       console.error('❌ Error fetching profile:', error);
-      toast.error('Failed to load profile data');
+      // More detailed error handling
+      if (error.response) {
+        // Server responded with error status
+        const errorMessage = error.response.data?.error || 'Server error occurred';
+        toast.error(`Failed to load profile: ${errorMessage}`);
+      } else if (error.request) {
+        // Request was made but no response received
+        toast.error('Network error: Unable to connect to server');
+      } else {
+        // Something else happened
+        toast.error('Failed to load profile data');
+      }
     } finally {
       setLoading(false);
     }
@@ -160,15 +174,27 @@ const Profile = () => {
             </div>
             <div className="flex-1">
               {editing ? (
-                <input
-                  type="text"
-                  value={editData.displayName}
-                  onChange={(e) => setEditData({...editData, displayName: e.target.value})}
-                  className="text-2xl font-bold text-gray-900 border-b border-gray-300 focus:border-blue-500 outline-none bg-transparent"
-                  placeholder="Display Name"
-                />
+                <div className="space-y-2">
+                  <input
+                    type="text"
+                    value={editData.displayName}
+                    onChange={(e) => setEditData({...editData, displayName: e.target.value})}
+                    className="text-2xl font-bold text-gray-900 border-b border-gray-300 focus:border-blue-500 outline-none bg-transparent w-full"
+                    placeholder="Display Name"
+                  />
+                  <input
+                    type="text"
+                    value={editData.username}
+                    onChange={(e) => setEditData({...editData, username: e.target.value})}
+                    className="text-blue-600 font-medium border-b border-gray-300 focus:border-blue-500 outline-none bg-transparent"
+                    placeholder="username"
+                  />
+                </div>
               ) : (
                 <h2 className="text-2xl font-bold text-gray-900">{profile.displayName}</h2>
+              )}
+              {!editing && profile.username && (
+                <p className="text-blue-600 font-medium">@{profile.username}</p>
               )}
               <p className="text-gray-600">{profile.email}</p>
               <div className="flex items-center space-x-4 text-sm text-gray-500 mt-2">

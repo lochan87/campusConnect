@@ -21,6 +21,7 @@ const Register = () => {
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
+    username: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -33,6 +34,9 @@ const Register = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [step, setStep] = useState(1);
+  const [usernameChecking, setUsernameChecking] = useState(false);
+  const [usernameAvailable, setUsernameAvailable] = useState(null);
+  const [usernameError, setUsernameError] = useState('');
 
   const departments = [
     'Computer Science',
@@ -57,17 +61,94 @@ const Register = () => {
   ];
 
   const handleChange = (e) => {
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [name]: value
     });
+
+    // Check username availability when username changes
+    if (name === 'username') {
+      setUsernameAvailable(null);
+      setUsernameError('');
+      if (value.trim().length >= 3) {
+        checkUsernameAvailability(value.trim());
+      }
+    }
+  };
+
+  const checkUsernameAvailability = async (username) => {
+    try {
+      setUsernameChecking(true);
+      setUsernameError('');
+      
+      // Validate username format
+      const usernameRegex = /^[a-zA-Z0-9_]+$/;
+      if (!usernameRegex.test(username)) {
+        setUsernameError('Username can only contain letters, numbers, and underscores');
+        setUsernameAvailable(false);
+        return;
+      }
+
+      if (username.length < 3) {
+        setUsernameError('Username must be at least 3 characters');
+        setUsernameAvailable(false);
+        return;
+      }
+
+      if (username.length > 20) {
+        setUsernameError('Username must be less than 20 characters');
+        setUsernameAvailable(false);
+        return;
+      }
+
+      // Check availability with backend
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/users/check-username/${username}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        setUsernameAvailable(data.available);
+        if (!data.available) {
+          setUsernameError('Username is already taken');
+        }
+      } else {
+        setUsernameError('Error checking username availability');
+        setUsernameAvailable(false);
+      }
+    } catch (error) {
+      console.error('Error checking username:', error);
+      setUsernameError('Error checking username availability');
+      setUsernameAvailable(false);
+    } finally {
+      setUsernameChecking(false);
+    }
   };
 
   const validateStep1 = () => {
-    const { firstName, lastName, email, password, confirmPassword } = formData;
+    const { firstName, lastName, username, email, password, confirmPassword } = formData;
     
     if (!firstName.trim() || !lastName.trim()) {
       toast.error('Please enter your full name');
+      return false;
+    }
+
+    if (!username.trim()) {
+      toast.error('Please enter a username');
+      return false;
+    }
+
+    if (username.trim().length < 3) {
+      toast.error('Username must be at least 3 characters');
+      return false;
+    }
+
+    if (usernameAvailable === false) {
+      toast.error('Please choose a different username');
+      return false;
+    }
+
+    if (usernameAvailable === null && username.trim().length >= 3) {
+      toast.error('Please wait for username availability check');
       return false;
     }
     
@@ -249,6 +330,64 @@ const Register = () => {
                       placeholder="Last name"
                     />
                   </div>
+                </div>
+
+                {/* Username field */}
+                <div>
+                  <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
+                    Username
+                  </label>
+                  <div className="relative">
+                    <FiUser className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <input
+                      id="username"
+                      name="username"
+                      type="text"
+                      required
+                      value={formData.username}
+                      onChange={handleChange}
+                      className={`pl-10 pr-10 w-full px-3 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition-colors ${
+                        usernameError 
+                          ? 'border-red-500 focus:border-red-500' 
+                          : usernameAvailable === true 
+                            ? 'border-green-500 focus:border-green-500'
+                            : 'border-gray-300 focus:border-blue-500'
+                      }`}
+                      placeholder="Choose a unique username"
+                    />
+                    
+                    {/* Username status indicator */}
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                      {usernameChecking && (
+                        <FiLoader className="w-5 h-5 text-gray-400 animate-spin" />
+                      )}
+                      {!usernameChecking && usernameAvailable === true && (
+                        <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                      )}
+                      {!usernameChecking && usernameAvailable === false && (
+                        <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Username feedback */}
+                  {usernameError && (
+                    <p className="mt-1 text-sm text-red-600">{usernameError}</p>
+                  )}
+                  {!usernameError && usernameAvailable === true && (
+                    <p className="mt-1 text-sm text-green-600">Username is available!</p>
+                  )}
+                  {formData.username.length > 0 && formData.username.length < 3 && (
+                    <p className="mt-1 text-sm text-gray-500">Username must be at least 3 characters</p>
+                  )}
                 </div>
 
                 {/* Email field */}
