@@ -30,10 +30,11 @@ const PostCard = ({ post, currentUser, onVote, onComment, onShare, onEdit, onDel
     location,
     createdAt,
     upvotes,
-    downvotes,
     commentCount,
     isAnonymous,
-    imageUrl
+    imageUrl, // Legacy field for backward compatibility
+    imageData, // New Base64 data field
+    imageMetadata
   } = post;
 
   const handleVote = async (type) => {
@@ -193,13 +194,22 @@ const PostCard = ({ post, currentUser, onVote, onComment, onShare, onEdit, onDel
         )}
         <p className="text-gray-700 whitespace-pre-wrap">{content}</p>
         
-        {imageUrl && (
+        {(imageData || imageUrl) && (
           <div className="mt-3">
             <img 
-              src={imageUrl} 
+              src={imageData || imageUrl} 
               alt="Post content" 
               className="w-full h-64 object-cover rounded-lg"
+              onError={(e) => {
+                console.error('Failed to load image');
+                e.target.style.display = 'none';
+              }}
             />
+            {imageMetadata && (
+              <div className="text-xs text-gray-500 mt-1">
+                {imageMetadata.originalName} • {Math.round(imageMetadata.size / 1024)}KB
+              </div>
+            )}
           </div>
         )}
       </div>

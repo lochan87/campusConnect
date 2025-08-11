@@ -3,22 +3,13 @@ const multer = require('multer');
 const path = require('path');
 const { getFirestore } = require('../config/firebase');
 const geminiService = require('../services/geminiService');
+const imageService = require('../services/storageService');
 const { validatePost } = require('../middleware/validation');
 const router = express.Router();
 
-// Configure multer for image uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, '../uploads'));
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
+// Configure multer for image uploads (store in memory)
 const upload = multer({
-  storage: storage,
+  storage: multer.memoryStorage(), // Store files in memory for Firebase upload
   limits: {
     fileSize: 5 * 1024 * 1024, // 5MB limit
   },
@@ -162,10 +153,41 @@ router.post('/', upload.single('image'), validatePost, async (req, res) => {
 
     // Handle image upload if present
     if (req.file) {
-      // Create full URL for the uploaded file
-      const baseUrl = process.env.BACKEND_URL || 'http://localhost:5000';
-      postData.imageUrl = `${baseUrl}/uploads/${req.file.filename}`;
-      postData.hasImage = true;
+      try {
+        console.log('Processing image upload...');
+        
+        // Validate the image
+        if (!imageService.validateImage(req.file.buffer, req.file.mimetype)) {
+          return res.status(400).json({
+            success: false,
+            error: 'Invalid image file or file too large (max 800KB)'
+          });
+        }
+
+        // Convert to Base64 and store with post
+        const imageData = imageService.convertToBase64(
+          req.file.buffer,
+          req.file.mimetype,
+          req.file.originalname
+        );
+        
+        postData.imageData = imageData.imageData; // Data URL format
+        postData.imageMetadata = {
+          mimeType: imageData.mimeType,
+          originalName: imageData.originalName,
+          size: imageData.size,
+          uploadedAt: imageData.uploadedAt
+        };
+        postData.hasImage = true;
+        
+        console.log(`Image processed successfully: ${imageData.size} bytes`);
+      } catch (uploadError) {
+        console.error('Failed to process image:', uploadError);
+        return res.status(400).json({
+          success: false,
+          error: uploadError.message || 'Failed to process image'
+        });
+      }
     }
 
     const docRef = await db.collection('posts').add(postData);
@@ -484,6 +506,9 @@ router.delete('/:id', async (req, res) => {
         error: 'Not authorized to delete this post'
       });
     }
+
+    // No need to delete images from external storage since they're stored in the document
+    // Image data will be automatically deleted with the post document
 
     await db.collection('posts').doc(id).delete();
 

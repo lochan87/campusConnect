@@ -45,9 +45,6 @@ app.use(limiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Serve static files (uploaded images)
-app.use('/uploads', express.static('uploads'));
-
 // Routes
 app.use('/api/posts', postRoutes);
 app.use('/api/users', userRoutes);
