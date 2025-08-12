@@ -443,4 +443,50 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+// Admin endpoint to manually trigger cleanup of expired polls
+router.post('/cleanup', async (req, res) => {
+  try {
+    console.log('🧹 Manual cleanup triggered via API');
+    const { cleanupService } = require('../services/cleanupService');
+    
+    const result = await cleanupService.runOnce();
+    
+    res.json({
+      success: true,
+      message: 'Cleanup completed successfully',
+      deletedCount: result.deletedCount,
+      totalChecked: result.totalChecked
+    });
+  } catch (error) {
+    console.error('❌ Manual cleanup failed:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to run cleanup'
+    });
+  }
+});
+
+// Admin endpoint to check cleanup service status
+router.get('/cleanup/status', (req, res) => {
+  try {
+    const { cleanupService } = require('../services/cleanupService');
+    const status = cleanupService.getStatus();
+    
+    res.json({
+      success: true,
+      status: {
+        isRunning: status.isRunning,
+        hasInterval: status.hasInterval,
+        lastCheck: new Date().toISOString()
+      }
+    });
+  } catch (error) {
+    console.error('❌ Failed to get cleanup status:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get cleanup status'
+    });
+  }
+});
+
 module.exports = router;

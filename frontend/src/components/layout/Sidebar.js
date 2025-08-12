@@ -18,7 +18,6 @@ import {
   FiSpeaker,
   FiPackage
 } from 'react-icons/fi';
-import { id } from 'date-fns/locale';
 
 const Sidebar = ({ onClose }) => {
   const { user } = useAuth();
@@ -100,50 +99,50 @@ const Sidebar = ({ onClose }) => {
           </div>
 
           {/* User info */}
-        <div className="flex items-center space-x-3 bg-gray-50 rounded-lg">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-            <span className="text-white font-medium">
-              {user?.firstName?.charAt(0) || 'U'}
-            </span>
+          <div className="flex items-center space-x-3 bg-gray-50 rounded-lg">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+              <span className="text-white font-medium">
+                {user?.firstName?.charAt(0) || 'U'}
+              </span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-900 truncate">
+                {user?.displayName || 'User'}
+              </p>
+              <p className="text-xs text-gray-500 truncate">
+                {user?.department || 'Student'}
+              </p>
+            </div>
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 truncate">
-              {user?.displayName || 'User'}
-            </p>
-            <p className="text-xs text-gray-500 truncate">
-              {user?.department || 'Student'}
-            </p>
-          </div>
-        </div>
 
-        {/* Navigation */}
-        <nav className="space-y-1">
-          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-            Navigation
-          </h3>
-          {navigationItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = isActiveRoute(item.path);
-            
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                onClick={onClose}
-                className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
-                  isActive
-                    ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                }`}
-              >
-                <Icon className="w-5 h-5" />
-                <span className="text-sm font-medium">{item.name}</span>
-              </Link>
-            );
-          })}
-        </nav>
+          {/* Navigation */}
+          <nav className="space-y-1">
+            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+              Navigation
+            </h3>
+            {navigationItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = isActiveRoute(item.path);
+              
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  onClick={onClose}
+                  className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
+                    isActive
+                      ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700'
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                  }`}
+                >
+                  <Icon className="w-5 h-5" />
+                  <span className="text-sm font-medium">{item.name}</span>
+                </Link>
+              );
+            })}
+          </nav>
 
-        {/* Current Filters Status */}
+          {/* Current Filters Status */}
         {(filters.category !== 'all' || filters.location !== 'all') && (
           <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
             <h4 className="text-xs font-semibold text-blue-800 mb-2">Active Filters</h4>
@@ -275,7 +274,7 @@ const Sidebar = ({ onClose }) => {
               </div>
             </div>
           </div>
-          </div>
+        </div>
         </div>
       </div>
     </div>

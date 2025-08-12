@@ -80,6 +80,12 @@ const Home = () => {
     }
   };
 
+  // Filter out expired polls
+  const activePolls = polls.filter(poll => {
+    if (!poll.expiresAt) return true; // No expiration date means active
+    return new Date() <= new Date(poll.expiresAt);
+  });
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -131,7 +137,7 @@ const Home = () => {
               <span className="text-green-600 font-semibold">📊</span>
             </div>
             <div>
-              <p className="text-2xl font-bold text-gray-900">{polls.length}</p>
+              <p className="text-2xl font-bold text-gray-900">{activePolls.length}</p>
               <p className="text-sm text-gray-600">Active Polls</p>
             </div>
           </div>
@@ -211,14 +217,14 @@ const Home = () => {
               <h3 className="text-lg font-semibold text-gray-900">Active Polls</h3>
             </div>
             <div className="p-4">
-              {polls.length === 0 ? (
+              {activePolls.length === 0 ? (
                 <div className="text-center py-6">
                   <span className="text-2xl mb-2 block">📊</span>
                   <p className="text-gray-600 text-sm">No active polls</p>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {polls.slice(0, 3).map((poll) => (
+                  {activePolls.slice(0, 3).map((poll) => (
                     <PollCard
                       key={poll.id}
                       poll={poll}

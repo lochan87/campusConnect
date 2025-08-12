@@ -397,6 +397,12 @@ const Profile = () => {
     );
   }
 
+  // Filter out expired polls from recent polls
+  const activeRecentPolls = profile.recentPolls ? profile.recentPolls.filter(poll => {
+    if (!poll.expiresAt) return true; // No expiration date means active
+    return new Date() <= new Date(poll.expiresAt);
+  }) : [];
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -665,7 +671,7 @@ const Profile = () => {
       )}
 
       {/* Recent Polls */}
-      {profile.recentPolls.length > 0 && (
+      {activeRecentPolls.length > 0 && (
         <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -674,7 +680,7 @@ const Profile = () => {
         >
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Polls</h3>
           <div className="space-y-3">
-            {profile.recentPolls.slice(0, 5).map((poll, index) => (
+            {activeRecentPolls.slice(0, 5).map((poll, index) => (
               <div key={poll.id} className="p-3 bg-gray-50 rounded-lg">
                 <h4 className="font-medium text-gray-900">{poll.question}</h4>
                 <div className="flex items-center justify-between mt-2 text-xs text-gray-500">

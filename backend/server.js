@@ -12,6 +12,7 @@ const pollRoutes = require('./routes/polls');
 const leaderboardRoutes = require('./routes/leaderboard');
 const { initializeFirebase } = require('./config/firebase');
 const { setupWebSocket } = require('./services/websocket');
+const { cleanupService } = require('./services/cleanupService');
 
 const app = express();
 const server = http.createServer(app);
@@ -78,6 +79,30 @@ const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`🚀 CampusConnect server running on port ${PORT}`);
   console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+  
+  // Start cleanup service for expired polls
+  // Run every 6 hours in production, every hour in development
+  const cleanupInterval = process.env.NODE_ENV === 'production' ? 360 : 60;
+  cleanupService.start(cleanupInterval);
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('🛑 SIGTERM received, shutting down gracefully...');
+  cleanupService.stop();
+  server.close(() => {
+    console.log('✅ Server closed');
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('🛑 SIGINT received, shutting down gracefully...');
+  cleanupService.stop();
+  server.close(() => {
+    console.log('✅ Server closed');
+    process.exit(0);
+  });
 });
 
 module.exports = { app, server, io };
