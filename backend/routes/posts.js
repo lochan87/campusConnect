@@ -110,11 +110,22 @@ router.post('/', upload.single('image'), validatePost, async (req, res) => {
       category,
       location,
       campusId,
-      isAnonymous = false,
+      isAnonymous = 'false',
       tags = [],
       userId,
       userName
     } = req.body;
+
+    // Convert string boolean to actual boolean
+    const isAnonymousPost = isAnonymous === 'true' || isAnonymous === true;
+    
+    console.log('🔍 Post creation debug:', {
+      receivedIsAnonymous: isAnonymous,
+      typeOfIsAnonymous: typeof isAnonymous,
+      convertedIsAnonymousPost: isAnonymousPost,
+      userName: userName,
+      userId: userId
+    });
 
     // Moderate content using Gemini AI
     const moderation = await geminiService.moderateContent(content);
@@ -133,11 +144,11 @@ router.post('/', upload.single('image'), validatePost, async (req, res) => {
       category,
       location: location || '',
       campusId,
-      isAnonymous: Boolean(isAnonymous),
+      isAnonymous: isAnonymousPost,
       tags: Array.isArray(tags) ? tags : (tags ? tags.split(',') : []),
       userId: userId, // Store userId even for anonymous posts (for deletion rights)
-      displayUserId: isAnonymous ? null : userId, // Only show userId if not anonymous
-      userName: isAnonymous ? 'Anonymous' : userName,
+      displayUserId: isAnonymousPost ? null : userId, // Only show userId if not anonymous
+      userName: isAnonymousPost ? 'Anonymous' : userName,
       upvotes: 0,
       downvotes: 0,
       commentCount: 0,

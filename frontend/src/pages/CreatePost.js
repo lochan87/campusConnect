@@ -112,7 +112,7 @@ const CreatePost = () => {
       postData.append('content', formData.content.trim());
       postData.append('category', formData.category.toLowerCase().replace(' & ', '_').replace(' ', '_'));
       postData.append('location', formData.location.trim());
-      postData.append('isAnonymous', formData.isAnonymous);
+      postData.append('isAnonymous', formData.isAnonymous ? 'true' : 'false');
       postData.append('campusId', user?.campusId || 'demo-campus'); // Use user's campus ID
       
       // Add user data if not anonymous
@@ -134,6 +134,7 @@ const CreatePost = () => {
         category: formData.category.toLowerCase().replace(' & ', '_').replace(' ', '_'),
         location: formData.location,
         isAnonymous: formData.isAnonymous,
+        isAnonymousString: formData.isAnonymous ? 'true' : 'false',
         hasImage: !!formData.image,
         userId: !formData.isAnonymous ? (user.uid || user.id) : null,
         userName: !formData.isAnonymous ? (user.displayName || user.name || user.email) : null
