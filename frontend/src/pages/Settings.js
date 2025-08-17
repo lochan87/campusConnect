@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { apiService } from '../services/api';
 import {
@@ -12,12 +13,15 @@ import {
   FiX,
   FiLoader,
   FiSave,
-  FiCreditCard
+  FiCreditCard,
+  FiTrash2,
+  FiAlertTriangle
 } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
 const Settings = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('username');
 
@@ -57,6 +61,10 @@ const Settings = () => {
     password: '' // Required for student ID change verification
   });
   const [studentIdError, setStudentIdError] = useState('');
+
+  // Delete account state
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   useEffect(() => {
     // Fetch current user profile to get username
@@ -364,6 +372,35 @@ const Settings = () => {
       toast.error(error.response?.data?.error || 'Failed to update Student ID');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!user) {
+      toast.error('User not found');
+      return;
+    }
+
+    try {
+      setDeleteLoading(true);
+      
+      // Call the delete account API
+      await apiService.deleteUserAccount();
+      
+      toast.success('Account deleted successfully');
+      
+      // Log out the user
+      logout();
+      
+      // Navigate to home page
+      navigate('/', { replace: true });
+    } catch (error) {
+      console.error('❌ Error deleting account:', error);
+      const errorMessage = error.response?.data?.error || 'Failed to delete account';
+      toast.error(errorMessage);
+    } finally {
+      setDeleteLoading(false);
+      setShowDeleteConfirm(false);
     }
   };
 
@@ -810,6 +847,114 @@ const Settings = () => {
           </AnimatePresence>
         </div>
       </div>
+
+      {/* Danger Zone */}
+      <motion.div
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.2 }}
+        className="mt-8 bg-white rounded-lg border border-red-200 overflow-hidden"
+      >
+        <div className="bg-red-50 px-6 py-4 border-b border-red-200">
+          <div className="flex items-center space-x-2">
+            <FiAlertTriangle className="w-5 h-5 text-red-600" />
+            <h2 className="text-lg font-semibold text-red-900">Danger Zone</h2>
+          </div>
+          <p className="text-sm text-red-700 mt-1">
+            Irreversible and destructive actions
+          </p>
+        </div>
+        
+        <div className="p-4 sm:p-6">
+          <div className="border border-red-300 rounded-lg p-4 bg-red-50">
+            <div className="flex flex-col space-y-4 sm:flex-row sm:items-start sm:justify-between sm:space-y-0">
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-red-900 mb-2">Delete Account</h3>
+                <p className="text-red-800 text-sm mb-4">
+                  Once you delete your account, there is no going back. Please be certain.
+                </p>
+                <div className="bg-red-100 rounded-lg p-3 mb-4 sm:mb-0">
+                  <h4 className="font-medium text-red-900 mb-2 text-sm">What will be permanently deleted:</h4>
+                  <ul className="text-xs text-red-800 space-y-1">
+                    <li>• Your profile and personal information</li>
+                    <li>• All your posts and comments</li>
+                    <li>• All your polls and votes</li>
+                    <li>• Your reputation and activity history</li>
+                    <li>• All associated data from our servers</li>
+                  </ul>
+                </div>
+              </div>
+              <div className="flex justify-center sm:justify-start sm:ml-6">
+                <button
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="w-full sm:w-auto px-4 py-3 sm:py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors flex items-center justify-center space-x-2 font-medium text-sm"
+                >
+                  <FiTrash2 className="w-4 h-4" />
+                  <span>Delete Account</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Delete Account Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="bg-white rounded-lg p-6 max-w-md w-full"
+          >
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="flex-shrink-0">
+                <FiAlertTriangle className="w-8 h-8 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-medium text-gray-900">Delete Account</h3>
+                <p className="text-sm text-gray-500">This action cannot be undone</p>
+              </div>
+            </div>
+            
+            <div className="mb-6">
+              <p className="text-gray-700 mb-4">
+                Are you absolutely sure you want to delete your account? This will permanently remove all your data.
+              </p>
+              <p className="text-sm font-semibold text-red-600">
+                This action is irreversible and cannot be undone.
+              </p>
+            </div>
+
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={deleteLoading}
+                className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                disabled={deleteLoading}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2"
+              >
+                {deleteLoading ? (
+                  <>
+                    <FiLoader className="w-4 h-4 animate-spin" />
+                    <span>Deleting...</span>
+                  </>
+                ) : (
+                  <>
+                    <FiTrash2 className="w-4 h-4" />
+                    <span>Delete Account</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 };
