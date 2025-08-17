@@ -2,53 +2,103 @@ const express = require('express');
 const { getFirestore } = require('../config/firebase');
 const router = express.Router();
 
+// Helper function to check if user is a demo user
+const isDemoUser = (userId, userData) => {
+  // Check if userId starts with demo- or has demo characteristics
+  if (userId.startsWith('demo-') || userId.includes('demo')) {
+    return true;
+  }
+  
+  // Check if email contains demo
+  if (userData.email && userData.email.includes('demo-user-')) {
+    return true;
+  }
+  
+  // Check if username contains demo
+  if (userData.username && userData.username.startsWith('demo_')) {
+    return true;
+  }
+  
+  // Check if displayName is "Demo User"
+  if (userData.displayName === 'Demo User') {
+    return true;
+  }
+  
+  return false;
+};
+
 // GET /api/leaderboard - Get top users by reputation and activity
 router.get('/', async (req, res) => {
   try {
     console.log('📊 Fetching leaderboard data');
     const db = getFirestore();
     
-    // Get top users by reputation
+    // Get more users to filter out demo users
     const reputationQuery = db.collection('users')
       .orderBy('reputation', 'desc')
-      .limit(10);
+      .limit(50); // Get more to filter out demos
     
     const reputationSnapshot = await reputationQuery.get();
     const topReputation = [];
     
     reputationSnapshot.forEach(doc => {
       const userData = doc.data();
-      topReputation.push({
-        id: doc.id,
-        displayName: userData.displayName || userData.email,
-        email: userData.email,
-        reputation: userData.reputation || 0,
-        postCount: userData.postCount || 0,
-        department: userData.department || '',
-        year: userData.year || ''
-      });
+      
+      // Skip demo users
+      if (isDemoUser(doc.id, userData)) {
+        console.log('🚫 Excluding demo user from leaderboard:', doc.id);
+        return;
+      }
+      
+      // Only include users with actual reputation
+      if ((userData.reputation || 0) > 0) {
+        topReputation.push({
+          id: doc.id,
+          displayName: userData.displayName || userData.email,
+          email: userData.email,
+          reputation: userData.reputation || 0,
+          postCount: userData.postCount || 0,
+          department: userData.department || '',
+          year: userData.year || ''
+        });
+      }
     });
+    
+    // Limit to top 10 after filtering
+    topReputation.splice(10);
 
     // Get top users by post count
     const activityQuery = db.collection('users')
       .orderBy('postCount', 'desc')
-      .limit(10);
+      .limit(50); // Get more to filter out demos
     
     const activitySnapshot = await activityQuery.get();
     const mostActive = [];
     
     activitySnapshot.forEach(doc => {
       const userData = doc.data();
-      mostActive.push({
-        id: doc.id,
-        displayName: userData.displayName || userData.email,
-        email: userData.email,
-        reputation: userData.reputation || 0,
-        postCount: userData.postCount || 0,
-        department: userData.department || '',
-        year: userData.year || ''
-      });
+      
+      // Skip demo users
+      if (isDemoUser(doc.id, userData)) {
+        return;
+      }
+      
+      // Only include users with actual activity
+      if ((userData.postCount || 0) > 0) {
+        mostActive.push({
+          id: doc.id,
+          displayName: userData.displayName || userData.email,
+          email: userData.email,
+          reputation: userData.reputation || 0,
+          postCount: userData.postCount || 0,
+          department: userData.department || '',
+          year: userData.year || ''
+        });
+      }
     });
+    
+    // Limit to top 10 after filtering
+    mostActive.splice(10);
 
     console.log('✅ Leaderboard data fetched:', { topReputation: topReputation.length, mostActive: mostActive.length });
 

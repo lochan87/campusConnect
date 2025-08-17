@@ -33,7 +33,8 @@ router.get('/', async (req, res) => {
       sortBy = 'createdAt',
       order = 'desc',
       limit = 50,
-      offset = 0
+      offset = 0,
+      userId // Add userId to check vote status
     } = req.query;
 
     let query = db.collection('posts');
@@ -57,11 +58,26 @@ router.get('/', async (req, res) => {
     
     let posts = [];
 
+    // Get user votes for all posts if userId is provided
+    let userVotes = {};
+    if (userId) {
+      const votesSnapshot = await db.collection('votes')
+        .where('userId', '==', userId)
+        .get();
+      
+      votesSnapshot.forEach(voteDoc => {
+        const voteData = voteDoc.data();
+        userVotes[voteData.postId] = voteData.type;
+      });
+    }
+
     snapshot.forEach(doc => {
+      const postData = doc.data();
       posts.push({
         id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate?.() || doc.data().createdAt
+        ...postData,
+        createdAt: postData.createdAt?.toDate?.() || postData.createdAt,
+        userVote: userId ? userVotes[doc.id] || null : null // 'up', 'down', or null
       });
     });
 
@@ -208,6 +224,35 @@ router.post('/', upload.single('image'), validatePost, async (req, res) => {
       ...postData
     };
 
+    // Award reputation for post creation (+5 points)
+    if (!isAnonymousPost && userId) {
+      try {
+        // Check if user is a demo user
+        const isDemoUser = (userId) => {
+          return userId.startsWith('demo-') || userId.includes('demo');
+        };
+        
+        if (!isDemoUser(userId)) {
+          const userRef = db.collection('users').doc(userId);
+          const userDoc = await userRef.get();
+          
+          if (userDoc.exists) {
+            const currentReputation = userDoc.data().reputation || 0;
+            await userRef.update({
+              reputation: currentReputation + 5,
+              lastActive: new Date()
+            });
+            console.log(`📈 Post creation: User ${userId} earned +5 reputation (${currentReputation} → ${currentReputation + 5})`);
+          }
+        } else {
+          console.log(`🚫 Demo user ${userId} - no reputation awarded for post creation`);
+        }
+      } catch (reputationError) {
+        console.error('Error updating reputation for post creation:', reputationError);
+        // Don't fail the post creation if reputation update fails
+      }
+    }
+
     // Emit real-time update via WebSocket
     if (req.app.get('io')) {
       req.app.get('io').to(`campus_${campusId}`).emit('post_created', newPost);
@@ -294,11 +339,12 @@ router.post('/:id/vote', async (req, res) => {
       const postData = postDoc.data();
       let upvotes = postData.upvotes || 0;
       let downvotes = postData.downvotes || 0;
+      let reputationChange = 0; // Track reputation changes for post author
 
       if (voteDoc.exists) {
         const existingVote = voteDoc.data();
         
-        // Remove existing vote
+        // Remove existing vote counts
         if (existingVote.type === 'up') {
           upvotes--;
         } else {
@@ -308,11 +354,14 @@ router.post('/:id/vote', async (req, res) => {
         // If same vote type, remove vote; otherwise, add new vote
         if (existingVote.type === type) {
           transaction.delete(voteRef);
+          // No reputation change when removing vote (reputation never decreases)
         } else {
           if (type === 'up') {
             upvotes++;
+            reputationChange = +1; // Only give reputation for new upvotes
           } else {
             downvotes++;
+            // No reputation change for downvotes
           }
           transaction.update(voteRef, { type, updatedAt: new Date() });
         }
@@ -320,8 +369,10 @@ router.post('/:id/vote', async (req, res) => {
         // New vote
         if (type === 'up') {
           upvotes++;
+          reputationChange = +1; // Give reputation for new upvote
         } else {
           downvotes++;
+          // No reputation change for downvotes
         }
         transaction.set(voteRef, {
           postId: id,
@@ -331,28 +382,67 @@ router.post('/:id/vote', async (req, res) => {
         });
       }
 
+      // Update post counts
       transaction.update(postRef, {
         upvotes,
         downvotes,
         updatedAt: new Date()
       });
 
-      return { upvotes, downvotes };
+      // Update author's reputation if there's a positive change, author exists, and voter is not the author
+      if (reputationChange > 0 && postData.userId && postData.userId !== userId) {
+        // Check if author is a demo user
+        const isDemoUser = (userId) => {
+          return userId.startsWith('demo-') || userId.includes('demo');
+        };
+        
+        if (!isDemoUser(postData.userId)) {
+          const authorRef = db.collection('users').doc(postData.userId);
+          const authorDoc = await transaction.get(authorRef);
+          
+          if (authorDoc.exists) {
+            const authorData = authorDoc.data();
+            const newReputation = (authorData.reputation || 0) + reputationChange;
+            
+            console.log(`📈 Updating reputation for user ${postData.userId}: ${authorData.reputation || 0} + ${reputationChange} = ${newReputation}`);
+            
+            transaction.update(authorRef, {
+              reputation: newReputation,
+              lastActive: new Date()
+            });
+          }
+        } else {
+          console.log(`🚫 Demo user ${postData.userId} - no reputation awarded for upvote`);
+        }
+      }
+
+      return { upvotes, downvotes, reputationChange };
     });
+
+    // After transaction, get the current vote status
+    const finalVoteDoc = await voteRef.get();
+    const userCurrentVote = finalVoteDoc.exists ? finalVoteDoc.data().type : null;
+
+    // Log reputation changes
+    if (result.reputationChange > 0) {
+      console.log(`✨ Reputation +${result.reputationChange} awarded to post author for upvote`);
+    }
 
     // Emit real-time update
     if (req.app.get('io')) {
       req.app.get('io').emit('post_voted', {
         postId: id,
         upvotes: result.upvotes,
-        downvotes: result.downvotes
+        downvotes: result.downvotes,
+        userVote: userCurrentVote
       });
     }
 
     res.json({
       success: true,
       upvotes: result.upvotes,
-      downvotes: result.downvotes
+      downvotes: result.downvotes,
+      userVote: userCurrentVote
     });
 
   } catch (error) {
@@ -701,20 +791,39 @@ router.delete('/:postId/comments/:commentId', async (req, res) => {
 
     const commentData = commentDoc.data();
 
-    // Check if user is the author (unless comment is anonymous)
-    if (!commentData.isAnonymous && commentData.userId !== userId) {
+    // Get the post to check if user is the post owner
+    const postDoc = await db.collection('posts').doc(postId).get();
+    
+    if (!postDoc.exists) {
+      return res.status(404).json({
+        success: false,
+        error: 'Post not found'
+      });
+    }
+
+    const postData = postDoc.data();
+    const isPostOwner = postData.userId === userId;
+    const isCommentAuthor = !commentData.isAnonymous && commentData.userId === userId;
+
+    // Check if user is the comment author OR the post owner
+    if (!isCommentAuthor && !isPostOwner) {
       return res.status(403).json({
         success: false,
         error: 'Not authorized to delete this comment'
       });
     }
 
+    // Log the deletion action
+    if (isPostOwner && !isCommentAuthor) {
+      console.log(`🗑️ Post owner (${userId}) deleted comment (${commentId}) on post (${postId}) by ${commentData.isAnonymous ? 'Anonymous' : commentData.userId}`);
+    } else if (isCommentAuthor) {
+      console.log(`🗑️ Comment author (${userId}) deleted their own comment (${commentId}) on post (${postId})`);
+    }
+
     await db.collection('comments').doc(commentId).delete();
 
     // Update post comment count
-    const postDoc = await db.collection('posts').doc(postId).get();
     if (postDoc.exists) {
-      const postData = postDoc.data();
       const newCommentCount = Math.max((postData.commentCount || 1) - 1, 0);
       
       await db.collection('posts').doc(postId).update({

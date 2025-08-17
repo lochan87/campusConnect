@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { 
   PencilIcon, 
   UserIcon, 
@@ -9,7 +9,9 @@ import {
   ChatBubbleLeftRightIcon,
   DocumentTextIcon,
   TrophyIcon,
-  FireIcon
+  FireIcon,
+  ExclamationTriangleIcon,
+  TrashIcon
 } from '@heroicons/react/24/outline';
 import { apiService } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -17,10 +19,13 @@ import toast from 'react-hot-toast';
 
 const Profile = () => {
   const { userId } = useParams();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const [editData, setEditData] = useState({
     displayName: '',
     course: '',
@@ -322,6 +327,35 @@ const Profile = () => {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    if (!user) {
+      toast.error('User not found');
+      return;
+    }
+
+    try {
+      setDeleteLoading(true);
+      
+      // Call the delete account API
+      await apiService.deleteUserAccount();
+      
+      toast.success('Account deleted successfully');
+      
+      // Log out the user
+      logout();
+      
+      // Navigate to home page
+      navigate('/', { replace: true });
+    } catch (error) {
+      console.error('❌ Error deleting account:', error);
+      const errorMessage = error.response?.data?.error || 'Failed to delete account';
+      toast.error(errorMessage);
+    } finally {
+      setDeleteLoading(false);
+      setShowDeleteConfirm(false);
+    }
+  };
+
   const formatDate = (date) => {
     if (!date) {
       return 'Unknown';
@@ -596,19 +630,31 @@ const Profile = () => {
                   
                   {/* Save/Cancel buttons for editing mode */}
                   {isOwnProfile && (
-                    <div className="flex justify-end space-x-3">
+                    <div className="flex justify-between items-center">
+                      {/* Delete Account Button */}
                       <button
-                        onClick={() => setEditing(false)}
-                        className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                        onClick={() => setShowDeleteConfirm(true)}
+                        className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                       >
-                        Cancel
+                        <TrashIcon className="w-4 h-4" />
+                        <span>Delete Account</span>
                       </button>
-                      <button
-                        onClick={handleSaveProfile}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                      >
-                        Save Changes
-                      </button>
+                      
+                      {/* Save/Cancel Buttons */}
+                      <div className="flex space-x-3">
+                        <button
+                          onClick={() => setEditing(false)}
+                          className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={handleSaveProfile}
+                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                        >
+                          Save Changes
+                        </button>
+                      </div>
                     </div>
                   )}
                 </>
@@ -702,6 +748,70 @@ const Profile = () => {
       >
         Member since {formatDate(profile.joinedAt)}
       </motion.div>
+
+      {/* Delete Account Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-lg p-6 max-w-md w-full"
+          >
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="flex-shrink-0">
+                <ExclamationTriangleIcon className="w-8 h-8 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-medium text-gray-900">Delete Account</h3>
+                <p className="text-sm text-gray-500">This action cannot be undone</p>
+              </div>
+            </div>
+            
+            <div className="mb-6">
+              <p className="text-gray-700 mb-4">
+                Are you sure you want to delete your account? This will permanently remove:
+              </p>
+              <ul className="text-sm text-gray-600 space-y-1 mb-4 ml-4">
+                <li>• Your profile and personal information</li>
+                <li>• All your posts and comments</li>
+                <li>• All your polls and votes</li>
+                <li>• Your reputation and activity history</li>
+                <li>• All associated data from our servers</li>
+              </ul>
+              <p className="text-sm font-semibold text-red-600">
+                This action is irreversible and cannot be undone.
+              </p>
+            </div>
+
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={deleteLoading}
+                className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                disabled={deleteLoading}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2"
+              >
+                {deleteLoading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Deleting...</span>
+                  </>
+                ) : (
+                  <>
+                    <TrashIcon className="w-4 h-4" />
+                    <span>Delete Account</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </motion.div>
   );
 };

@@ -135,6 +135,7 @@ export const apiService = {
   updateUserProfile: (id, profileData) => api.put(`/users/profile/${id}`, profileData),
   changePassword: (passwordData) => api.put('/users/change-password', passwordData),
   changeEmail: (emailData) => api.put('/users/change-email', emailData),
+  deleteUserAccount: () => api.delete('/users/delete-account'),
   
   // Leaderboard
   getLeaderboardData: () => api.get('/leaderboard'),

@@ -5,6 +5,8 @@ import { FiHeart, FiMessageCircle, FiShare2, FiMapPin, FiClock, FiMoreHorizontal
 const PostCard = ({ post, currentUser, onVote, onComment, onShare, onEdit, onDelete }) => {
   const [showMenu, setShowMenu] = useState(false);
   const [isLiking, setIsLiking] = useState(false);
+  const [optimisticVote, setOptimisticVote] = useState(null);
+  const [optimisticUpvotes, setOptimisticUpvotes] = useState(post.upvotes || 0);
   const menuRef = useRef(null);
 
   useEffect(() => {
@@ -19,6 +21,14 @@ const PostCard = ({ post, currentUser, onVote, onComment, onShare, onEdit, onDel
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+
+  // Sync optimistic state with actual post data
+  useEffect(() => {
+    if (!isLiking) {
+      setOptimisticVote(post.userVote || null);
+      setOptimisticUpvotes(post.upvotes || 0);
+    }
+  }, [post.userVote, post.upvotes, isLiking]);
 
   const {
     id,
@@ -38,14 +48,51 @@ const PostCard = ({ post, currentUser, onVote, onComment, onShare, onEdit, onDel
   } = post;
 
   const handleVote = async (type) => {
-    if (onVote && !isLiking) {
+    if (onVote && !isLiking && currentUser) {
       setIsLiking(true);
+      
+      // Optimistic update
+      const previousVote = optimisticVote;
+      const previousUpvotes = optimisticUpvotes;
+      
+      let newUpvotes = optimisticUpvotes;
+      let newVote = null;
+      
+      if (previousVote === type) {
+        // Remove vote (same type clicked)
+        newVote = null;
+        if (type === 'up') {
+          newUpvotes = Math.max(0, optimisticUpvotes - 1);
+        }
+      } else {
+        // Add new vote or switch vote
+        newVote = type;
+        if (type === 'up') {
+          if (previousVote === 'down') {
+            newUpvotes = optimisticUpvotes + 1; // Just switch from down to up
+          } else {
+            newUpvotes = optimisticUpvotes + 1; // Add new upvote
+          }
+        } else { // type === 'down'
+          if (previousVote === 'up') {
+            newUpvotes = Math.max(0, optimisticUpvotes - 1); // Switch from up to down
+          }
+          // For downvotes, we don't change the upvote count unless switching from up
+        }
+      }
+      
+      setOptimisticVote(newVote);
+      setOptimisticUpvotes(newUpvotes);
+      
       try {
         await onVote(id, type);
       } catch (error) {
         console.error('Error voting:', error);
+        // Revert optimistic update on error
+        setOptimisticVote(previousVote);
+        setOptimisticUpvotes(previousUpvotes);
       } finally {
-        setTimeout(() => setIsLiking(false), 300); // Brief delay for visual feedback
+        setTimeout(() => setIsLiking(false), 300);
       }
     }
   };
@@ -221,20 +268,22 @@ const PostCard = ({ post, currentUser, onVote, onComment, onShare, onEdit, onDel
             <motion.button
               whileTap={{ scale: 0.9 }}
               onClick={() => handleVote('up')}
-              disabled={isLiking}
+              disabled={isLiking || !currentUser}
               className={`flex items-center space-x-1 transition-colors ${
-                isLiking 
+                optimisticVote === 'up'
                   ? 'text-red-500' 
-                  : 'text-gray-500 hover:text-red-500'
+                  : isLiking 
+                    ? 'text-red-400' 
+                    : 'text-gray-500 hover:text-red-500'
               }`}
             >
               <motion.div
                 animate={isLiking ? { scale: [1, 1.2, 1] } : {}}
                 transition={{ duration: 0.3 }}
               >
-                <FiHeart className={`w-4 h-4 ${isLiking ? 'fill-current' : ''}`} />
+                <FiHeart className={`w-4 h-4 ${optimisticVote === 'up' ? 'fill-current' : ''}`} />
               </motion.div>
-              <span className="text-sm font-medium">{upvotes || 0}</span>
+              <span className="text-sm font-medium">{optimisticUpvotes}</span>
             </motion.button>
             
             <motion.button

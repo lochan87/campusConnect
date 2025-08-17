@@ -145,6 +145,35 @@ router.post('/', validatePoll, async (req, res) => {
       ...pollData
     };
 
+    // Award reputation for poll creation (+5 points)
+    if (!isAnonymous && userId) {
+      try {
+        // Check if user is a demo user
+        const isDemoUser = (userId) => {
+          return userId.startsWith('demo-') || userId.includes('demo');
+        };
+        
+        if (!isDemoUser(userId)) {
+          const userRef = db.collection('users').doc(userId);
+          const userDoc = await userRef.get();
+          
+          if (userDoc.exists) {
+            const currentReputation = userDoc.data().reputation || 0;
+            await userRef.update({
+              reputation: currentReputation + 5,
+              lastActive: new Date()
+            });
+            console.log(`📈 Poll creation: User ${userId} earned +5 reputation (${currentReputation} → ${currentReputation + 5})`);
+          }
+        } else {
+          console.log(`🚫 Demo user ${userId} - no reputation awarded for poll creation`);
+        }
+      } catch (reputationError) {
+        console.error('Error updating reputation for poll creation:', reputationError);
+        // Don't fail the poll creation if reputation update fails
+      }
+    }
+
     // Emit real-time update via WebSocket
     if (req.app.get('io')) {
       req.app.get('io').to(`campus_${campusId}`).emit('poll_created', newPoll);

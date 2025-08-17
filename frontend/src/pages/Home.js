@@ -11,7 +11,7 @@ import LoadingSkeleton from '../components/ui/LoadingSkeleton';
 import toast from 'react-hot-toast';
 
 const Home = () => {
-  const { posts, polls, loading, fetchPosts, fetchPolls, refreshPosts, voteOnPost, voteOnPoll, deletePost, editPost } = usePosts();
+  const { posts, polls, loading, fetchPosts, fetchPolls, refreshPosts, voteOnPost, voteOnPoll, deletePost, updateCommentCount } = usePosts();
   const { user } = useAuth();
   const [commentModal, setCommentModal] = useState({ isOpen: false, post: null });
 
@@ -60,9 +60,14 @@ const Home = () => {
   };
 
   const handleSubmitComment = async (postId, comment) => {
-    // The CommentModal now handles the submission internally
-    // This is just for compatibility, the actual work is done in the modal
-    console.log('Comment submitted:', postId, comment);
+    try {
+      // Optimistically update the comment count
+      updateCommentCount(postId, 1);
+    } catch (error) {
+      // If there's an error, we can revert the optimistic update
+      // by decreasing the count by 1
+      updateCommentCount(postId, -1);
+    }
   };
 
   const handleEdit = (post) => {

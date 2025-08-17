@@ -168,7 +168,8 @@ export const PostProvider = ({ children }) => {
         payload: {
           id: voteData.postId,
           upvotes: voteData.upvotes,
-          downvotes: voteData.downvotes
+          downvotes: voteData.downvotes,
+          userVote: voteData.userVote
         }
       });
     };
@@ -185,6 +186,28 @@ export const PostProvider = ({ children }) => {
       dispatch({ type: POST_ACTIONS.DELETE_POLL, payload: data.pollId });
     };
 
+    const handleCommentAdded = (data) => {
+      // Update the comment count for the post
+      dispatch({
+        type: POST_ACTIONS.UPDATE_POST,
+        payload: {
+          id: data.postId,
+          commentCount: data.commentCount
+        }
+      });
+    };
+
+    const handleCommentDeleted = (data) => {
+      // Update the comment count for the post
+      dispatch({
+        type: POST_ACTIONS.UPDATE_POST,
+        payload: {
+          id: data.postId,
+          commentCount: data.commentCount
+        }
+      });
+    };
+
     // Register socket listeners
     socketService.on('newPost', handleNewPost);
     socketService.on('postUpdated', handlePostUpdated);
@@ -193,6 +216,8 @@ export const PostProvider = ({ children }) => {
     socketService.on('newPoll', handleNewPoll);
     socketService.on('pollUpdated', handlePollUpdated);
     socketService.on('pollDeleted', handlePollDeleted);
+    socketService.on('comment_added', handleCommentAdded);
+    socketService.on('comment_deleted', handleCommentDeleted);
 
     // Cleanup
     return () => {
@@ -203,6 +228,8 @@ export const PostProvider = ({ children }) => {
       socketService.off('newPoll', handleNewPoll);
       socketService.off('pollUpdated', handlePollUpdated);
       socketService.off('pollDeleted', handlePollDeleted);
+      socketService.off('comment_added', handleCommentAdded);
+      socketService.off('comment_deleted', handleCommentDeleted);
     };
   }, [user]);
 
@@ -220,6 +247,7 @@ export const PostProvider = ({ children }) => {
       const params = {
         ...state.filters,
         campusId: user?.campusId,
+        userId: user?.uid, // Add userId to get vote status
         limit: state.pagination.limit,
         offset: loadMore ? state.pagination.offset : 0
       };
@@ -430,6 +458,17 @@ export const PostProvider = ({ children }) => {
     }
   };
 
+  // Update comment count for a post (optimistic update)
+  const updateCommentCount = (postId, increment = 1) => {
+    dispatch({
+      type: POST_ACTIONS.UPDATE_POST,
+      payload: {
+        id: postId,
+        commentCount: (state.posts.find(p => p.id === postId)?.commentCount || 0) + increment
+      }
+    });
+  };
+
   const value = {
     // State
     posts: state.posts,
@@ -449,6 +488,7 @@ export const PostProvider = ({ children }) => {
     deletePost,
     editPost,
     updateFilters,
+    updateCommentCount,
     clearError,
     refreshPosts,
     loadMorePosts

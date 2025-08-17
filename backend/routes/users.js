@@ -2,6 +2,7 @@ const express = require('express');
 const { getFirestore, getAuth } = require('../config/firebase');
 const admin = require('firebase-admin');
 const geminiService = require('../services/geminiService');
+const { requireAuth } = require('../middleware/auth');
 const router = express.Router();
 
 // GET /api/users/check-username/:username - Check username availability
@@ -266,8 +267,13 @@ router.get('/:id', async (req, res) => {
     let reputation = 0;
     postsSnapshot.forEach(doc => {
       const post = doc.data();
-      reputation += (post.upvotes || 0) - (post.downvotes || 0);
+      // +1 for each upvote received, no penalty for downvotes (reputation only increases)
+      reputation += (post.upvotes || 0);
     });
+
+    // Add creation bonus: +5 for each active post and poll
+    const creationBonus = (postsSnapshot.size + pollsSnapshot.size) * 5;
+    reputation += creationBonus;
 
     const userProfile = {
       ...userData,
@@ -577,12 +583,24 @@ router.get('/profile/:id', async (req, res) => {
 
     const userData = userDoc.data();
     
+    // Helper function to check if user is a demo user
+    const isDemoUser = (userId, userData) => {
+      if (userId.startsWith('demo-') || userId.includes('demo')) return true;
+      if (userData && userData.email && userData.email.includes('demo-user-')) return true;
+      if (userData && userData.username && userData.username.startsWith('demo_')) return true;
+      if (userData && userData.displayName === 'Demo User') return true;
+      return false;
+    };
+    
+    const isDemo = isDemoUser(userId, userData);
+    
     console.log('👤 User data from database:', {
       uid: userId,
       studentId: userData.studentId,
       hasStudentId: !!userData.studentId,
       studentIdType: typeof userData.studentId,
-      allFields: Object.keys(userData)
+      allFields: Object.keys(userData),
+      isDemoUser: isDemo
     });
     
     // Get user's posts (simplified query to avoid index requirement)
@@ -670,7 +688,7 @@ router.get('/profile/:id', async (req, res) => {
       department: userData.department || '',
       year: userData.year || '',
       bio: userData.bio || '',
-      reputation: userData.reputation || 0,
+      reputation: isDemo ? 0 : (userData.reputation || 0), // Always 0 for demo users
       postCount: userData.postCount || totalPosts,
       joinedAt: userData.joinedAt?.toDate?.() || userData.joinedAt || userData.createdAt?.toDate?.() || userData.createdAt || new Date(),
       stats: {
@@ -975,6 +993,181 @@ router.put('/change-email', async (req, res) => {
       success: false,
       error: 'Failed to change email'
     });
+  }
+});
+
+// POST /api/users/recalculate-reputation - Admin route to recalculate all user reputations
+router.post('/recalculate-reputation', async (req, res) => {
+  try {
+    const db = getFirestore();
+    
+    console.log('🔄 Starting reputation recalculation for all users...');
+    
+    // Helper function to check if user is a demo user
+    const isDemoUser = (userId, userData) => {
+      if (userId.startsWith('demo-') || userId.includes('demo')) return true;
+      if (userData && userData.email && userData.email.includes('demo-user-')) return true;
+      if (userData && userData.username && userData.username.startsWith('demo_')) return true;
+      if (userData && userData.displayName === 'Demo User') return true;
+      return false;
+    };
+    
+    // Get all users
+    const usersSnapshot = await db.collection('users').get();
+    const users = [];
+    
+    usersSnapshot.forEach(doc => {
+      const userData = doc.data();
+      // Skip demo users entirely
+      if (!isDemoUser(doc.id, userData)) {
+        users.push({ id: doc.id, data: userData });
+      } else {
+        console.log(`🚫 Skipping demo user: ${doc.id}`);
+      }
+    });
+    
+    let updatedCount = 0;
+    
+    // Process each non-demo user
+    for (const user of users) {
+      try {
+        // Get all posts by this user
+        const postsSnapshot = await db.collection('posts')
+          .where('userId', '==', user.id)
+          .get();
+        
+        // Get all polls by this user
+        const pollsSnapshot = await db.collection('polls')
+          .where('userId', '==', user.id)
+          .get();
+        
+        let totalReputation = 0;
+        
+        // Calculate reputation from all their posts (current upvotes)
+        for (const postDoc of postsSnapshot.docs) {
+          const postData = postDoc.data();
+          const upvotes = postData.upvotes || 0;
+          
+          // Each upvote = +1 reputation
+          totalReputation += upvotes;
+        }
+        
+        // Add creation bonus: +5 for each post and poll
+        const creationBonus = (postsSnapshot.size + pollsSnapshot.size) * 5;
+        totalReputation += creationBonus;
+        
+        // Update user's reputation (only increase, never decrease from current)
+        const currentReputation = user.data.reputation || 0;
+        const newReputation = Math.max(currentReputation, totalReputation);
+        
+        if (newReputation !== currentReputation) {
+          await db.collection('users').doc(user.id).update({
+            reputation: newReputation,
+            lastActive: new Date()
+          });
+          
+          console.log(`📈 Updated ${user.data.displayName || user.data.email}: ${currentReputation} → ${newReputation} (${postsSnapshot.size} posts, ${pollsSnapshot.size} polls, creation bonus: +${creationBonus})`);
+          updatedCount++;
+        }
+        
+      } catch (error) {
+        console.error(`❌ Error processing user ${user.id}:`, error);
+      }
+    }
+    
+    console.log(`✅ Reputation recalculation complete. Updated ${updatedCount} users.`);
+    
+    res.json({
+      success: true,
+      message: `Reputation recalculated for ${users.length} users`,
+      updatedCount
+    });
+    
+  } catch (error) {
+    console.error('❌ Error recalculating reputation:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to recalculate reputation'
+    });
+  }
+});
+
+// Delete user account
+router.delete('/delete-account', requireAuth, async (req, res) => {
+  try {
+    const userId = req.user.uid;
+    
+    // Use a batch to delete all user data atomically
+    const batch = db.batch();
+    
+    // Delete user's posts
+    const postsSnapshot = await db.collection('posts')
+      .where('authorId', '==', userId)
+      .get();
+    
+    postsSnapshot.docs.forEach(doc => {
+      batch.delete(doc.ref);
+    });
+    
+    // Delete user's polls
+    const pollsSnapshot = await db.collection('polls')
+      .where('authorId', '==', userId)
+      .get();
+    
+    pollsSnapshot.docs.forEach(doc => {
+      batch.delete(doc.ref);
+    });
+    
+    // Delete user's comments on posts
+    const postCommentsSnapshot = await db.collectionGroup('comments')
+      .where('authorId', '==', userId)
+      .get();
+    
+    postCommentsSnapshot.docs.forEach(doc => {
+      batch.delete(doc.ref);
+    });
+    
+    // Delete user's votes on polls
+    const pollVotesSnapshot = await db.collectionGroup('votes')
+      .where('userId', '==', userId)
+      .get();
+    
+    pollVotesSnapshot.docs.forEach(doc => {
+      batch.delete(doc.ref);
+    });
+    
+    // Remove user's likes from all posts and polls
+    const allPostsSnapshot = await db.collection('posts').get();
+    allPostsSnapshot.docs.forEach(doc => {
+      const data = doc.data();
+      if (data.likes && data.likes.includes(userId)) {
+        batch.update(doc.ref, {
+          likes: data.likes.filter(id => id !== userId)
+        });
+      }
+    });
+    
+    const allPollsSnapshot = await db.collection('polls').get();
+    allPollsSnapshot.docs.forEach(doc => {
+      const data = doc.data();
+      if (data.likes && data.likes.includes(userId)) {
+        batch.update(doc.ref, {
+          likes: data.likes.filter(id => id !== userId)
+        });
+      }
+    });
+    
+    // Delete user document
+    const userDoc = db.collection('users').doc(userId);
+    batch.delete(userDoc);
+    
+    // Commit all deletions
+    await batch.commit();
+    
+    res.json({ message: 'Account deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting account:', error);
+    res.status(500).json({ error: 'Failed to delete account' });
   }
 });
 
