@@ -1,18 +1,32 @@
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
+// Request queue to limit concurrent requests
+let pendingRequests = 0;
+const MAX_CONCURRENT_REQUESTS = 5;
+
 // Create axios instance with default config
 const api = axios.create({
   baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
-  timeout: 15000,
+  timeout: 8000, // Reduced from 15000 to 8000ms
   headers: {
     'Content-Type': 'application/json',
   },
+  maxConcurrentRequests: 10, // Limit concurrent requests
+  maxRedirects: 3,
 });
 
 // Request interceptor
 api.interceptors.request.use(
   (config) => {
+    // Check if too many concurrent requests
+    if (pendingRequests >= MAX_CONCURRENT_REQUESTS) {
+      return Promise.reject(new Error('Too many concurrent requests'));
+    }
+    
+    pendingRequests++;
+    console.log(`🔄 API Request: ${config.method?.toUpperCase()} ${config.url} (${pendingRequests} pending)`);
+    
     // Add auth token if available
     const token = localStorage.getItem('authToken');
     if (token) {
@@ -35,13 +49,18 @@ api.interceptors.request.use(
 // Response interceptor
 api.interceptors.response.use(
   (response) => {
+    pendingRequests = Math.max(0, pendingRequests - 1);
+    console.log(`✅ API Success: ${response.config.method?.toUpperCase()} ${response.config.url} (${pendingRequests} pending)`);
     return response;
   },
   (error) => {
+    pendingRequests = Math.max(0, pendingRequests - 1);
+    console.log(`❌ API Error: ${error.config?.method?.toUpperCase()} ${error.config?.url} (${pendingRequests} pending)`);
+    
     const message = error.response?.data?.error || error.message || 'An error occurred';
     
-    // Don't show toast for auth errors (handled separately)
-    if (error.response?.status !== 401 && error.response?.status !== 403) {
+    // Don't show toast for auth errors (handled separately) or concurrent request errors
+    if (error.response?.status !== 401 && error.response?.status !== 403 && !message.includes('concurrent')) {
       toast.error(message);
     }
     
@@ -118,6 +137,16 @@ export const apiService = {
   votePoll: (id, voteData) => api.post(`/polls/${id}/vote`, voteData),
   closePoll: (id, userId) => api.put(`/polls/${id}/close`, { userId }),
   deletePoll: (id, userId) => api.delete(`/polls/${id}`, { data: { userId } }),
+
+  // Events
+  getEvents: (params = {}) => api.get('/events', { params }),
+  createEvent: (eventData) => {
+    return api.post('/events', eventData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
 
   // Users
   register: (userData) => api.post('/users/register', userData),

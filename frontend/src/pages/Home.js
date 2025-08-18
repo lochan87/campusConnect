@@ -2,25 +2,27 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { usePosts } from '../context/PostContext';
 import { useAuth } from '../context/AuthContext';
-import { FiPlus, FiTrendingUp, FiRefreshCw } from 'react-icons/fi';
+import { FiPlus, FiRefreshCw } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import PostCard from '../components/posts/PostCard';
 import PollCard from '../components/polls/PollCard';
+import EventCard from '../components/events/EventCard';
 import CommentModal from '../components/posts/CommentModal';
 import LoadingSkeleton from '../components/ui/LoadingSkeleton';
 import toast from 'react-hot-toast';
 
 const Home = () => {
-  const { posts, polls, loading, fetchPosts, fetchPolls, refreshPosts, voteOnPost, voteOnPoll, deletePost, updateCommentCount } = usePosts();
+  const { posts, polls, events, loading, fetchPosts, fetchPolls, fetchEvents, refreshPosts, voteOnPost, voteOnPoll, deletePost, updateCommentCount } = usePosts();
   const { user } = useAuth();
   const [commentModal, setCommentModal] = useState({ isOpen: false, post: null });
 
   useEffect(() => {
-    if (user) {
+    if (user && !loading) {
       fetchPosts();
       fetchPolls();
+      fetchEvents();
     }
-  }, [user]);
+  }, [user?.uid]); // Only depend on user ID, not the fetch functions
 
   const handleRefresh = () => {
     refreshPosts();
@@ -85,10 +87,14 @@ const Home = () => {
     }
   };
 
-  // Filter out expired polls
+  // Filter out expired polls and upcoming events
   const activePolls = polls.filter(poll => {
     if (!poll.expiresAt) return true; // No expiration date means active
     return new Date() <= new Date(poll.expiresAt);
+  });
+
+  const upcomingEvents = events.filter(event => {
+    return new Date(event.date) >= new Date(); // Future events
   });
 
   return (
@@ -151,11 +157,11 @@ const Home = () => {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-              <FiTrendingUp className="w-5 h-5 text-purple-600" />
+              <span className="text-purple-600 font-semibold">📅</span>
             </div>
             <div>
-              <p className="text-2xl font-bold text-gray-900">{user?.reputation || 0}</p>
-              <p className="text-sm text-gray-600">Your Reputation</p>
+              <p className="text-2xl font-bold text-gray-900">{upcomingEvents.length}</p>
+              <p className="text-sm text-gray-600">Upcoming Events</p>
             </div>
           </div>
         </div>
@@ -242,6 +248,30 @@ const Home = () => {
             </div>
           </div>
 
+          {/* Upcoming Events */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="p-4 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">Upcoming Events</h3>
+            </div>
+            <div className="p-4">
+              {upcomingEvents.length === 0 ? (
+                <div className="text-center py-6">
+                  <span className="text-2xl mb-2 block">📅</span>
+                  <p className="text-gray-600 text-sm">No upcoming events</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {upcomingEvents.slice(0, 2).map((event) => (
+                    <EventCard
+                      key={event.id}
+                      event={event}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Quick Actions */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200">
             <div className="p-4 border-b border-gray-200">
@@ -259,6 +289,12 @@ const Home = () => {
                 className="block w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
               >
                 📊 Create Poll
+              </Link>
+              <Link
+                to="/create-event"
+                className="block w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+              >
+                📅 Create Event
               </Link>
               <Link
                 to="/leaderboard"

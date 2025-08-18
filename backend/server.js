@@ -9,6 +9,7 @@ require('dotenv').config();
 const postRoutes = require('./routes/posts');
 const userRoutes = require('./routes/users');
 const pollRoutes = require('./routes/polls');
+const eventRoutes = require('./routes/events');
 const leaderboardRoutes = require('./routes/leaderboard');
 const { initializeFirebase } = require('./config/firebase');
 const { setupWebSocket } = require('./services/websocket');
@@ -64,6 +65,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/api/posts', postRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/polls', pollRoutes);
+app.use('/api/events', eventRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 
 // Health check

@@ -28,13 +28,13 @@ const Sidebar = ({ onClose }) => {
     { name: 'Home', path: '/', icon: FiHome },
     { name: 'Create Post', path: '/create-post', icon: FiPlus },
     { name: 'Create Poll', path: '/create-poll', icon: FiBarChart2 },
+    { name: 'Create Event', path: '/create-event', icon: FiCalendar },
     { name: 'Leaderboard', path: '/leaderboard', icon: FiTrendingUp },
     { name: 'Profile', path: '/profile', icon: FiUsers }
   ];
 
   const categories = [
     { id: 'all', name: 'All Posts', icon: FiHome, color: 'text-gray-600' },
-    { id: 'events', name: 'Events', icon: FiCalendar, color: 'text-blue-600' },
     { id: 'lost_found', name: 'Lost & Found', icon: FiSearch, color: 'text-yellow-600' },
     { id: 'food', name: 'Food', icon: FiPackage, color: 'text-green-600' },
     { id: 'memes', name: 'Memes', icon: FiSmile, color: 'text-purple-600' },

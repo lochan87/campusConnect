@@ -139,16 +139,22 @@ const CreatePoll = () => {
             <label htmlFor="question" className="block text-sm font-medium text-gray-700 mb-2">
               Poll Question *
             </label>
-            <input
-              type="text"
-              id="question"
-              name="question"
-              value={formData.question}
-              onChange={handleInputChange}
-              placeholder="What would you like to ask?"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-              required
-            />
+            <div className="relative">
+              <input
+                type="text"
+                id="question"
+                name="question"
+                value={formData.question}
+                onChange={handleInputChange}
+                placeholder="What would you like to ask?"
+                className="w-full px-3 py-2 pr-16 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                maxLength={200}
+                required
+              />
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-gray-400">
+                {formData.question.length}/200
+              </div>
+            </div>
           </div>
 
           {/* Description */}
@@ -156,15 +162,21 @@ const CreatePoll = () => {
             <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
               Description (Optional)
             </label>
-            <textarea
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleInputChange}
-              placeholder="Provide more context for your poll..."
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-            />
+            <div className="relative">
+              <textarea
+                id="description"
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
+                placeholder="Provide more context for your poll..."
+                rows={3}
+                className="w-full px-3 py-2 pr-16 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 resize-none"
+                maxLength={500}
+              />
+              <div className="absolute right-3 bottom-2 text-xs text-gray-400">
+                {formData.description.length}/500
+              </div>
+            </div>
           </div>
 
           {/* Options */}
@@ -175,15 +187,19 @@ const CreatePoll = () => {
             <div className="space-y-3">
               {options.map((option, index) => (
                 <div key={index} className="flex items-center space-x-2">
-                  <div className="flex-1">
+                  <div className="flex-1 relative">
                     <input
                       type="text"
                       value={option}
                       onChange={(e) => handleOptionChange(index, e.target.value)}
                       placeholder={`Option ${index + 1}`}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                      className="w-full px-3 py-2 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                      maxLength={100}
                       required={index < 2}
                     />
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-gray-400">
+                      {option.length}/100
+                    </div>
                   </div>
                   {options.length > 2 && (
                     <button

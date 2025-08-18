@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 const initialState = {
   posts: [],
   polls: [],
+  events: [],
   loading: false,
   error: null,
   hasMore: true,
@@ -37,6 +38,10 @@ const POST_ACTIONS = {
   ADD_POLL: 'ADD_POLL',
   UPDATE_POLL: 'UPDATE_POLL',
   DELETE_POLL: 'DELETE_POLL',
+  SET_EVENTS: 'SET_EVENTS',
+  ADD_EVENT: 'ADD_EVENT',
+  UPDATE_EVENT: 'UPDATE_EVENT',
+  DELETE_EVENT: 'DELETE_EVENT',
   SET_FILTERS: 'SET_FILTERS',
   SET_HAS_MORE: 'SET_HAS_MORE',
   RESET_PAGINATION: 'RESET_PAGINATION'
@@ -115,6 +120,31 @@ const postReducer = (state, action) => {
       return {
         ...state,
         polls: state.polls.filter(poll => poll.id !== action.payload)
+      };
+
+    case POST_ACTIONS.SET_EVENTS:
+      return { ...state, events: action.payload, loading: false };
+
+    case POST_ACTIONS.ADD_EVENT:
+      return { 
+        ...state, 
+        events: [action.payload, ...state.events] 
+      };
+
+    case POST_ACTIONS.UPDATE_EVENT:
+      return {
+        ...state,
+        events: state.events.map(event =>
+          event.id === action.payload.id 
+            ? { ...event, ...action.payload } 
+            : event
+        )
+      };
+
+    case POST_ACTIONS.DELETE_EVENT:
+      return {
+        ...state,
+        events: state.events.filter(event => event.id !== action.payload)
       };
 
     case POST_ACTIONS.SET_FILTERS:
@@ -282,7 +312,7 @@ export const PostProvider = ({ children }) => {
   }, [state.filters, state.pagination.limit, state.pagination.offset, user]);
 
   // Fetch polls
-  const fetchPolls = async () => {
+  const fetchPolls = useCallback(async () => {
     try {
       const params = {
         campusId: user?.campusId,
@@ -299,7 +329,27 @@ export const PostProvider = ({ children }) => {
     } catch (error) {
       console.error('Error fetching polls:', error);
     }
-  };
+  }, [user?.campusId, user?.uid]);
+
+  // Fetch events
+  const fetchEvents = useCallback(async () => {
+    try {
+      const params = {
+        campusId: user?.campusId,
+        limit: 10,
+        sortBy: 'date',
+        order: 'asc' // Show upcoming events first
+      };
+
+      const response = await apiService.getEvents(params);
+      
+      if (response.data.success) {
+        dispatch({ type: POST_ACTIONS.SET_EVENTS, payload: response.data.events });
+      }
+    } catch (error) {
+      console.error('Error fetching events:', error);
+    }
+  }, [user?.campusId]);
 
   // Create post
   const createPost = async (postData) => {
@@ -473,6 +523,7 @@ export const PostProvider = ({ children }) => {
     // State
     posts: state.posts,
     polls: state.polls,
+    events: state.events,
     loading: state.loading,
     error: state.error,
     hasMore: state.hasMore,
@@ -481,6 +532,7 @@ export const PostProvider = ({ children }) => {
     // Actions
     fetchPosts,
     fetchPolls,
+    fetchEvents,
     createPost,
     createPoll,
     voteOnPost,

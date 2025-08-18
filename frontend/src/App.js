@@ -11,6 +11,7 @@ import Register from './pages/Register';
 import Profile from './pages/Profile';
 import CreatePost from './pages/CreatePost';
 import CreatePoll from './pages/CreatePoll';
+import CreateEvent from './pages/CreateEvent';
 import PostDetail from './pages/PostDetail';
 import Leaderboard from './pages/Leaderboard';
 import Settings from './pages/Settings';
@@ -136,6 +137,7 @@ const AppContent = () => {
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/create-post" element={<CreatePost />} />
                 <Route path="/create-poll" element={<CreatePoll />} />
+                <Route path="/create-event" element={<CreateEvent />} />
                 <Route path="/post/:postId" element={<PostDetail />} />
                 <Route path="/leaderboard" element={<Leaderboard />} />
                 <Route path="/settings" element={<Settings />} />
