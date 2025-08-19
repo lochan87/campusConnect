@@ -113,6 +113,12 @@ class SocketService {
       this.emit('eventUpdated', eventData);
     });
 
+    // User updates (reputation, postCount, etc.)
+    this.socket.on('user_updated', (userData) => {
+      console.log('👤 User updated:', userData);
+      this.emit('userUpdated', userData);
+    });
+
     // Meme reactions
     this.socket.on('meme_updated', (memeData) => {
       console.log('😂 Meme updated:', memeData);

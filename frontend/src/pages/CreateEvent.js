@@ -17,7 +17,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 const CreateEvent = () => {
-  const { user } = useAuth();
+  const { user, refreshUserData } = useAuth();
   const { refreshPosts } = usePosts();
   const navigate = useNavigate();
   
@@ -460,6 +460,12 @@ const CreateEvent = () => {
 
       if (response.data.success) {
         toast.success('Event created successfully!');
+        
+        // Refresh user data to get updated reputation and postCount
+        if (refreshUserData) {
+          await refreshUserData();
+        }
+        
         refreshPosts();
         navigate('/');
       } else {

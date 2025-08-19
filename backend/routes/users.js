@@ -252,34 +252,14 @@ router.get('/:id', async (req, res) => {
 
     const userData = userDoc.data();
 
-    // Get user's post count and reputation
-    const postsSnapshot = await db.collection('posts')
-      .where('userId', '==', id)
-      .where('isActive', '==', true)
-      .get();
-
-    const pollsSnapshot = await db.collection('polls')
-      .where('userId', '==', id)
-      .where('isActive', '==', true)
-      .get();
-
-    // Calculate reputation based on post upvotes
-    let reputation = 0;
-    postsSnapshot.forEach(doc => {
-      const post = doc.data();
-      // +1 for each upvote received, no penalty for downvotes (reputation only increases)
-      reputation += (post.upvotes || 0);
-    });
-
-    // Add creation bonus: +5 for each active post and poll
-    const creationBonus = (postsSnapshot.size + pollsSnapshot.size) * 5;
-    reputation += creationBonus;
-
+    // Use stored reputation and postCount from user document
+    // These values are updated during content creation
     const userProfile = {
       ...userData,
-      postCount: postsSnapshot.size,
-      pollCount: pollsSnapshot.size,
-      reputation
+      postCount: userData.postCount || 0,
+      pollCount: userData.pollCount || 0,
+      eventCount: userData.eventCount || 0,
+      reputation: userData.reputation || 0
     };
 
     res.json({

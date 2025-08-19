@@ -14,7 +14,7 @@ import {
 } from 'react-icons/fi';
 
 const CreatePoll = () => {
-  const { user } = useAuth();
+  const { user, refreshUserData } = useAuth();
   const { refreshPosts } = usePosts();
   const navigate = useNavigate();
   
@@ -102,6 +102,12 @@ const CreatePoll = () => {
       
       if (response.data.success) {
         toast.success('Poll created successfully!');
+        
+        // Refresh user data to get updated reputation and postCount
+        if (refreshUserData) {
+          await refreshUserData();
+        }
+        
         refreshPosts();
         navigate('/');
       } else {

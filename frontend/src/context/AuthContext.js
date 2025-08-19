@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { authService } from '../services/auth';
+import { socketService } from '../services/socket';
 
 // Initial state
 const initialState = {
@@ -115,6 +116,33 @@ export const AuthProvider = ({ children }) => {
     initializeAuth();
   }, []);
 
+  // Listen for real-time user updates
+  useEffect(() => {
+    if (state.user && socketService) {
+      const handleUserUpdate = (userData) => {
+        // Only update if this is the current user
+        if (userData.userId === state.user.uid) {
+          dispatch({
+            type: AUTH_ACTIONS.UPDATE_USER,
+            payload: {
+              reputation: userData.reputation,
+              postCount: userData.postCount,
+              pollCount: userData.pollCount,
+              eventCount: userData.eventCount
+            }
+          });
+          console.log('👤 User stats updated in real-time:', userData);
+        }
+      };
+
+      socketService.on('userUpdated', handleUserUpdate);
+
+      return () => {
+        socketService.off('userUpdated', handleUserUpdate);
+      };
+    }
+  }, [state.user]);
+
   // Login function
   const login = async (credentials) => {
     dispatch({ type: AUTH_ACTIONS.LOGIN_START });
@@ -217,6 +245,27 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Refresh user data from database
+  const refreshUserData = async () => {
+    try {
+      if (!state.user) {
+        return;
+      }
+
+      const refreshedUser = await authService.refreshUser();
+      
+      if (refreshedUser) {
+        dispatch({
+          type: AUTH_ACTIONS.UPDATE_USER,
+          payload: refreshedUser
+        });
+        return { success: true, user: refreshedUser };
+      }
+    } catch (error) {
+      console.error('Error refreshing user data:', error);
+    }
+  };
+
   // Clear error
   const clearError = () => {
     dispatch({ type: AUTH_ACTIONS.CLEAR_ERROR });
@@ -240,6 +289,7 @@ export const AuthProvider = ({ children }) => {
     demoLogin,
     logout,
     updateUser,
+    refreshUserData,
     clearError,
     canPerformAction
   };

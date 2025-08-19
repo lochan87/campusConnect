@@ -14,7 +14,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 const CreatePost = () => {
-  const { user } = useAuth();
+  const { user, refreshUserData } = useAuth();
   const { refreshPosts } = usePosts();
 
   // Location options
@@ -143,6 +143,11 @@ const CreatePost = () => {
       
       if (response.data.success) {
         toast.success('Post created successfully!');
+        
+        // Refresh user data to get updated reputation and postCount
+        if (refreshUserData) {
+          await refreshUserData();
+        }
         
         // Reset form
         setFormData({

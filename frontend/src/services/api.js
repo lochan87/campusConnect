@@ -168,6 +168,9 @@ export const apiService = {
   
   // Leaderboard
   getLeaderboardData: () => api.get('/leaderboard'),
+  
+  // Recalculate user reputation and post count
+  recalculateReputation: () => api.post('/users/recalculate-reputation'),
 
   // Comments (if implemented)
   getComments: (postId) => api.get(`/posts/${postId}/comments`),

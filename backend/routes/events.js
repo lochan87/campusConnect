@@ -187,6 +187,11 @@ router.post('/', upload.single('poster'), async (req, res) => {
       startTime,
       endTime,
       location,
+      eventType,
+      targetAudience,
+      userRole,
+      hostingDepartment,
+      stream,
       campusId,
       userId,
       isAnonymous
@@ -253,6 +258,11 @@ router.post('/', upload.single('poster'), async (req, res) => {
       startTime,
       endTime,
       location,
+      eventType,
+      targetAudience,
+      userRole,
+      hostingDepartment,
+      stream,
       campusId,
       userId: isAnonymous === 'true' ? null : userId,
       poster: posterUrl,
@@ -261,6 +271,54 @@ router.post('/', upload.single('poster'), async (req, res) => {
     };
 
     const docRef = await db.collection('events').add(eventData);
+
+    // Award reputation for event creation based on user role
+    if (eventData.userId) {
+      try {
+        // Check if user is a demo user
+        const isDemoUser = (userId) => {
+          return userId.startsWith('demo-') || userId.includes('demo');
+        };
+        
+        if (!isDemoUser(eventData.userId)) {
+          const userRef = db.collection('users').doc(eventData.userId);
+          const userDoc = await userRef.get();
+          
+          if (userDoc.exists) {
+            const currentReputation = userDoc.data().reputation || 0;
+            const currentPostCount = userDoc.data().postCount || 0;
+            
+            // Determine reputation bonus based on role (default to organizer if not specified)
+            const userRole = req.body.userRole || 'organizer';
+            const reputationBonus = userRole === 'organizer' ? 10 : 5; // organizer: +10, volunteer: +5
+            const currentEventCount = userDoc.data().eventCount || 0;
+            
+            await userRef.update({
+              reputation: currentReputation + reputationBonus,
+              postCount: currentPostCount + 1,
+              eventCount: currentEventCount + 1,
+              lastActive: new Date()
+            });
+            console.log(`📈 Event creation: User ${eventData.userId} (${userRole}) earned +${reputationBonus} reputation (${currentReputation} → ${currentReputation + reputationBonus}), postCount updated (${currentPostCount} → ${currentPostCount + 1}), eventCount updated (${currentEventCount} → ${currentEventCount + 1})`);
+            
+            // Emit user update via WebSocket
+            if (req.app.get('io')) {
+              req.app.get('io').emit('user_updated', {
+                userId: eventData.userId,
+                reputation: currentReputation + reputationBonus,
+                postCount: currentPostCount + 1,
+                eventCount: currentEventCount + 1
+              });
+            }
+          }
+        } else {
+          console.log(`🚫 Demo user ${eventData.userId} - no reputation awarded for event creation`);
+        }
+      } catch (reputationError) {
+        console.error('Error updating reputation for event creation:', reputationError);
+        // Don't fail the event creation if reputation update fails
+      }
+    }
 
     // Get the created event with creator info
     let creator = null;

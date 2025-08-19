@@ -159,11 +159,25 @@ router.post('/', validatePoll, async (req, res) => {
           
           if (userDoc.exists) {
             const currentReputation = userDoc.data().reputation || 0;
+            const currentPostCount = userDoc.data().postCount || 0;
+            const currentPollCount = userDoc.data().pollCount || 0;
             await userRef.update({
               reputation: currentReputation + 5,
+              postCount: currentPostCount + 1,
+              pollCount: currentPollCount + 1,
               lastActive: new Date()
             });
-            console.log(`📈 Poll creation: User ${userId} earned +5 reputation (${currentReputation} → ${currentReputation + 5})`);
+            console.log(`📈 Poll creation: User ${userId} earned +5 reputation (${currentReputation} → ${currentReputation + 5}), postCount updated (${currentPostCount} → ${currentPostCount + 1}), pollCount updated (${currentPollCount} → ${currentPollCount + 1})`);
+            
+            // Emit user update via WebSocket
+            if (req.app.get('io')) {
+              req.app.get('io').emit('user_updated', {
+                userId,
+                reputation: currentReputation + 5,
+                postCount: currentPostCount + 1,
+                pollCount: currentPollCount + 1
+              });
+            }
           }
         } else {
           console.log(`🚫 Demo user ${userId} - no reputation awarded for poll creation`);
