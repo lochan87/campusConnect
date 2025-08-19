@@ -273,51 +273,21 @@ const Leaderboard = () => {
         )}
       </div>
 
-      {/* Refresh Button and Recalculate */}
+      {/* Refresh Button */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5 }}
-        className="mt-8 text-center space-y-4"
+        className="mt-8 text-center"
       >
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <button
-            onClick={fetchLeaderboard}
-            disabled={loading}
-            className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-          >
-            <span>Refresh Leaderboard</span>
-            <ChevronRightIcon className="w-4 h-4" />
-          </button>
-          
-          <button
-            onClick={async () => {
-              try {
-                setLoading(true);
-                const response = await apiService.recalculateReputation();
-                if (response.data.success) {
-                  toast.success('User statistics recalculated successfully!');
-                  await fetchLeaderboard(); // Refresh after recalculation
-                } else {
-                  toast.error('Failed to recalculate statistics');
-                }
-              } catch (error) {
-                console.error('Error recalculating statistics:', error);
-                toast.error('Failed to recalculate statistics');
-              } finally {
-                setLoading(false);
-              }
-            }}
-            disabled={loading}
-            className="inline-flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-          >
-            <span>Fix Database</span>
-            <TrophyIcon className="w-4 h-4" />
-          </button>
-        </div>
-        <p className="text-xs text-gray-500">
-          Use "Fix Database" if your reputation/posts aren't showing correctly
-        </p>
+        <button
+          onClick={fetchLeaderboard}
+          disabled={loading}
+          className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+        >
+          <span>Refresh Leaderboard</span>
+          <ChevronRightIcon className="w-4 h-4" />
+        </button>
       </motion.div>
     </motion.div>
   );

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { usePosts } from '../context/PostContext';
 import { useAuth } from '../context/AuthContext';
-import { FiPlus, FiRefreshCw } from 'react-icons/fi';
+import { FiPlus, FiRefreshCw, FiBarChart2, FiCalendar, FiStar } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import PostCard from '../components/posts/PostCard';
 import PollCard from '../components/polls/PollCard';
@@ -132,20 +132,8 @@ const Home = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-              <span className="text-blue-600 font-semibold">📝</span>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900">{posts.length}</p>
-              <p className="text-sm text-gray-600">Posts Today</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-          <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-              <span className="text-green-600 font-semibold">📊</span>
+              <FiBarChart2 className="w-5 h-5 text-green-600" />
             </div>
             <div>
               <p className="text-2xl font-bold text-gray-900">{activePolls.length}</p>
@@ -157,11 +145,23 @@ const Home = () => {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-              <span className="text-purple-600 font-semibold">📅</span>
+              <FiCalendar className="w-5 h-5 text-purple-600" />
             </div>
             <div>
               <p className="text-2xl font-bold text-gray-900">{upcomingEvents.length}</p>
               <p className="text-sm text-gray-600">Upcoming Events</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+              <FiStar className="w-5 h-5 text-amber-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-gray-900">{user?.reputation || 0}</p>
+              <p className="text-sm text-gray-600">Reputation</p>
             </div>
           </div>
         </div>
