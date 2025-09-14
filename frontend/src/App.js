@@ -8,6 +8,7 @@ import Sidebar from './components/layout/Sidebar';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
 import Profile from './pages/Profile';
 import CreatePost from './pages/CreatePost';
 import CreatePoll from './pages/CreatePoll';
@@ -61,7 +62,25 @@ const AppContent = () => {
     if (user) {
       // Initialize socket connection when user logs in
       socketService.connect();
-      socketService.joinCampus(user.campusId);
+      
+      // Join campus room after connection is established
+      const handleConnectionEstablished = (connected) => {
+        if (connected && user.campusId) {
+          socketService.joinCampus(user.campusId);
+        }
+      };
+      
+      // Listen for connection status changes
+      socketService.on('connectionStatusChanged', handleConnectionEstablished);
+      
+      // If already connected, join immediately
+      if (socketService.isSocketConnected() && user.campusId) {
+        socketService.joinCampus(user.campusId);
+      }
+      
+      return () => {
+        socketService.off('connectionStatusChanged', handleConnectionEstablished);
+      };
     }
 
     return () => {
@@ -88,6 +107,7 @@ const AppContent = () => {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </div>
@@ -138,6 +158,7 @@ const AppContent = () => {
                 <Route path="/create-post" element={<CreatePost />} />
                 <Route path="/create-poll" element={<CreatePoll />} />
                 <Route path="/create-event" element={<CreateEvent />} />
+                <Route path="/events/edit/:eventId" element={<CreateEvent />} />
                 <Route path="/post/:postId" element={<PostDetail />} />
                 <Route path="/leaderboard" element={<Leaderboard />} />
                 <Route path="/settings" element={<Settings />} />

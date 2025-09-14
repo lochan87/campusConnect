@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { usePosts } from '../context/PostContext';
 import { apiService } from '../services/api';
@@ -18,8 +18,10 @@ import {
 
 const CreateEvent = () => {
   const { user, refreshUserData } = useAuth();
-  const { refreshPosts } = usePosts();
+  const { refreshPosts, editEvent } = usePosts();
   const navigate = useNavigate();
+  const { eventId } = useParams(); // For edit mode
+  const isEditMode = !!eventId;
   
   // Location options
   const locationOptions = [
@@ -329,6 +331,49 @@ const CreateEvent = () => {
   const [poster, setPoster] = useState(null);
   const [posterPreview, setPosterPreview] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [loadingEvent, setLoadingEvent] = useState(false);
+
+  // Load event data in edit mode
+  useEffect(() => {
+    const loadEventData = async () => {
+      if (isEditMode && eventId) {
+        setLoadingEvent(true);
+        try {
+          const response = await apiService.getEvent(eventId);
+          const event = response.data.event;
+          
+          // Populate form data
+          setFormData({
+            title: event.title || '',
+            description: event.description || '',
+            location: event.location || '',
+            startDate: event.date || '',
+            endDate: event.endDate || event.date || '', // Use date if endDate doesn't exist
+            startTime: event.startTime || '',
+            endTime: event.endTime || '',
+            eventType: event.eventType || '',
+            targetAudience: event.targetAudience || '',
+            userRole: event.userRole || '',
+            hostingDepartment: event.hostingDepartment || '',
+            stream: event.stream || ''
+          });
+          
+          // Set poster preview if exists
+          if (event.posterData || event.poster) {
+            setPosterPreview(event.posterData || event.poster);
+          }
+        } catch (error) {
+          console.error('Error loading event:', error);
+          toast.error('Failed to load event data');
+          navigate('/home');
+        } finally {
+          setLoadingEvent(false);
+        }
+      }
+    };
+
+    loadEventData();
+  }, [isEditMode, eventId, navigate]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -389,6 +434,12 @@ const CreateEvent = () => {
       return false;
     }
 
+    // Since backend requires endTime, we need to ensure it's provided
+    if (!formData.endTime) {
+      toast.error('End time is required');
+      return false;
+    }
+
     if (!formData.eventType) {
       toast.error('Event type is required');
       return false;
@@ -445,8 +496,7 @@ const CreateEvent = () => {
       eventData.append('title', formData.title);
       eventData.append('description', formData.description);
       eventData.append('location', formData.location);
-      eventData.append('startDate', formData.startDate);
-      eventData.append('endDate', formData.endDate || formData.startDate);
+      eventData.append('date', formData.startDate); // Backend expects 'date', not 'startDate'
       eventData.append('startTime', formData.startTime);
       eventData.append('endTime', formData.endTime || '23:59');
       eventData.append('eventType', formData.eventType);
@@ -454,26 +504,39 @@ const CreateEvent = () => {
       eventData.append('userRole', formData.userRole);
       eventData.append('hostingDepartment', formData.hostingDepartment);
       eventData.append('stream', formData.stream);
-      eventData.append('poster', poster);
-
-      const response = await apiService.createEvent(eventData);
-
-      if (response.data.success) {
-        toast.success('Event created successfully!');
-        
-        // Refresh user data to get updated reputation and postCount
-        if (refreshUserData) {
-          await refreshUserData();
-        }
-        
-        refreshPosts();
-        navigate('/');
-      } else {
-        toast.error(response.data.error || 'Failed to create event');
+      eventData.append('campusId', user?.campusId || 'demo-campus'); // Add missing campusId
+      eventData.append('userId', user?.uid || user?.id);
+      eventData.append('isAnonymous', 'false'); // Events are typically not anonymous
+      
+      // Only append poster if one is selected
+      if (poster) {
+        eventData.append('poster', poster);
       }
+
+      let response;
+      if (isEditMode) {
+        response = await editEvent(eventId, eventData);
+        toast.success('Event updated successfully!');
+      } else {
+        response = await apiService.createEvent(eventData);
+        if (response.data.success) {
+          toast.success('Event created successfully!');
+          
+          // Refresh user data to get updated reputation and postCount
+          if (refreshUserData) {
+            await refreshUserData();
+          }
+        } else {
+          toast.error(response.data.error || 'Failed to create event');
+          return;
+        }
+      }
+      
+      refreshPosts();
+      navigate('/');
     } catch (error) {
-      console.error('Error creating event:', error);
-      toast.error(error.response?.data?.error || 'Failed to create event');
+      console.error(`Error ${isEditMode ? 'updating' : 'creating'} event:`, error);
+      toast.error(error.response?.data?.error || `Failed to ${isEditMode ? 'update' : 'create'} event`);
     } finally {
       setLoading(false);
     }
@@ -488,9 +551,18 @@ const CreateEvent = () => {
       >
         <div className="flex items-center gap-3 mb-6">
           <CalendarIcon className="h-6 w-6 text-blue-600" />
-          <h1 className="text-2xl font-bold text-gray-900">Create New Event</h1>
+          <h1 className="text-2xl font-bold text-gray-900">
+            {isEditMode ? 'Edit Event' : 'Create New Event'}
+          </h1>
         </div>
-        <form onSubmit={handleSubmit} className="space-y-6">
+
+        {loadingEvent ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <span className="ml-3 text-gray-600">Loading event data...</span>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-6">
           {/* Event Title */}
           <div>
             <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
@@ -614,7 +686,7 @@ const CreateEvent = () => {
             <div>
               <label htmlFor="endTime" className="block text-sm font-medium text-gray-700 mb-2">
                 <ClockIcon className="h-4 w-4 inline mr-1" />
-                End Time (Optional)
+                End Time <span className="text-red-500">*</span>
               </label>
               <input
                 type="time"
@@ -623,6 +695,7 @@ const CreateEvent = () => {
                 value={formData.endTime}
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                required
               />
             </div>
           </div>
@@ -815,12 +888,13 @@ const CreateEvent = () => {
               ) : (
                 <div className="flex items-center justify-center gap-2">
                   <PlusIcon className="h-4 w-4" />
-                  Create Event
+                  {isEditMode ? 'Update Event' : 'Create Event'}
                 </div>
               )}
             </button>
           </div>
         </form>
+      )}
       </motion.div>
     </div>
   );

@@ -10,6 +10,8 @@ const initialState = {
   polls: [],
   events: [],
   loading: false,
+  pollsLoading: false,
+  eventsLoading: false,
   error: null,
   hasMore: true,
   filters: {
@@ -27,6 +29,8 @@ const initialState = {
 // Action types
 const POST_ACTIONS = {
   SET_LOADING: 'SET_LOADING',
+  SET_POLLS_LOADING: 'SET_POLLS_LOADING',
+  SET_EVENTS_LOADING: 'SET_EVENTS_LOADING',
   SET_ERROR: 'SET_ERROR',
   CLEAR_ERROR: 'CLEAR_ERROR',
   SET_POSTS: 'SET_POSTS',
@@ -52,6 +56,12 @@ const postReducer = (state, action) => {
   switch (action.type) {
     case POST_ACTIONS.SET_LOADING:
       return { ...state, loading: action.payload };
+
+    case POST_ACTIONS.SET_POLLS_LOADING:
+      return { ...state, pollsLoading: action.payload };
+
+    case POST_ACTIONS.SET_EVENTS_LOADING:
+      return { ...state, eventsLoading: action.payload };
 
     case POST_ACTIONS.SET_ERROR:
       return { ...state, error: action.payload, loading: false };
@@ -98,7 +108,7 @@ const postReducer = (state, action) => {
       };
 
     case POST_ACTIONS.SET_POLLS:
-      return { ...state, polls: action.payload, loading: false };
+      return { ...state, polls: action.payload, pollsLoading: false };
 
     case POST_ACTIONS.ADD_POLL:
       return { 
@@ -123,7 +133,7 @@ const postReducer = (state, action) => {
       };
 
     case POST_ACTIONS.SET_EVENTS:
-      return { ...state, events: action.payload, loading: false };
+      return { ...state, events: action.payload, eventsLoading: false };
 
     case POST_ACTIONS.ADD_EVENT:
       return { 
@@ -239,25 +249,25 @@ export const PostProvider = ({ children }) => {
     };
 
     // Register socket listeners
-    socketService.on('newPost', handleNewPost);
-    socketService.on('postUpdated', handlePostUpdated);
-    socketService.on('postDeleted', handlePostDeleted);
-    socketService.on('postVoted', handlePostVoted);
-    socketService.on('newPoll', handleNewPoll);
-    socketService.on('pollUpdated', handlePollUpdated);
-    socketService.on('pollDeleted', handlePollDeleted);
+    socketService.on('post_created', handleNewPost);
+    socketService.on('post_updated', handlePostUpdated);
+    socketService.on('post_deleted', handlePostDeleted);
+    socketService.on('post_voted', handlePostVoted);
+    socketService.on('poll_created', handleNewPoll);
+    socketService.on('poll_updated', handlePollUpdated);
+    socketService.on('poll_deleted', handlePollDeleted);
     socketService.on('comment_added', handleCommentAdded);
     socketService.on('comment_deleted', handleCommentDeleted);
 
     // Cleanup
     return () => {
-      socketService.off('newPost', handleNewPost);
-      socketService.off('postUpdated', handlePostUpdated);
-      socketService.off('postDeleted', handlePostDeleted);
-      socketService.off('postVoted', handlePostVoted);
-      socketService.off('newPoll', handleNewPoll);
-      socketService.off('pollUpdated', handlePollUpdated);
-      socketService.off('pollDeleted', handlePollDeleted);
+      socketService.off('post_created', handleNewPost);
+      socketService.off('post_updated', handlePostUpdated);
+      socketService.off('post_deleted', handlePostDeleted);
+      socketService.off('post_voted', handlePostVoted);
+      socketService.off('poll_created', handleNewPoll);
+      socketService.off('poll_updated', handlePollUpdated);
+      socketService.off('poll_deleted', handlePollDeleted);
       socketService.off('comment_added', handleCommentAdded);
       socketService.off('comment_deleted', handleCommentDeleted);
     };
@@ -265,6 +275,8 @@ export const PostProvider = ({ children }) => {
 
   // Fetch posts
   const fetchPosts = useCallback(async (loadMore = false) => {
+    if (state.loading || !user?.campusId) return;
+    
     try {
       console.log('🔄 Fetching posts..., loadMore:', loadMore);
       console.log('👤 User:', user);
@@ -309,11 +321,15 @@ export const PostProvider = ({ children }) => {
         payload: error.response?.data?.error || 'Failed to fetch posts' 
       });
     }
-  }, [state.filters, state.pagination.limit, state.pagination.offset, user]);
+  }, [state.filters, state.pagination.limit, state.pagination.offset, state.loading, user]);
 
   // Fetch polls
   const fetchPolls = useCallback(async () => {
+    if (state.pollsLoading || !user?.campusId) return;
+    
     try {
+      dispatch({ type: POST_ACTIONS.SET_POLLS_LOADING, payload: true });
+      
       const params = {
         campusId: user?.campusId,
         isActive: true,
@@ -328,12 +344,17 @@ export const PostProvider = ({ children }) => {
       }
     } catch (error) {
       console.error('Error fetching polls:', error);
+      dispatch({ type: POST_ACTIONS.SET_POLLS_LOADING, payload: false });
     }
-  }, [user?.campusId, user?.uid]);
+  }, [user?.campusId, user?.uid, state.pollsLoading]);
 
   // Fetch events
   const fetchEvents = useCallback(async () => {
+    if (state.eventsLoading || !user?.campusId) return;
+    
     try {
+      dispatch({ type: POST_ACTIONS.SET_EVENTS_LOADING, payload: true });
+      
       const params = {
         campusId: user?.campusId,
         limit: 10,
@@ -348,8 +369,9 @@ export const PostProvider = ({ children }) => {
       }
     } catch (error) {
       console.error('Error fetching events:', error);
+      dispatch({ type: POST_ACTIONS.SET_EVENTS_LOADING, payload: false });
     }
-  }, [user?.campusId]);
+  }, [user?.campusId, state.eventsLoading]);
 
   // Create post
   const createPost = async (postData) => {
@@ -458,10 +480,20 @@ export const PostProvider = ({ children }) => {
   // Edit post
   const editPost = async (postId, postData) => {
     try {
-      const fullPostData = {
-        ...postData,
-        userId: user.uid || user.id
-      };
+      // If postData is FormData, add userId directly to it
+      // Otherwise, create the object with userId
+      let fullPostData;
+      
+      if (postData instanceof FormData) {
+        // Add userId to the existing FormData
+        postData.append('userId', user.uid || user.id);
+        fullPostData = postData;
+      } else {
+        fullPostData = {
+          ...postData,
+          userId: user.uid || user.id
+        };
+      }
 
       const response = await apiService.editPost(postId, fullPostData);
       
@@ -477,17 +509,72 @@ export const PostProvider = ({ children }) => {
     }
   };
 
+  // Delete event
+  const deleteEvent = async (eventId) => {
+    try {
+      const response = await apiService.deleteEvent(eventId, user.uid || user.id);
+      
+      if (response.data.success) {
+        // Event will be removed via socket event or refresh
+        toast.success('Event deleted successfully!');
+        // Manually remove from state for immediate UI update
+        dispatch({ type: POST_ACTIONS.DELETE_EVENT, payload: eventId });
+        return { success: true };
+      }
+    } catch (error) {
+      const errorMessage = error.response?.data?.error || 'Failed to delete event';
+      toast.error(errorMessage);
+      throw error;
+    }
+  };
+
+  // Edit event
+  const editEvent = async (eventId, eventData) => {
+    try {
+      // Add userId to the FormData
+      if (eventData instanceof FormData) {
+        eventData.append('userId', user.uid || user.id);
+      } else {
+        // Convert to FormData if it's not already
+        const formData = new FormData();
+        Object.keys(eventData).forEach(key => {
+          if (key === 'poster' && eventData[key]) {
+            formData.append('poster', eventData[key]);
+          } else {
+            formData.append(key, eventData[key]);
+          }
+        });
+        formData.append('userId', user.uid || user.id);
+        eventData = formData;
+      }
+
+      const response = await apiService.editEvent(eventId, eventData);
+      
+      if (response.data.success) {
+        // Event will be updated via socket event or refresh
+        toast.success('Event updated successfully!');
+        // Manually update state for immediate UI update
+        dispatch({ type: POST_ACTIONS.UPDATE_EVENT, payload: response.data.event });
+        return { success: true, event: response.data.event };
+      }
+    } catch (error) {
+      const errorMessage = error.response?.data?.error || 'Failed to update event';
+      toast.error(errorMessage);
+      throw error;
+    }
+  };
+
   // Update filters
   const updateFilters = (newFilters) => {
     dispatch({ type: POST_ACTIONS.SET_FILTERS, payload: newFilters });
   };
 
-  // Effect to refetch posts when filters change
-  useEffect(() => {
-    if (user) {
-      fetchPosts();
-    }
-  }, [state.filters, user]);
+  // Effect to refetch posts when filters change (commented out to prevent too many requests)
+  // useEffect(() => {
+  //   if (user) {
+  //     fetchPosts();
+  //   }
+  // }, [state.filters, user]);
 
   // Clear error
   const clearError = () => {
@@ -525,6 +612,8 @@ export const PostProvider = ({ children }) => {
     polls: state.polls,
     events: state.events,
     loading: state.loading,
+    pollsLoading: state.pollsLoading,
+    eventsLoading: state.eventsLoading,
     error: state.error,
     hasMore: state.hasMore,
     filters: state.filters,
@@ -539,6 +628,8 @@ export const PostProvider = ({ children }) => {
     voteOnPoll,
     deletePost,
     editPost,
+    deleteEvent,
+    editEvent,
     updateFilters,
     updateCommentCount,
     clearError,

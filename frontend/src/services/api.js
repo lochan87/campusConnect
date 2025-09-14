@@ -128,6 +128,7 @@ export const apiService = {
   },
   votePost: (id, voteData) => api.post(`/posts/${id}/vote`, voteData),
   deletePost: (id, userId) => api.delete(`/posts/${id}`, { data: { userId } }),
+  reportPost: (id, reportData) => api.post(`/posts/${id}/report`, reportData),
   getEventSummary: (campusId) => api.get('/posts/summary/events', { params: { campusId } }),
 
   // Polls
@@ -140,6 +141,7 @@ export const apiService = {
 
   // Events
   getEvents: (params = {}) => api.get('/events', { params }),
+  getEvent: (id) => api.get(`/events/${id}`),
   createEvent: (eventData) => {
     return api.post('/events', eventData, {
       headers: {
@@ -147,6 +149,15 @@ export const apiService = {
       },
     });
   },
+  editEvent: (id, eventData) => {
+    return api.put(`/events/${id}`, eventData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
+  deleteEvent: (id, userId) => api.delete(`/events/${id}`, { data: { userId } }),
+  reportEvent: (id, reportData) => api.post(`/events/${id}/report`, reportData),
 
   // Users
   register: (userData) => api.post('/users/register', userData),
@@ -164,6 +175,7 @@ export const apiService = {
   updateUserProfile: (id, profileData) => api.put(`/users/profile/${id}`, profileData),
   changePassword: (passwordData) => api.put('/users/change-password', passwordData),
   changeEmail: (emailData) => api.put('/users/change-email', emailData),
+  changeStudentId: (studentIdData) => api.put('/users/change-student-id', studentIdData),
   deleteUserAccount: () => api.delete('/users/delete-account'),
   
   // Leaderboard

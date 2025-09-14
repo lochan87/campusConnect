@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { usePosts } from '../context/PostContext';
@@ -16,6 +17,7 @@ import {
 const CreatePost = () => {
   const { user, refreshUserData } = useAuth();
   const { refreshPosts } = usePosts();
+  const navigate = useNavigate();
 
   // Location options
   const locationOptions = [
@@ -164,6 +166,9 @@ const CreatePost = () => {
         if (refreshPosts) {
           await refreshPosts();
         }
+        
+        // Navigate back to home
+        navigate('/');
       } else {
         toast.error(response.data.message || 'Failed to create post');
       }

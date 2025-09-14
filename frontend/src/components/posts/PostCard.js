@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { FiHeart, FiMessageCircle, FiShare2, FiMapPin, FiClock, FiMoreHorizontal, FiEdit2, FiTrash2 } from 'react-icons/fi';
+import { FiHeart, FiMessageCircle, FiShare2, FiMapPin, FiClock, FiMoreHorizontal, FiEdit2, FiTrash2, FiFlag } from 'react-icons/fi';
+import ReportPostModal from './ReportPostModal';
 
 const PostCard = ({ post, currentUser, onVote, onComment, onShare, onEdit, onDelete }) => {
   const [showMenu, setShowMenu] = useState(false);
   const [isLiking, setIsLiking] = useState(false);
   const [optimisticVote, setOptimisticVote] = useState(null);
   const [optimisticUpvotes, setOptimisticUpvotes] = useState(post.upvotes || 0);
+  const [reportModal, setReportModal] = useState({ isOpen: false });
   const menuRef = useRef(null);
 
   useEffect(() => {
@@ -220,10 +222,11 @@ const PostCard = ({ post, currentUser, onVote, onComment, onShare, onEdit, onDel
                     <button
                       onClick={() => {
                         setShowMenu(false);
-                        // TODO: Report functionality
+                        setReportModal({ isOpen: true });
                       }}
                       className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     >
+                      <FiFlag className="w-4 h-4 mr-2" />
                       Report Post
                     </button>
                   </div>
@@ -305,6 +308,13 @@ const PostCard = ({ post, currentUser, onVote, onComment, onShare, onEdit, onDel
           </button>
         </div>
       </div>
+
+      {/* Report Post Modal */}
+      <ReportPostModal
+        post={post}
+        isOpen={reportModal.isOpen}
+        onClose={() => setReportModal({ isOpen: false })}
+      />
     </motion.div>
   );
 };

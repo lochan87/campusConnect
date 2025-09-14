@@ -513,7 +513,27 @@ router.put('/:id', upload.single('image'), async (req, res) => {
   try {
     const db = getFirestore();
     const { id } = req.params;
+    
+    // Log the received data for debugging
+    console.log('Edit post request body:', req.body);
+    console.log('Edit post request file:', req.file);
+    
     const { title, content, category, location, userId } = req.body;
+    
+    // Validate required fields
+    if (!content || content.trim() === '') {
+      return res.status(400).json({
+        success: false,
+        error: 'Content is required'
+      });
+    }
+    
+    if (!category || category.trim() === '') {
+      return res.status(400).json({
+        success: false,
+        error: 'Category is required'
+      });
+    }
 
     const postDoc = await db.collection('posts').doc(id).get();
 
@@ -546,10 +566,10 @@ router.put('/:id', upload.single('image'), async (req, res) => {
     }
 
     const updateData = {
-      title: title || '',
-      content,
-      category,
-      location: location || '',
+      title: title?.trim() || '',
+      content: content.trim(),
+      category: category.trim(),
+      location: location?.trim() || '',
       updatedAt: new Date(),
       moderation: {
         isReviewed: moderation.severity === 'low',
@@ -862,6 +882,76 @@ router.delete('/:postId/comments/:commentId', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to delete comment'
+    });
+  }
+});
+
+// POST /api/posts/:id/report - Report a post
+router.post('/:id/report', async (req, res) => {
+  try {
+    const db = getFirestore();
+    const { id } = req.params;
+    const { reportedBy, reason, description } = req.body;
+
+    if (!reportedBy || !reason) {
+      return res.status(400).json({
+        success: false,
+        error: 'Reporter ID and reason are required'
+      });
+    }
+
+    // Check if post exists
+    const postDoc = await db.collection('posts').doc(id).get();
+    if (!postDoc.exists) {
+      return res.status(404).json({
+        success: false,
+        error: 'Post not found'
+      });
+    }
+
+    // Check if user has already reported this post
+    const existingReport = await db.collection('post_reports')
+      .where('postId', '==', id)
+      .where('reportedBy', '==', reportedBy)
+      .get();
+
+    if (!existingReport.empty) {
+      return res.status(400).json({
+        success: false,
+        error: 'You have already reported this post'
+      });
+    }
+
+    const reportData = {
+      postId: id,
+      reportedBy,
+      reason,
+      description: description || '',
+      status: 'pending',
+      createdAt: new Date(),
+      // Store post details for admin review
+      postDetails: {
+        title: postDoc.data().title,
+        content: postDoc.data().content,
+        category: postDoc.data().category,
+        userId: postDoc.data().userId,
+        userName: postDoc.data().userName,
+        isAnonymous: postDoc.data().isAnonymous
+      }
+    };
+
+    await db.collection('post_reports').add(reportData);
+
+    res.json({
+      success: true,
+      message: 'Post reported successfully'
+    });
+
+  } catch (error) {
+    console.error('Error reporting post:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to report post'
     });
   }
 });

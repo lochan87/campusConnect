@@ -4,6 +4,7 @@ const { getFirestore, admin } = require('../config/firebase');
 const multer = require('multer');
 const path = require('path');
 const { requireAuth } = require('../middleware/auth');
+const storageService = require('../services/storageService');
 
 // Configure multer for file uploads
 const upload = multer({
@@ -217,39 +218,7 @@ router.post('/', upload.single('poster'), async (req, res) => {
       });
     }
 
-    // Handle poster upload if provided
-    let posterUrl = null;
-    if (req.file) {
-      try {
-        const bucket = admin.storage().bucket();
-        const fileName = `events/${Date.now()}-${req.file.originalname}`;
-        const file = bucket.file(fileName);
-
-        const stream = file.createWriteStream({
-          metadata: {
-            contentType: req.file.mimetype,
-          },
-        });
-
-        await new Promise((resolve, reject) => {
-          stream.on('error', reject);
-          stream.on('finish', resolve);
-          stream.end(req.file.buffer);
-        });
-
-        // Make the file public and get download URL
-        await file.makePublic();
-        posterUrl = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
-      } catch (uploadError) {
-        console.error('Error uploading poster:', uploadError);
-        return res.status(500).json({
-          success: false,
-          error: 'Failed to upload poster'
-        });
-      }
-    }
-
-    // Create event document
+    // Create event document structure
     const db = getFirestore();
     const eventData = {
       title,
@@ -265,10 +234,48 @@ router.post('/', upload.single('poster'), async (req, res) => {
       stream,
       campusId,
       userId: isAnonymous === 'true' ? null : userId,
-      poster: posterUrl,
       createdAt: new Date(),
       updatedAt: new Date()
     };
+
+    // Handle poster upload if provided
+    if (req.file) {
+      try {
+        console.log('Processing poster upload...');
+        
+        // Validate the poster image
+        if (!storageService.validateImage(req.file.buffer, req.file.mimetype)) {
+          return res.status(400).json({
+            success: false,
+            error: 'Invalid poster image file or file too large (max 800KB)'
+          });
+        }
+
+        // Convert to Base64 and store with event
+        const posterData = storageService.convertToBase64(
+          req.file.buffer,
+          req.file.mimetype,
+          req.file.originalname
+        );
+        
+        eventData.posterData = posterData.imageData; // Data URL format
+        eventData.posterMetadata = {
+          mimeType: posterData.mimeType,
+          originalName: posterData.originalName,
+          size: posterData.size,
+          uploadedAt: posterData.uploadedAt
+        };
+        eventData.hasPoster = true;
+        
+        console.log(`Poster processed successfully: ${posterData.size} bytes`);
+      } catch (uploadError) {
+        console.error('Failed to process poster:', uploadError);
+        return res.status(400).json({
+          success: false,
+          error: uploadError.message || 'Failed to process poster'
+        });
+      }
+    }
 
     const docRef = await db.collection('events').add(eventData);
 
@@ -492,6 +499,78 @@ router.delete('/:eventId', requireAuth, async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to delete event'
+    });
+  }
+});
+
+// POST /api/events/:eventId/report - Report an event
+router.post('/:eventId/report', async (req, res) => {
+  try {
+    const db = getFirestore();
+    const { eventId } = req.params;
+    const { reportedBy, reason, description } = req.body;
+
+    if (!reportedBy || !reason) {
+      return res.status(400).json({
+        success: false,
+        error: 'Reporter ID and reason are required'
+      });
+    }
+
+    // Check if event exists
+    const eventDoc = await db.collection('events').doc(eventId).get();
+    if (!eventDoc.exists) {
+      return res.status(404).json({
+        success: false,
+        error: 'Event not found'
+      });
+    }
+
+    // Check if user has already reported this event
+    const existingReport = await db.collection('event_reports')
+      .where('eventId', '==', eventId)
+      .where('reportedBy', '==', reportedBy)
+      .get();
+
+    if (!existingReport.empty) {
+      return res.status(400).json({
+        success: false,
+        error: 'You have already reported this event'
+      });
+    }
+
+    const reportData = {
+      eventId: eventId,
+      reportedBy,
+      reason,
+      description: description || '',
+      status: 'pending',
+      createdAt: new Date(),
+      // Store event details for admin review
+      eventDetails: {
+        title: eventDoc.data().title,
+        description: eventDoc.data().description,
+        date: eventDoc.data().date,
+        startTime: eventDoc.data().startTime,
+        endTime: eventDoc.data().endTime,
+        location: eventDoc.data().location,
+        userId: eventDoc.data().userId,
+        creator: eventDoc.data().creator
+      }
+    };
+
+    await db.collection('event_reports').add(reportData);
+
+    res.json({
+      success: true,
+      message: 'Event reported successfully'
+    });
+
+  } catch (error) {
+    console.error('Error reporting event:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to report event'
     });
   }
 });

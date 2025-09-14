@@ -5,6 +5,141 @@ const geminiService = require('../services/geminiService');
 const { requireAuth } = require('../middleware/auth');
 const router = express.Router();
 
+// Auto-selection logic for course and department based on Student ID
+const autoSelectCourseAndDepartment = (studentId) => {
+  if (!studentId || studentId.length !== 10) return { course: '', department: '' };
+  
+  const courseCode = studentId.substring(2, 5);  // Extract CCC part
+  const deptCode = studentId.substring(5, 7);    // Extract DD part
+  
+  // Course code mapping
+  const courseCodeMapping = {
+    'BEN': 'B.E (Bachelor of Engineering)',
+    'MTE': 'M.Tech (Master of Technology)',
+    'MBA': 'MBA (Master of Business Administration)',
+    'BBA': 'BBA (Bachelor of Business Administration)',
+    'BCO': 'B.Com (Bachelor of Commerce)',
+    'MCO': 'M.Com (Master of Commerce)',
+    'PHD': 'Ph.D (Doctor of Philosophy)',
+    'BCA': 'BCA (Bachelor of Computer Applications)',
+    'MCA': 'MCA (Master of Computer Applications)',
+    'BDS': 'Dental (Bachelor of Dental Surgery)',
+    'MBS': 'MBBS (Bachelor of Medicine and Bachelor of Surgery)',
+    'BSC': 'B.Sc (Bachelor of Science)',
+    'MSC': 'M.Sc (Master of Science)',
+    'BAR': 'BA (Bachelor of Arts)',
+    'MAR': 'MA (Master of Arts)',
+    'LLB': 'LLB (Bachelor of Laws)',
+    'LLM': 'LLM (Master of Laws)',
+    'BED': 'B.Ed (Bachelor of Education)',
+    'MED': 'M.Ed (Master of Education)',
+  };
+
+  // Department code mapping (serial order for each course)
+  const departmentCodeMapping = {
+    'B.E (Bachelor of Engineering)': {
+      '01': 'Artificial Intelligence and Machine Learning',
+      '02': 'Computer Science & Engineering (Data Science)',
+      '03': 'Information Science and Engineering',
+      '04': 'Computer Science & Engineering (Internet of Things and Cyber Security including Block Chain Technology)',
+      '05': 'Electronics and Instrumentation Engineering',
+      '06': 'Computer Science and Design',
+      '07': 'Mechanical Engineering',
+      '08': 'Computer Science and Engineering',
+      '09': 'Medical Electronics Engineering',
+      '10': 'Computer Science and Business Systems',
+      '11': 'Electronics and Telecommunication Engineering',
+      '12': 'Computer Science & Engineering (Cyber Security)',
+      '13': 'Robotics and Artificial Intelligence',
+      '14': 'Aeronautical Engineering',
+      '15': 'Chemical Engineering',
+      '16': 'Automobile Engineering',
+      '17': 'Civil Engineering',
+      '18': 'Biotechnology',
+      '19': 'Electrical & Electronics Engineering',
+      '20': 'Electronics & Communication Engineering'
+    },
+    'M.Tech (Master of Technology)': {
+      '01': 'Computer Science and Engineering',
+      '02': 'Mechanical Engineering',
+      '03': 'Electronics and Communication Engineering',
+      '04': 'Civil Engineering',
+      '05': 'Chemical Engineering',
+      '06': 'Biotechnology'
+    },
+    'MBA (Master of Business Administration)': {
+      '01': 'Finance',
+      '02': 'Marketing',
+      '03': 'Human Resources',
+      '04': 'Operations',
+      '05': 'Information Systems',
+      '06': 'International Business'
+    },
+    'BBA (Bachelor of Business Administration)': {
+      '01': 'Finance',
+      '02': 'Marketing',
+      '03': 'Human Resources',
+      '04': 'Operations',
+      '05': 'Information Systems',
+      '06': 'International Business'
+    },
+    'B.Com (Bachelor of Commerce)': {
+      '01': 'Accounting',
+      '02': 'Banking & Finance',
+      '03': 'Taxation',
+      '04': 'Economics',
+      '05': 'Business Mathematics',
+      '06': 'Corporate Secretaryship'
+    },
+    'M.Com (Master of Commerce)': {
+      '01': 'Accounting',
+      '02': 'Banking & Finance',
+      '03': 'Taxation',
+      '04': 'Economics',
+      '05': 'Business Mathematics',
+      '06': 'Corporate Secretaryship'
+    },
+    'BCA (Bachelor of Computer Applications)': {
+      '01': 'Software Development',
+      '02': 'Database Management',
+      '03': 'Web Technologies',
+      '04': 'Mobile Application Development',
+      '05': 'System Analysis and Design',
+      '06': 'Network Administration'
+    },
+    'MCA (Master of Computer Applications)': {
+      '01': 'Software Development',
+      '02': 'Database Management',
+      '03': 'Web Technologies',
+      '04': 'Mobile Application Development',
+      '05': 'System Analysis and Design',
+      '06': 'Network Administration'
+    },
+    'Ph.D (Doctor of Philosophy)': {
+      '01': 'Engineering & Technology',
+      '02': 'Business & Management',
+      '03': 'Commerce & Economics',
+      '04': 'Computer Applications',
+      '05': 'Medical Sciences',
+      '06': 'Basic Sciences',
+      '07': 'Arts & Humanities',
+      '08': 'Law',
+      '09': 'Education'
+    }
+  };
+  
+  // Find course by code
+  const course = courseCodeMapping[courseCode.toUpperCase()] || '';
+  
+  // Find department by code and course
+  let department = '';
+  if (course && departmentCodeMapping[course] && departmentCodeMapping[course][deptCode]) {
+    department = departmentCodeMapping[course][deptCode];
+  }
+  
+  return { course, department };
+};
+
 // GET /api/users/check-username/:username - Check username availability
 router.get('/check-username/:username', async (req, res) => {
   try {
@@ -359,15 +494,14 @@ router.post('/register', async (req, res) => {
       lastName,
       username,
       studentId,
-      campusId,
       course,
       department,
       year,
       bio
     } = req.body;
 
-    // Validate required fields
-    if (!email || !password || !firstName || !lastName || !username || !studentId || !campusId) {
+    // Validate required fields (campusId will be generated from studentId)
+    if (!email || !password || !firstName || !lastName || !username || !studentId) {
       return res.status(400).json({
         success: false,
         error: 'Missing required fields'
@@ -411,6 +545,9 @@ router.post('/register', async (req, res) => {
     });
 
     // Create user document in Firestore
+    // Generate campusId based on studentId (ignore frontend campusId)
+    const generatedCampusId = generateCampusId(studentId);
+    
     const userData = {
       uid: userRecord.uid,
       email,
@@ -418,7 +555,7 @@ router.post('/register', async (req, res) => {
       lastName,
       username: username.toLowerCase(),
       studentId,
-      campusId,
+      campusId: generatedCampusId,
       course: course || '',
       department: department || '',
       year: year || '',
@@ -567,6 +704,87 @@ router.get('/:id', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to fetch user profile'
+    });
+  }
+});
+
+// PUT /api/users/change-student-id - Change user student ID
+router.put('/change-student-id', async (req, res) => {
+  try {
+    const { userId, newStudentId, password } = req.body;
+    
+    if (!userId || !newStudentId || !password) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields'
+      });
+    }
+
+    // Basic student ID validation
+    const studentIdRegex = /^\d{2}[A-Z]{3}\d{5}$/i;
+    if (!studentIdRegex.test(newStudentId.trim())) {
+      return res.status(400).json({
+        success: false,
+        error: 'Student ID must be in format YYCCCDDNNN (e.g., 22BEN03073)'
+      });
+    }
+
+    const db = getFirestore();
+    
+    // Check if the new student ID is already in use
+    const existingStudentQuery = await db.collection('users')
+      .where('studentId', '==', newStudentId.trim())
+      .limit(1)
+      .get();
+
+    if (!existingStudentQuery.empty) {
+      const existingUser = existingStudentQuery.docs[0];
+      if (existingUser.id !== userId) {
+        return res.status(400).json({
+          success: false,
+          error: 'Student ID is already in use'
+        });
+      }
+    }
+
+    // In a real implementation, you would verify the current password here
+    // For now, we'll update the student ID directly
+    
+    // Auto-select course and department based on new Student ID
+    const { course, department } = autoSelectCourseAndDepartment(newStudentId.trim());
+    
+    // Update student ID, course, and department in Firestore user profile
+    const updateData = {
+      studentId: newStudentId.trim(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    };
+    
+    // Only update course and department if they were successfully auto-selected
+    if (course) {
+      updateData.course = course;
+    }
+    if (department) {
+      updateData.department = department;
+    }
+    
+    const userRef = db.collection('users').doc(userId);
+    await userRef.update(updateData);
+    
+    res.json({
+      success: true,
+      message: 'Student ID updated successfully',
+      newStudentId: newStudentId.trim(),
+      autoUpdated: {
+        course: course || null,
+        department: department || null
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Error changing student ID:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to change student ID'
     });
   }
 });
@@ -1267,6 +1485,78 @@ router.put('/change-email', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to change email'
+    });
+  }
+});
+
+// Function to generate campus ID - simple shared format for all users
+const generateCampusId = (studentId) => {
+  // Simple shared campus ID for all users
+  return 'CC_Name';
+};
+
+// PUT /api/users/change-student-id - Change student ID with auto-update
+router.put('/change-student-id', requireAuth, async (req, res) => {
+  try {
+    const { studentId } = req.body;
+    const userId = req.user.uid;
+    const db = getFirestore();
+    
+    if (!studentId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Student ID is required'
+      });
+    }
+
+    // Validate student ID format (YYCCCDDNNN - 10 characters)
+    const studentIdRegex = /^[0-9]{2}[A-Z]{3}[0-9]{5}$/;
+    if (!studentIdRegex.test(studentId)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid Student ID format. Expected format: YYCCCDDNNN (e.g., 22BEN03073)'
+      });
+    }
+
+    // Auto-select course and department based on student ID
+    const { course, department } = autoSelectCourseAndDepartment(studentId);
+    
+    if (!course || !department) {
+      return res.status(400).json({
+        success: false,
+        error: 'Unable to determine course or department from Student ID'
+      });
+    }
+
+    // Generate new campus ID based on student ID
+    const campusId = generateCampusId(studentId);
+    
+    // Update user document
+    const userRef = db.collection('users').doc(userId);
+    await userRef.update({
+      studentId,
+      course,
+      department,
+      campusId,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+    
+    res.json({
+      success: true,
+      message: 'Student ID updated successfully',
+      data: {
+        studentId,
+        course,
+        department,
+        campusId
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Error changing student ID:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to change student ID'
     });
   }
 });

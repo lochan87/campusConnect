@@ -1,8 +1,24 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FiCalendar, FiMapPin, FiClock, FiUser } from 'react-icons/fi';
+import { FiCalendar, FiMapPin, FiClock, FiUser, FiMoreHorizontal, FiEdit2, FiTrash2, FiFlag } from 'react-icons/fi';
+import ReportEventModal from './ReportEventModal';
 
-const EventCard = ({ event }) => {
+const EventCard = ({ event, currentUser, onEdit, onDelete }) => {
+  const [showMenu, setShowMenu] = useState(false);
+  const [reportModal, setReportModal] = useState({ isOpen: false });
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setShowMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { 
@@ -28,10 +44,10 @@ const EventCard = ({ event }) => {
       className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-200"
     >
       {/* Event Poster */}
-      {event.poster && (
+      {(event.posterData || event.poster) && (
         <div className="h-48 bg-gray-100 overflow-hidden">
           <img
-            src={event.poster}
+            src={event.posterData || event.poster}
             alt={event.title}
             className="w-full h-full object-cover"
           />
@@ -40,10 +56,65 @@ const EventCard = ({ event }) => {
 
       {/* Event Content */}
       <div className="p-4">
-        {/* Event Title */}
-        <h3 className="font-semibold text-gray-900 text-lg mb-2 line-clamp-2">
-          {event.title}
-        </h3>
+        {/* Event Header with Title and Menu */}
+        <div className="flex items-start justify-between mb-2">
+          <h3 className="font-semibold text-gray-900 text-lg line-clamp-2 flex-1 mr-2">
+            {event.title}
+          </h3>
+          <div className="relative" ref={menuRef}>
+            <button 
+              onClick={() => setShowMenu(!showMenu)}
+              className="p-1 hover:bg-gray-100 rounded"
+            >
+              <FiMoreHorizontal className="w-4 h-4 text-gray-400" />
+            </button>
+            
+            {showMenu && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="absolute right-0 mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-10"
+              >
+                <div className="py-1">
+                  {currentUser && (currentUser.uid === event.userId || currentUser.id === event.userId) && (
+                    <>
+                      <button
+                        onClick={() => {
+                          setShowMenu(false);
+                          onEdit && onEdit(event);
+                        }}
+                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        <FiEdit2 className="w-4 h-4 mr-2" />
+                        Edit Event
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowMenu(false);
+                          onDelete && onDelete(event.id);
+                        }}
+                        className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                      >
+                        <FiTrash2 className="w-4 h-4 mr-2" />
+                        Delete Event
+                      </button>
+                    </>
+                  )}
+                  <button
+                    onClick={() => {
+                      setShowMenu(false);
+                      setReportModal({ isOpen: true });
+                    }}
+                    className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    <FiFlag className="w-4 h-4 mr-2" />
+                    Report Event
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </div>
+        </div>
 
         {/* Event Description */}
         {event.description && (
@@ -95,6 +166,13 @@ const EventCard = ({ event }) => {
           </div>
         </div>
       </div>
+
+      {/* Report Event Modal */}
+      <ReportEventModal
+        event={event}
+        isOpen={reportModal.isOpen}
+        onClose={() => setReportModal({ isOpen: false })}
+      />
     </motion.div>
   );
 };

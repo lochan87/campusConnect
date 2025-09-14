@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { usePosts } from '../context/PostContext';
 import { useAuth } from '../context/AuthContext';
 import { FiPlus, FiRefreshCw, FiBarChart2, FiCalendar, FiStar } from 'react-icons/fi';
@@ -8,24 +9,34 @@ import PostCard from '../components/posts/PostCard';
 import PollCard from '../components/polls/PollCard';
 import EventCard from '../components/events/EventCard';
 import CommentModal from '../components/posts/CommentModal';
+import EditPostModal from '../components/posts/EditPostModal';
 import LoadingSkeleton from '../components/ui/LoadingSkeleton';
 import toast from 'react-hot-toast';
 
 const Home = () => {
-  const { posts, polls, events, loading, fetchPosts, fetchPolls, fetchEvents, refreshPosts, voteOnPost, voteOnPoll, deletePost, updateCommentCount } = usePosts();
+  const { posts, polls, events, loading, fetchPosts, fetchPolls, fetchEvents, refreshPosts, voteOnPost, voteOnPoll, deletePost, deleteEvent, updateCommentCount } = usePosts();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [commentModal, setCommentModal] = useState({ isOpen: false, post: null });
+  const [editModal, setEditModal] = useState({ isOpen: false, post: null });
+  const [hasInitialized, setHasInitialized] = useState(false);
 
   useEffect(() => {
-    if (user && !loading) {
+    if (user && !hasInitialized) {
       fetchPosts();
       fetchPolls();
       fetchEvents();
+      setHasInitialized(true);
     }
-  }, [user?.uid]); // Only depend on user ID, not the fetch functions
+  }, [user?.uid, hasInitialized]); // Only run once when user is available
 
-  const handleRefresh = () => {
-    refreshPosts();
+  const handleRefresh = async () => {
+    if (user) {
+      // Add a small delay between calls to prevent concurrent request issues
+      refreshPosts();
+      setTimeout(() => fetchPolls(), 100);
+      setTimeout(() => fetchEvents(), 200);
+    }
   };
 
   const handleVote = async (postId, voteType) => {
@@ -41,6 +52,21 @@ const Home = () => {
       await voteOnPoll(pollId, [optionIndex]); // Backend expects array of option indexes
     } catch (error) {
       console.error('Error voting on poll:', error);
+    }
+  };
+
+  const handleEditEvent = (event) => {
+    // Navigate to edit event page
+    navigate(`/events/edit/${event.id}`);
+  };
+
+  const handleDeleteEvent = async (eventId) => {
+    if (window.confirm('Are you sure you want to delete this event?')) {
+      try {
+        await deleteEvent(eventId);
+      } catch (error) {
+        console.error('Error deleting event:', error);
+      }
     }
   };
 
@@ -73,8 +99,7 @@ const Home = () => {
   };
 
   const handleEdit = (post) => {
-    // TODO: Open edit modal or navigate to edit page
-    console.log('Edit post:', post);
+    setEditModal({ isOpen: true, post });
   };
 
   const handleDelete = async (postId) => {
@@ -265,6 +290,9 @@ const Home = () => {
                     <EventCard
                       key={event.id}
                       event={event}
+                      currentUser={user}
+                      onEdit={handleEditEvent}
+                      onDelete={handleDeleteEvent}
                     />
                   ))}
                 </div>
@@ -325,6 +353,13 @@ const Home = () => {
         isOpen={commentModal.isOpen}
         onClose={() => setCommentModal({ isOpen: false, post: null })}
         onSubmitComment={handleSubmitComment}
+      />
+
+      {/* Edit Post Modal */}
+      <EditPostModal
+        post={editModal.post}
+        isOpen={editModal.isOpen}
+        onClose={() => setEditModal({ isOpen: false, post: null })}
       />
     </motion.div>
   );

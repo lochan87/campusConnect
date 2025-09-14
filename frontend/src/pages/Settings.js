@@ -358,12 +358,29 @@ const Settings = () => {
       });
 
       if (response.data.success) {
-        toast.success('Student ID updated successfully!');
+        let successMessage = 'Student ID updated successfully!';
+        
+        // Show auto-updated course and department info
+        const { autoUpdated } = response.data;
+        if (autoUpdated && (autoUpdated.course || autoUpdated.department)) {
+          const autoUpdatedItems = [];
+          if (autoUpdated.course) autoUpdatedItems.push(`Course: ${autoUpdated.course}`);
+          if (autoUpdated.department) autoUpdatedItems.push(`Department: ${autoUpdated.department}`);
+          
+          if (autoUpdatedItems.length > 0) {
+            successMessage += ` Auto-updated: ${autoUpdatedItems.join(', ')}`;
+          }
+        }
+        
+        toast.success(successMessage);
         setStudentIdData({
           newStudentId: '',
           currentStudentId: response.data.newStudentId || studentIdData.newStudentId,
           password: ''
         });
+        
+        // Refresh user profile to show updated course/department
+        fetchUserProfile();
       } else {
         toast.error(response.data.error || 'Failed to update Student ID');
       }
@@ -771,6 +788,8 @@ const Settings = () => {
                     <h3 className="text-lg font-medium text-gray-900 mb-2 sm:mb-4">Change Student ID</h3>
                     <p className="text-sm text-gray-600 mb-4 sm:mb-6">
                       Update your Student ID. You'll need to enter your current password to verify this change.
+                      <br />
+                      <span className="text-blue-600 font-medium">Note: Course and department will be automatically updated based on your new Student ID.</span>
                     </p>
                   </div>
 

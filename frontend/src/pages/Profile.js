@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { 
   PencilIcon, 
   UserIcon, 
@@ -17,8 +17,7 @@ import toast from 'react-hot-toast';
 
 const Profile = () => {
   const { userId } = useParams();
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
+  const { user } = useAuth();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -30,250 +29,16 @@ const Profile = () => {
     bio: ''
   });
 
-  const departmentsByCourse = {
-    'B.E (Bachelor of Engineering)': [
-      'Artificial Intelligence and Machine Learning',
-      'Computer Science & Engineering (Data Science)',
-      'Information Science and Engineering',
-      'Computer Science & Engineering (Internet of Things and Cyber Security including Block Chain Technology)',
-      'Electronics and Instrumentation Engineering',
-      'Computer Science and Design',
-      'Mechanical Engineering',
-      'Computer Science and Engineering',
-      'Medical Electronics Engineering',
-      'Computer Science and Business Systems',
-      'Electronics and Telecommunication Engineering',
-      'Computer Science & Engineering (Cyber Security)',
-      'Robotics and Artificial Intelligence',
-      'Aeronautical Engineering',
-      'Chemical Engineering',
-      'Automobile Engineering',
-      'Civil Engineering',
-      'Biotechnology',
-      'Electrical & Electronics Engineering',
-      'Electronics & Communication Engineering'
-    ],
-    'M.Tech (Master of Technology)': [
-      'Artificial Intelligence and Machine Learning',
-      'Computer Science & Engineering (Data Science)',
-      'Information Science and Engineering',
-      'Computer Science & Engineering (Internet of Things and Cyber Security including Block Chain Technology)',
-      'Electronics and Instrumentation Engineering',
-      'Computer Science and Design',
-      'Mechanical Engineering',
-      'Computer Science and Engineering',
-      'Medical Electronics Engineering',
-      'Computer Science and Business Systems',
-      'Electronics and Telecommunication Engineering',
-      'Computer Science & Engineering (Cyber Security)',
-      'Robotics and Artificial Intelligence',
-      'Aeronautical Engineering',
-      'Chemical Engineering',
-      'Automobile Engineering',
-      'Civil Engineering',
-      'Biotechnology',
-      'Electrical & Electronics Engineering',
-      'Electronics & Communication Engineering'
-    ],
-    'MBA (Master of Business Administration)': [
-      'Finance',
-      'Marketing',
-      'Human Resources',
-      'Operations Management',
-      'International Business',
-      'Business Analytics',
-      'Entrepreneurship',
-      'Supply Chain Management'
-    ],
-    'BBA (Bachelor of Business Administration)': [
-      'Finance',
-      'Marketing',
-      'Human Resources',
-      'Operations Management',
-      'International Business',
-      'Business Analytics',
-      'Entrepreneurship',
-      'Supply Chain Management'
-    ],
-    'B.Com (Bachelor of Commerce)': [
-      'Accounting',
-      'Banking & Finance',
-      'Taxation',
-      'Economics',
-      'Business Mathematics',
-      'Corporate Secretaryship'
-    ],
-    'M.Com (Master of Commerce)': [
-      'Accounting',
-      'Banking & Finance',
-      'Taxation',
-      'Economics',
-      'Business Mathematics',
-      'Corporate Secretaryship'
-    ],
-    'BCA (Bachelor of Computer Applications)': [
-      'Software Development',
-      'Database Management',
-      'Web Technologies',
-      'Mobile Application Development',
-      'System Analysis and Design',
-      'Network Administration'
-    ],
-    'MCA (Master of Computer Applications)': [
-      'Software Development',
-      'Database Management',
-      'Web Technologies',
-      'Mobile Application Development',
-      'System Analysis and Design',
-      'Network Administration'
-    ],
-    'MBBS (Bachelor of Medicine and Bachelor of Surgery)': [
-      'General Medicine',
-      'Surgery',
-      'Pediatrics',
-      'Cardiology',
-      'Neurology',
-      'Orthopedics',
-      'Dermatology',
-      'Radiology',
-      'Anesthesiology',
-      'Pathology'
-    ],
-    'Dental (Bachelor of Dental Surgery)': [
-      'Oral & Maxillofacial Surgery',
-      'Orthodontics',
-      'Periodontics',
-      'Endodontics',
-      'Prosthodontics',
-      'Oral Medicine'
-    ],
-    'B.Sc (Bachelor of Science)': [
-      'Physics',
-      'Chemistry',
-      'Mathematics',
-      'Biology',
-      'Microbiology',
-      'Biochemistry',
-      'Zoology',
-      'Botany',
-      'Environmental Science',
-      'Statistics'
-    ],
-    'M.Sc (Master of Science)': [
-      'Physics',
-      'Chemistry',
-      'Mathematics',
-      'Biology',
-      'Microbiology',
-      'Biochemistry',
-      'Zoology',
-      'Botany',
-      'Environmental Science',
-      'Statistics'
-    ],
-    'BA (Bachelor of Arts)': [
-      'English Literature',
-      'Hindi Literature',
-      'History',
-      'Political Science',
-      'Sociology',
-      'Philosophy',
-      'Psychology',
-      'Geography',
-      'Journalism & Mass Communication',
-      'Fine Arts',
-      'Music',
-      'Dance'
-    ],
-    'MA (Master of Arts)': [
-      'English Literature',
-      'Hindi Literature',
-      'History',
-      'Political Science',
-      'Sociology',
-      'Philosophy',
-      'Psychology',
-      'Geography',
-      'Journalism & Mass Communication',
-      'Fine Arts',
-      'Music',
-      'Dance'
-    ],
-    'LLB (Bachelor of Laws)': [
-      'Constitutional Law',
-      'Criminal Law',
-      'Corporate Law',
-      'International Law',
-      'Civil Law',
-      'Intellectual Property Law',
-      'Environmental Law'
-    ],
-    'LLM (Master of Laws)': [
-      'Constitutional Law',
-      'Criminal Law',
-      'Corporate Law',
-      'International Law',
-      'Civil Law',
-      'Intellectual Property Law',
-      'Environmental Law'
-    ],
-    'B.Ed (Bachelor of Education)': [
-      'Primary Education',
-      'Secondary Education',
-      'Special Education',
-      'Educational Psychology',
-      'Curriculum Development',
-      'Educational Technology',
-      'Physical Education'
-    ],
-    'M.Ed (Master of Education)': [
-      'Primary Education',
-      'Secondary Education',
-      'Special Education',
-      'Educational Psychology',
-      'Curriculum Development',
-      'Educational Technology',
-      'Physical Education'
-    ],
-    'Ph.D (Doctor of Philosophy)': [
-      'Engineering & Technology',
-      'Business & Management',
-      'Commerce & Economics',
-      'Computer Applications',
-      'Medical Sciences',
-      'Basic Sciences',
-      'Arts & Humanities',
-      'Law',
-      'Education'
-    ]
-  };
-
-  // Get available departments based on selected course
-  const getAvailableDepartments = () => {
-    if (!editData.course) return [];
-    return departmentsByCourse[editData.course] || [];
-  };
-
   const currentUserId = userId || user?.uid;
   const isOwnProfile = user && currentUserId === user.uid;
 
-  useEffect(() => {
-    if (currentUserId) {
-      fetchProfile();
-    }
-  }, [currentUserId]);
-
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     try {
       setLoading(true);
       
       const response = await apiService.getUserProfile(currentUserId);
       
       if (response.data.success) {
-        console.log('📋 Full profile data received:', response.data.profile);
-        console.log('🆔 Student ID in profile:', response.data.profile.studentId);
-        console.log('🆔 Student ID type:', typeof response.data.profile.studentId);
-        console.log('🆔 Student ID empty check:', !response.data.profile.studentId);
         setProfile(response.data.profile);
         setEditData({
           displayName: response.data.profile.displayName || '',
@@ -282,13 +47,10 @@ const Profile = () => {
           year: response.data.profile.year || '',
           bio: response.data.profile.bio || ''
         });
-        console.log('🆔 EditData studentId set to:', response.data.profile.studentId || '');
       } else {
-        console.error('❌ Profile fetch failed:', response.data);
         toast.error('Failed to load profile');
       }
     } catch (error) {
-      console.error('❌ Error fetching profile:', error);
       // More detailed error handling
       if (error.response) {
         // Server responded with error status
@@ -304,7 +66,13 @@ const Profile = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentUserId]);
+
+  useEffect(() => {
+    if (currentUserId) {
+      fetchProfile();
+    }
+  }, [currentUserId, fetchProfile]);
 
   const handleSaveProfile = async () => {
     try {
@@ -318,7 +86,6 @@ const Profile = () => {
         toast.error('Failed to update profile');
       }
     } catch (error) {
-      console.error('❌ Error updating profile:', error);
       toast.error('Failed to update profile');
     }
   };
@@ -357,7 +124,6 @@ const Profile = () => {
         day: 'numeric'
       });
     } catch (error) {
-      console.error('❌ Error formatting date:', error, 'Date value:', date);
       return 'Unknown';
     }
   };
@@ -485,56 +251,27 @@ const Profile = () => {
           <div className="border-t pt-4">
             {editing ? (
               <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {/* Course and Department - Display only, auto-selected from Student ID */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">Course</label>
-                    <select
-                      value={editData.course}
-                      onChange={(e) => setEditData({...editData, course: e.target.value, department: ''})}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="">Select Course</option>
-                      <option value="B.E (Bachelor of Engineering)">B.E (Bachelor of Engineering)</option>
-                      <option value="M.Tech (Master of Technology)">M.Tech (Master of Technology)</option>
-                      <option value="MBA (Master of Business Administration)">MBA (Master of Business Administration)</option>
-                      <option value="BBA (Bachelor of Business Administration)">BBA (Bachelor of Business Administration)</option>
-                      <option value="B.Com (Bachelor of Commerce)">B.Com (Bachelor of Commerce)</option>
-                      <option value="M.Com (Master of Commerce)">M.Com (Master of Commerce)</option>
-                      <option value="Ph.D (Doctor of Philosophy)">Ph.D (Doctor of Philosophy)</option>
-                      <option value="BCA (Bachelor of Computer Applications)">BCA (Bachelor of Computer Applications)</option>
-                      <option value="MCA (Master of Computer Applications)">MCA (Master of Computer Applications)</option>
-                      <option value="Dental (Bachelor of Dental Surgery)">Dental (Bachelor of Dental Surgery)</option>
-                      <option value="MBBS (Bachelor of Medicine and Bachelor of Surgery)">MBBS (Bachelor of Medicine and Bachelor of Surgery)</option>
-                      <option value="B.Sc (Bachelor of Science)">B.Sc (Bachelor of Science)</option>
-                      <option value="M.Sc (Master of Science)">M.Sc (Master of Science)</option>
-                      <option value="BA (Bachelor of Arts)">BA (Bachelor of Arts)</option>
-                      <option value="MA (Master of Arts)">MA (Master of Arts)</option>
-                      <option value="LLB (Bachelor of Laws)">LLB (Bachelor of Laws)</option>
-                      <option value="LLM (Master of Laws)">LLM (Master of Laws)</option>
-                      <option value="B.Ed (Bachelor of Education)">B.Ed (Bachelor of Education)</option>
-                      <option value="M.Ed (Master of Education)">M.Ed (Master of Education)</option>
-                    </select>
+                    <div className="w-full border border-gray-200 bg-gray-50 rounded-lg px-3 py-2 text-sm text-gray-600">
+                      {profile.course || 'Auto-selected from Student ID'}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">Auto-selected from Student ID</p>
                   </div>
                   
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">Department</label>
-                    <select
-                      value={editData.department}
-                      onChange={(e) => setEditData({...editData, department: e.target.value})}
-                      disabled={!editData.course}
-                      className={`w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                        !editData.course ? 'bg-gray-100 cursor-not-allowed' : ''
-                      }`}
-                    >
-                      <option value="">
-                        {editData.course ? 'Select Department' : 'Select course first'}
-                      </option>
-                      {getAvailableDepartments().map((dept) => (
-                        <option key={dept} value={dept}>{dept}</option>
-                      ))}
-                    </select>
+                    <div className="w-full border border-gray-200 bg-gray-50 rounded-lg px-3 py-2 text-sm text-gray-600">
+                      {profile.department || 'Auto-selected from Student ID'}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">Auto-selected from Student ID</p>
                   </div>
-                  
+                </div>
+                
+                {/* Year - Editable */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">Year</label>
                     <select

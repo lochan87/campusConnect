@@ -346,19 +346,10 @@ const Register = () => {
     return { strength: 100, label: 'Strong', color: 'bg-green-500' };
   };
 
-  // Function to generate campusId from studentId and firstName
+  // Function to generate campusId - simple shared format for all users
   const generateCampusId = (studentId, firstName) => {
-    if (!studentId || !firstName) return '';
-    
-    // New format: firstname_studentid (e.g., lochan_22BEN03073)
-    const cleanFirstName = firstName.replace(/[^a-zA-Z]/g, '').toLowerCase();
-    const cleanStudentId = studentId.replace(/[^a-zA-Z0-9]/g, '');
-    
-    if (cleanFirstName && cleanStudentId) {
-      return `${cleanFirstName}_${cleanStudentId}`;
-    }
-    
-    return '';
+    // Simple shared campus ID for all users
+    return 'CC_Name';
   };
 
   const handleChange = (e) => {
@@ -1033,17 +1024,6 @@ const Register = () => {
                   <p className="text-xs text-blue-600 mt-1">
                     💡 Course and department will be auto-selected based on your Student ID
                   </p>
-                  {/* Campus ID Preview */}
-                  {formData.studentId && formData.firstName && formData.campusId && (
-                    <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-lg">
-                      <div className="flex items-center space-x-2">
-                        <FiMapPin className="w-4 h-4 text-blue-600" />
-                        <span className="text-sm text-blue-700">
-                          Campus ID: <span className="font-medium font-mono">{formData.campusId}</span>
-                        </span>
-                      </div>
-                    </div>
-                  )}
                 </div>
 
                 {/* Course */}
