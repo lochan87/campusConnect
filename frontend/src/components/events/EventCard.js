@@ -1,9 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { FiCalendar, FiMapPin, FiClock, FiUser, FiMoreHorizontal, FiEdit2, FiTrash2, FiFlag } from 'react-icons/fi';
 import ReportEventModal from './ReportEventModal';
 
 const EventCard = ({ event, currentUser, onEdit, onDelete }) => {
+  const navigate = useNavigate();
   const [showMenu, setShowMenu] = useState(false);
   const [reportModal, setReportModal] = useState({ isOpen: false });
   const menuRef = useRef(null);
@@ -37,11 +39,23 @@ const EventCard = ({ event, currentUser, onEdit, onDelete }) => {
     });
   };
 
+  const handleCardClick = (e) => {
+    // Don't navigate if clicking on interactive elements
+    const clickableElements = ['button', 'a', 'input', 'textarea'];
+    const isClickableElement = clickableElements.includes(e.target.tagName.toLowerCase());
+    const isInsideClickable = e.target.closest('button, a, input, textarea');
+    
+    if (!isClickableElement && !isInsideClickable) {
+      navigate(`/event/${event.id}`);
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-200"
+      className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-200 cursor-pointer"
+      onClick={handleCardClick}
     >
       {/* Event Poster */}
       {(event.posterData || event.poster) && (

@@ -79,7 +79,7 @@ api.interceptors.response.use(
 export const apiService = {
   // Posts
   getPosts: (params = {}) => api.get('/posts', { params }),
-  getPost: (id) => api.get(`/posts/${id}`),
+  getPost: (id, userId) => api.get(`/posts/${id}`, { params: userId ? { userId } : {} }),
   createPost: (postData) => {
     // If postData is already FormData, use it directly
     if (postData instanceof FormData) {
@@ -126,7 +126,7 @@ export const apiService = {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
   },
-  votePost: (id, voteData) => api.post(`/posts/${id}/vote`, voteData),
+  likePost: (id, userId) => api.post(`/posts/${id}/like`, { userId }),
   deletePost: (id, userId) => api.delete(`/posts/${id}`, { data: { userId } }),
   reportPost: (id, reportData) => api.post(`/posts/${id}/report`, reportData),
   getEventSummary: (campusId) => api.get('/posts/summary/events', { params: { campusId } }),
@@ -191,6 +191,16 @@ export const apiService = {
   // Health check
   healthCheck: () => api.get('/health', { baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000' })
 };
+
+// Convenient export functions for easy access
+export const getPost = (id, userId) => apiService.getPost(id, userId);
+export const getEvent = (id) => apiService.getEvent(id);
+export const deleteEvent = (id, userId) => apiService.deleteEvent(id, userId);
+export const likePost = (id, userId) => apiService.likePost(id, userId);
+export const deletePost = (id, userId) => apiService.deletePost(id, userId);
+export const getComments = (postId) => apiService.getComments(postId);
+export const createComment = (postId, commentData) => apiService.createComment(postId, commentData);
+export const deleteComment = (postId, commentId, userId) => apiService.deleteComment(postId, commentId, userId);
 
 // Utility functions
 export const uploadImage = async (file) => {

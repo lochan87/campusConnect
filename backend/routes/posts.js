@@ -58,16 +58,16 @@ router.get('/', async (req, res) => {
     
     let posts = [];
 
-    // Get user votes for all posts if userId is provided
-    let userVotes = {};
+    // Get user likes for all posts if userId is provided
+    let userLikes = {};
     if (userId) {
-      const votesSnapshot = await db.collection('votes')
+      const likesSnapshot = await db.collection('likes')
         .where('userId', '==', userId)
         .get();
       
-      votesSnapshot.forEach(voteDoc => {
-        const voteData = voteDoc.data();
-        userVotes[voteData.postId] = voteData.type;
+      likesSnapshot.forEach(likeDoc => {
+        const likeData = likeDoc.data();
+        userLikes[likeData.postId] = true;
       });
     }
 
@@ -77,7 +77,7 @@ router.get('/', async (req, res) => {
         id: doc.id,
         ...postData,
         createdAt: postData.createdAt?.toDate?.() || postData.createdAt,
-        userVote: userId ? userVotes[doc.id] || null : null // 'up', 'down', or null
+        userHasLiked: userId ? userLikes[doc.id] || false : false // true or false
       });
     });
 
@@ -292,6 +292,7 @@ router.get('/:id', async (req, res) => {
   try {
     const db = getFirestore();
     const { id } = req.params;
+    const { userId } = req.query; // Get userId from query params
 
     const doc = await db.collection('posts').doc(id).get();
 
@@ -302,10 +303,20 @@ router.get('/:id', async (req, res) => {
       });
     }
 
+    const postData = doc.data();
+    let userHasLiked = false;
+
+    // Check if user has liked this post
+    if (userId) {
+      const likeDoc = await db.collection('likes').doc(`${id}_${userId}`).get();
+      userHasLiked = likeDoc.exists;
+    }
+
     const post = {
       id: doc.id,
-      ...doc.data(),
-      createdAt: doc.data().createdAt?.toDate?.() || doc.data().createdAt
+      ...postData,
+      createdAt: postData.createdAt?.toDate?.() || postData.createdAt,
+      userHasLiked
     };
 
     res.json({
@@ -322,145 +333,118 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST /api/posts/:id/vote - Vote on a post (upvote/downvote)
-router.post('/:id/vote', async (req, res) => {
+// POST /api/posts/:id/like - Like/unlike a post
+router.post('/:id/like', async (req, res) => {
   try {
     const db = getFirestore();
     const { id } = req.params;
-    const { type, userId } = req.body; // type: 'up' or 'down'
-
-    if (!['up', 'down'].includes(type)) {
-      return res.status(400).json({
-        success: false,
-        error: 'Invalid vote type'
-      });
-    }
+    const { userId } = req.body;
 
     const postRef = db.collection('posts').doc(id);
-    const voteRef = db.collection('votes').doc(`${id}_${userId}`);
+    const likeRef = db.collection('likes').doc(`${id}_${userId}`);
 
     const result = await db.runTransaction(async (transaction) => {
+      // ALL READS MUST HAPPEN FIRST
       const postDoc = await transaction.get(postRef);
-      const voteDoc = await transaction.get(voteRef);
+      const likeDoc = await transaction.get(likeRef);
 
       if (!postDoc.exists) {
         throw new Error('Post not found');
       }
 
       const postData = postDoc.data();
-      let upvotes = postData.upvotes || 0;
-      let downvotes = postData.downvotes || 0;
-      let reputationChange = 0; // Track reputation changes for post author
-
-      if (voteDoc.exists) {
-        const existingVote = voteDoc.data();
-        
-        // Remove existing vote counts
-        if (existingVote.type === 'up') {
-          upvotes--;
-        } else {
-          downvotes--;
-        }
-
-        // If same vote type, remove vote; otherwise, add new vote
-        if (existingVote.type === type) {
-          transaction.delete(voteRef);
-          // No reputation change when removing vote (reputation never decreases)
-        } else {
-          if (type === 'up') {
-            upvotes++;
-            reputationChange = +1; // Only give reputation for new upvotes
-          } else {
-            downvotes++;
-            // No reputation change for downvotes
-          }
-          transaction.update(voteRef, { type, updatedAt: new Date() });
-        }
-      } else {
-        // New vote
-        if (type === 'up') {
-          upvotes++;
-          reputationChange = +1; // Give reputation for new upvote
-        } else {
-          downvotes++;
-          // No reputation change for downvotes
-        }
-        transaction.set(voteRef, {
-          postId: id,
-          userId,
-          type,
-          createdAt: new Date()
-        });
-      }
-
-      // Update post counts
-      transaction.update(postRef, {
-        upvotes,
-        downvotes,
-        updatedAt: new Date()
-      });
-
-      // Update author's reputation if there's a positive change, author exists, and voter is not the author
-      if (reputationChange > 0 && postData.userId && postData.userId !== userId) {
-        // Check if author is a demo user
+      
+      // Pre-read author document if we might need it
+      let authorDoc = null;
+      let authorRef = null;
+      if (postData.userId && postData.userId !== userId) {
         const isDemoUser = (userId) => {
           return userId.startsWith('demo-') || userId.includes('demo');
         };
         
         if (!isDemoUser(postData.userId)) {
-          const authorRef = db.collection('users').doc(postData.userId);
-          const authorDoc = await transaction.get(authorRef);
-          
-          if (authorDoc.exists) {
-            const authorData = authorDoc.data();
-            const newReputation = (authorData.reputation || 0) + reputationChange;
-            
-            console.log(`📈 Updating reputation for user ${postData.userId}: ${authorData.reputation || 0} + ${reputationChange} = ${newReputation}`);
-            
-            transaction.update(authorRef, {
-              reputation: newReputation,
-              lastActive: new Date()
-            });
-          }
-        } else {
-          console.log(`🚫 Demo user ${postData.userId} - no reputation awarded for upvote`);
+          authorRef = db.collection('users').doc(postData.userId);
+          authorDoc = await transaction.get(authorRef);
         }
       }
 
-      return { upvotes, downvotes, reputationChange };
+      // NOW PROCESS THE LIKE LOGIC
+      let likes = postData.likes || 0;
+      let reputationChange = 0; // Track reputation changes for post author
+      let isLiked = false;
+
+      if (likeDoc.exists) {
+        // Unlike - remove the like
+        likes--;
+        transaction.delete(likeRef);
+        isLiked = false;
+        // No reputation change when removing like (reputation never decreases)
+      } else {
+        // Like - add the like
+        likes++;
+        reputationChange = +1; // Give reputation for new like
+        isLiked = true;
+        transaction.set(likeRef, {
+          postId: id,
+          userId,
+          createdAt: new Date()
+        });
+      }
+
+      // Update post like count
+      transaction.update(postRef, {
+        likes,
+        updatedAt: new Date()
+      });
+
+      // Update author's reputation if there's a positive change and we have the author doc
+      if (reputationChange > 0 && authorDoc && authorDoc.exists) {
+        const authorData = authorDoc.data();
+        const newReputation = (authorData.reputation || 0) + reputationChange;
+        
+        console.log(`📈 Updating reputation for user ${postData.userId}: ${authorData.reputation || 0} + ${reputationChange} = ${newReputation}`);
+        
+        transaction.update(authorRef, {
+          reputation: newReputation,
+          lastActive: new Date()
+        });
+      } else if (reputationChange > 0 && postData.userId && postData.userId !== userId) {
+        console.log(`🚫 Demo user ${postData.userId} - no reputation awarded for like`);
+      }
+
+      return { likes, reputationChange, isLiked };
     });
 
-    // After transaction, get the current vote status
-    const finalVoteDoc = await voteRef.get();
-    const userCurrentVote = finalVoteDoc.exists ? finalVoteDoc.data().type : null;
+    // After transaction, get the current like status
+    const finalLikeDoc = await likeRef.get();
+    const userHasLiked = finalLikeDoc.exists;
 
     // Log reputation changes
     if (result.reputationChange > 0) {
-      console.log(`✨ Reputation +${result.reputationChange} awarded to post author for upvote`);
+      console.log(`✨ Reputation +${result.reputationChange} awarded to post author for like`);
     }
 
     // Emit real-time update
     if (req.app.get('io')) {
-      req.app.get('io').emit('post_voted', {
+      req.app.get('io').emit('post_liked', {
         postId: id,
-        upvotes: result.upvotes,
-        downvotes: result.downvotes,
-        userVote: userCurrentVote
+        likes: result.likes,
+        userHasLiked
       });
     }
 
     res.json({
       success: true,
-      upvotes: result.upvotes,
-      downvotes: result.downvotes,
-      userVote: userCurrentVote
+      likes: result.likes,
+      userHasLiked,
+      reputationChange: result.reputationChange
     });
 
   } catch (error) {
-    console.error('Error voting on post:', error);
+    console.error('Error liking post:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to vote on post'
+      error: 'Failed to like post'
     });
   }
 });

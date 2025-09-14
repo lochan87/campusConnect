@@ -202,14 +202,13 @@ export const PostProvider = ({ children }) => {
       dispatch({ type: POST_ACTIONS.DELETE_POST, payload: data.postId });
     };
 
-    const handlePostVoted = (voteData) => {
+    const handlePostLiked = (likeData) => {
       dispatch({ 
         type: POST_ACTIONS.UPDATE_POST, 
         payload: {
-          id: voteData.postId,
-          upvotes: voteData.upvotes,
-          downvotes: voteData.downvotes,
-          userVote: voteData.userVote
+          id: likeData.postId,
+          likes: likeData.likes,
+          userHasLiked: likeData.userHasLiked
         }
       });
     };
@@ -252,7 +251,7 @@ export const PostProvider = ({ children }) => {
     socketService.on('post_created', handleNewPost);
     socketService.on('post_updated', handlePostUpdated);
     socketService.on('post_deleted', handlePostDeleted);
-    socketService.on('post_voted', handlePostVoted);
+    socketService.on('post_liked', handlePostLiked);
     socketService.on('poll_created', handleNewPoll);
     socketService.on('poll_updated', handlePollUpdated);
     socketService.on('poll_deleted', handlePollDeleted);
@@ -264,7 +263,7 @@ export const PostProvider = ({ children }) => {
       socketService.off('post_created', handleNewPost);
       socketService.off('post_updated', handlePostUpdated);
       socketService.off('post_deleted', handlePostDeleted);
-      socketService.off('post_voted', handlePostVoted);
+      socketService.off('post_liked', handlePostLiked);
       socketService.off('poll_created', handleNewPoll);
       socketService.off('poll_updated', handlePollUpdated);
       socketService.off('poll_deleted', handlePollDeleted);
@@ -421,20 +420,17 @@ export const PostProvider = ({ children }) => {
     }
   };
 
-  // Vote on post
-  const voteOnPost = async (postId, voteType) => {
+  // Like/unlike post
+  const likePost = async (postId) => {
     try {
-      const response = await apiService.votePost(postId, {
-        type: voteType,
-        userId: user.uid
-      });
+      const response = await apiService.likePost(postId, user.uid);
       
       if (response.data.success) {
-        // Vote will be updated via socket event
+        // Like will be updated via socket event
         return { success: true };
       }
     } catch (error) {
-      const errorMessage = error.response?.data?.error || 'Failed to vote';
+      const errorMessage = error.response?.data?.error || 'Failed to like post';
       toast.error(errorMessage);
       throw error;
     }
@@ -624,7 +620,7 @@ export const PostProvider = ({ children }) => {
     fetchEvents,
     createPost,
     createPoll,
-    voteOnPost,
+    likePost,
     voteOnPoll,
     deletePost,
     editPost,

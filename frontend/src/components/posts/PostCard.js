@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { FiHeart, FiMessageCircle, FiShare2, FiMapPin, FiClock, FiMoreHorizontal, FiEdit2, FiTrash2, FiFlag } from 'react-icons/fi';
 import ReportPostModal from './ReportPostModal';
 
-const PostCard = ({ post, currentUser, onVote, onComment, onShare, onEdit, onDelete }) => {
+const PostCard = ({ post, currentUser, onLike, onShare, onEdit, onDelete }) => {
+  const navigate = useNavigate();
   const [showMenu, setShowMenu] = useState(false);
   const [isLiking, setIsLiking] = useState(false);
-  const [optimisticVote, setOptimisticVote] = useState(null);
-  const [optimisticUpvotes, setOptimisticUpvotes] = useState(post.upvotes || 0);
+  const [optimisticLiked, setOptimisticLiked] = useState(post.userHasLiked || false);
+  const [optimisticLikes, setOptimisticLikes] = useState(post.likes || 0);
   const [reportModal, setReportModal] = useState({ isOpen: false });
   const menuRef = useRef(null);
 
@@ -27,10 +29,10 @@ const PostCard = ({ post, currentUser, onVote, onComment, onShare, onEdit, onDel
   // Sync optimistic state with actual post data
   useEffect(() => {
     if (!isLiking) {
-      setOptimisticVote(post.userVote || null);
-      setOptimisticUpvotes(post.upvotes || 0);
+      setOptimisticLiked(post.userHasLiked || false);
+      setOptimisticLikes(post.likes || 0);
     }
-  }, [post.userVote, post.upvotes, isLiking]);
+  }, [post.userHasLiked, post.likes, isLiking]);
 
   const {
     id,
@@ -49,50 +51,35 @@ const PostCard = ({ post, currentUser, onVote, onComment, onShare, onEdit, onDel
     imageMetadata
   } = post;
 
-  const handleVote = async (type) => {
-    if (onVote && !isLiking && currentUser) {
+  const handleLike = async () => {
+    if (onLike && !isLiking && currentUser) {
       setIsLiking(true);
       
       // Optimistic update
-      const previousVote = optimisticVote;
-      const previousUpvotes = optimisticUpvotes;
+      const previousLiked = optimisticLiked;
+      const previousLikes = optimisticLikes;
       
-      let newUpvotes = optimisticUpvotes;
-      let newVote = null;
+      let newLikes = optimisticLikes;
+      let newLiked = !optimisticLiked;
       
-      if (previousVote === type) {
-        // Remove vote (same type clicked)
-        newVote = null;
-        if (type === 'up') {
-          newUpvotes = Math.max(0, optimisticUpvotes - 1);
-        }
+      if (optimisticLiked) {
+        // Unlike
+        newLikes = Math.max(0, optimisticLikes - 1);
       } else {
-        // Add new vote or switch vote
-        newVote = type;
-        if (type === 'up') {
-          if (previousVote === 'down') {
-            newUpvotes = optimisticUpvotes + 1; // Just switch from down to up
-          } else {
-            newUpvotes = optimisticUpvotes + 1; // Add new upvote
-          }
-        } else { // type === 'down'
-          if (previousVote === 'up') {
-            newUpvotes = Math.max(0, optimisticUpvotes - 1); // Switch from up to down
-          }
-          // For downvotes, we don't change the upvote count unless switching from up
-        }
+        // Like
+        newLikes = optimisticLikes + 1;
       }
       
-      setOptimisticVote(newVote);
-      setOptimisticUpvotes(newUpvotes);
+      setOptimisticLiked(newLiked);
+      setOptimisticLikes(newLikes);
       
       try {
-        await onVote(id, type);
+        await onLike(id);
       } catch (error) {
-        console.error('Error voting:', error);
+        console.error('Error liking post:', error);
         // Revert optimistic update on error
-        setOptimisticVote(previousVote);
-        setOptimisticUpvotes(previousUpvotes);
+        setOptimisticLiked(previousLiked);
+        setOptimisticLikes(previousLikes);
       } finally {
         setTimeout(() => setIsLiking(false), 300);
       }
@@ -130,11 +117,23 @@ const PostCard = ({ post, currentUser, onVote, onComment, onShare, onEdit, onDel
 
   const isOwner = currentUser && (currentUser.uid === userId || currentUser.id === userId);
 
+  const handleCardClick = (e) => {
+    // Don't navigate if clicking on interactive elements
+    const clickableElements = ['button', 'a', 'input', 'textarea'];
+    const isClickableElement = clickableElements.includes(e.target.tagName.toLowerCase());
+    const isInsideClickable = e.target.closest('button, a, input, textarea');
+    
+    if (!isClickableElement && !isInsideClickable) {
+      navigate(`/post/${id}`);
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow duration-200"
+      className="bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow duration-200 cursor-pointer"
+      onClick={handleCardClick}
     >
       {/* Header */}
       <div className="p-4 pb-2">
@@ -238,11 +237,17 @@ const PostCard = ({ post, currentUser, onVote, onComment, onShare, onEdit, onDel
       </div>
 
       {/* Content */}
-      <div className="px-4 pb-2">
-        {title && (
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
-        )}
-        <p className="text-gray-700 whitespace-pre-wrap">{content}</p>
+      <div className="px-4 pb-4">
+        <div className="flex-1 min-w-0">
+          <h3 className="text-lg font-semibold text-gray-900 break-words leading-tight">
+            {title}
+          </h3>
+          {content && (
+            <p className="text-gray-700 mt-2 break-words whitespace-pre-wrap leading-relaxed">
+              {content}
+            </p>
+          )}
+        </div>
         
         {(imageData || imageUrl) && (
           <div className="mt-3">
@@ -270,10 +275,10 @@ const PostCard = ({ post, currentUser, onVote, onComment, onShare, onEdit, onDel
           <div className="flex items-center space-x-4">
             <motion.button
               whileTap={{ scale: 0.9 }}
-              onClick={() => handleVote('up')}
+              onClick={handleLike}
               disabled={isLiking || !currentUser}
               className={`flex items-center space-x-1 transition-colors ${
-                optimisticVote === 'up'
+                optimisticLiked
                   ? 'text-red-500' 
                   : isLiking 
                     ? 'text-red-400' 
@@ -284,14 +289,17 @@ const PostCard = ({ post, currentUser, onVote, onComment, onShare, onEdit, onDel
                 animate={isLiking ? { scale: [1, 1.2, 1] } : {}}
                 transition={{ duration: 0.3 }}
               >
-                <FiHeart className={`w-4 h-4 ${optimisticVote === 'up' ? 'fill-current' : ''}`} />
+                <FiHeart className={`w-4 h-4 ${optimisticLiked ? 'fill-current' : ''}`} />
               </motion.div>
-              <span className="text-sm font-medium">{optimisticUpvotes}</span>
+              <span className="text-sm font-medium">{optimisticLikes}</span>
             </motion.button>
             
             <motion.button
               whileTap={{ scale: 0.95 }}
-              onClick={() => onComment && onComment(id)}
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/post/${id}`);
+              }}
               className="flex items-center space-x-1 text-gray-500 hover:text-blue-500 transition-colors"
             >
               <FiMessageCircle className="w-4 h-4" />
