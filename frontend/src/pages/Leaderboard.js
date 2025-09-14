@@ -278,16 +278,18 @@ const Leaderboard = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5 }}
-        className="mt-8 text-center"
+        className="mt-8 text-center space-y-4"
       >
-        <button
-          onClick={fetchLeaderboard}
-          disabled={loading}
-          className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-        >
-          <span>Refresh Leaderboard</span>
-          <ChevronRightIcon className="w-4 h-4" />
-        </button>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <button
+            onClick={fetchLeaderboard}
+            disabled={loading}
+            className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+          >
+            <span>Refresh Leaderboard</span>
+            <ChevronRightIcon className="w-4 h-4" />
+          </button>
+        </div>
       </motion.div>
     </motion.div>
   );

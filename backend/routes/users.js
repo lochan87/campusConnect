@@ -52,6 +52,301 @@ router.get('/check-username/:username', async (req, res) => {
   }
 });
 
+// GET /api/users/check-email/:email - Check email availability
+router.get('/check-email/:email', async (req, res) => {
+  try {
+    const email = decodeURIComponent(req.params.email).toLowerCase();
+    const db = getFirestore();
+    const auth = getAuth();
+    
+    console.log(`🔍 Checking email availability for: ${email}`);
+    
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      console.log(`❌ Invalid email format: ${email}`);
+      return res.json({
+        success: true,
+        available: false,
+        message: 'Invalid email format'
+      });
+    }
+
+    // Check Firebase Auth for existing user with this email
+    try {
+      const userRecord = await auth.getUserByEmail(email);
+      console.log(`❌ Email found in Firebase Auth: ${email}`, userRecord.uid);
+      // If we get here, user exists
+      return res.json({
+        success: true,
+        available: false,
+        message: 'Email is already registered'
+      });
+    } catch (authError) {
+      console.log(`🔍 Firebase Auth check result for ${email}:`, authError.code);
+      // If error is 'auth/user-not-found', email is available
+      if (authError.code === 'auth/user-not-found') {
+        console.log(`✅ Email not found in Firebase Auth, checking Firestore...`);
+        // Also check Firestore just in case there's a mismatch
+        const usersQuery = await db.collection('users')
+          .where('email', '==', email)
+          .limit(1)
+          .get();
+
+        const isAvailable = usersQuery.empty;
+        console.log(`🔍 Firestore check result: ${isAvailable ? 'Available' : 'Taken'}`);
+        
+        if (!usersQuery.empty) {
+          console.log(`❌ Email found in Firestore:`, usersQuery.docs[0].data());
+        }
+
+        return res.json({
+          success: true,
+          available: isAvailable,
+          message: isAvailable ? 'Email is available' : 'Email is already registered'
+        });
+      } else {
+        // Some other auth error
+        console.log(`❌ Firebase Auth error:`, authError);
+        throw authError;
+      }
+    }
+
+  } catch (error) {
+    console.error('❌ Error checking email:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to check email availability'
+    });
+  }
+});
+
+// GET /api/users/debug-email/:email - Debug email checking process
+router.get('/debug-email/:email', async (req, res) => {
+  try {
+    const email = decodeURIComponent(req.params.email).toLowerCase();
+    const db = getFirestore();
+    const auth = getAuth();
+    
+    const debugInfo = {
+      email: email,
+      timestamp: new Date().toISOString(),
+      checks: {}
+    };
+    
+    console.log(`🐛 DEBUG: Full email check for ${email}`);
+    
+    // Check Firebase Auth
+    try {
+      const userRecord = await auth.getUserByEmail(email);
+      debugInfo.checks.firebaseAuth = {
+        exists: true,
+        uid: userRecord.uid,
+        created: userRecord.metadata.creationTime,
+        lastSignIn: userRecord.metadata.lastSignInTime
+      };
+      console.log(`🐛 Firebase Auth: USER EXISTS`, userRecord.uid);
+    } catch (authError) {
+      debugInfo.checks.firebaseAuth = {
+        exists: false,
+        error: authError.code,
+        message: authError.message
+      };
+      console.log(`🐛 Firebase Auth: USER NOT FOUND`, authError.code);
+    }
+    
+    // Check Firestore
+    const usersQuery = await db.collection('users')
+      .where('email', '==', email)
+      .get();
+    
+    debugInfo.checks.firestore = {
+      exists: !usersQuery.empty,
+      recordCount: usersQuery.docs.length,
+      records: usersQuery.docs.map(doc => ({
+        id: doc.id,
+        data: doc.data()
+      }))
+    };
+    
+    console.log(`🐛 Firestore: ${usersQuery.empty ? 'NO RECORDS' : `${usersQuery.docs.length} RECORDS FOUND`}`);
+    
+    // Overall availability
+    const isAvailable = debugInfo.checks.firebaseAuth.exists === false && 
+                       debugInfo.checks.firestore.exists === false;
+    
+    debugInfo.available = isAvailable;
+    debugInfo.recommendation = isAvailable ? 
+      'Email is available for registration' : 
+      'Email is already in use - check Firebase Auth or Firestore records';
+    
+    res.json({
+      success: true,
+      debug: debugInfo
+    });
+    
+  } catch (error) {
+    console.error('🐛 DEBUG ERROR:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      debug: {
+        error: error.message,
+        stack: error.stack
+      }
+    });
+  }
+});
+
+// GET /api/users/cleanup-all-orphaned - Clean up all orphaned Firestore records
+router.get('/cleanup-all-orphaned', async (req, res) => {
+  try {
+    const db = getFirestore();
+    const auth = getAuth();
+    
+    console.log(`🧹 Starting cleanup of all orphaned Firestore records...`);
+    
+    // Get all users from Firestore
+    const allUsers = await db.collection('users').get();
+    
+    if (allUsers.empty) {
+      return res.json({
+        success: true,
+        message: 'No users found in Firestore',
+        orphanedRecords: 0
+      });
+    }
+    
+    const orphanedRecords = [];
+    
+    // Check each Firestore user against Firebase Auth
+    for (const doc of allUsers.docs) {
+      const userData = doc.data();
+      const email = userData.email;
+      
+      try {
+        // Try to get user from Firebase Auth
+        await auth.getUserByEmail(email);
+        console.log(`✅ User exists in both systems: ${email}`);
+      } catch (authError) {
+        if (authError.code === 'auth/user-not-found') {
+          console.log(`❌ Orphaned record found: ${email}`);
+          orphanedRecords.push({
+            docId: doc.id,
+            email: email,
+            data: userData
+          });
+        } else {
+          console.log(`⚠️ Error checking ${email}:`, authError.code);
+        }
+      }
+    }
+    
+    if (orphanedRecords.length === 0) {
+      return res.json({
+        success: true,
+        message: 'No orphaned records found',
+        orphanedRecords: 0
+      });
+    }
+    
+    // Clean up orphaned records
+    console.log(`🧹 Removing ${orphanedRecords.length} orphaned records...`);
+    const batch = db.batch();
+    orphanedRecords.forEach(record => {
+      const docRef = db.collection('users').doc(record.docId);
+      batch.delete(docRef);
+    });
+    
+    await batch.commit();
+    
+    return res.json({
+      success: true,
+      message: `Successfully cleaned up ${orphanedRecords.length} orphaned records`,
+      orphanedRecords: orphanedRecords.length,
+      cleanedEmails: orphanedRecords.map(r => r.email)
+    });
+    
+  } catch (error) {
+    console.error('❌ Error during full cleanup:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to cleanup orphaned records'
+    });
+  }
+});
+
+// GET /api/users/cleanup-email/:email - Clean up orphaned Firestore records
+router.get('/cleanup-email/:email', async (req, res) => {
+  try {
+    const email = decodeURIComponent(req.params.email).toLowerCase();
+    const db = getFirestore();
+    const auth = getAuth();
+    
+    console.log(`🧹 Cleaning up records for email: ${email}`);
+    
+    // Check if user exists in Firebase Auth
+    let authUserExists = false;
+    try {
+      await auth.getUserByEmail(email);
+      authUserExists = true;
+      console.log(`✅ User exists in Firebase Auth`);
+    } catch (authError) {
+      if (authError.code === 'auth/user-not-found') {
+        console.log(`❌ User not found in Firebase Auth`);
+      } else {
+        throw authError;
+      }
+    }
+    
+    // Check Firestore records
+    const usersQuery = await db.collection('users')
+      .where('email', '==', email)
+      .get();
+    
+    if (usersQuery.empty) {
+      console.log(`✅ No Firestore records found for ${email}`);
+      return res.json({
+        success: true,
+        message: 'No cleanup needed - no records found',
+        authExists: authUserExists,
+        firestoreRecords: 0
+      });
+    }
+    
+    // If Firebase Auth user doesn't exist but Firestore records do, clean them up
+    if (!authUserExists) {
+      console.log(`🧹 Removing ${usersQuery.docs.length} orphaned Firestore records`);
+      const batch = db.batch();
+      usersQuery.docs.forEach(doc => {
+        batch.delete(doc.ref);
+      });
+      await batch.commit();
+      
+      return res.json({
+        success: true,
+        message: `Cleaned up ${usersQuery.docs.length} orphaned Firestore records`,
+        authExists: false,
+        removedRecords: usersQuery.docs.length
+      });
+    } else {
+      return res.json({
+        success: true,
+        message: 'User exists in both Firebase Auth and Firestore - no cleanup needed',
+        authExists: true,
+        firestoreRecords: usersQuery.docs.length
+      });
+    }
+    
+  } catch (error) {
+    console.error('❌ Error during cleanup:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to cleanup email records'
+    });
+  }
+});
+
 // POST /api/users/register - Register a new user
 router.post('/register', async (req, res) => {
   try {
@@ -165,7 +460,7 @@ router.post('/register', async (req, res) => {
     
     let errorMessage = 'Failed to register user';
     if (error.code === 'auth/email-already-exists') {
-      errorMessage = 'Email already exists';
+      errorMessage = 'The email address is already in use by another account.';
     } else if (error.code === 'auth/invalid-email') {
       errorMessage = 'Invalid email address';
     } else if (error.code === 'auth/weak-password') {

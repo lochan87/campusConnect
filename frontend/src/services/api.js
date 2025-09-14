@@ -168,7 +168,7 @@ export const apiService = {
   
   // Leaderboard
   getLeaderboardData: () => api.get('/leaderboard'),
-
+  
   // Comments (if implemented)
   getComments: (postId) => api.get(`/posts/${postId}/comments`),
   createComment: (postId, commentData) => api.post(`/posts/${postId}/comments`, commentData),

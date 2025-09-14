@@ -30,7 +30,7 @@ const Register = () => {
     department: '',
     year: '',
     bio: '',
-    campusId: 'demo-campus'
+    campusId: '' // Will be dynamically set based on studentId
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -39,251 +39,276 @@ const Register = () => {
   const [usernameChecking, setUsernameChecking] = useState(false);
   const [usernameAvailable, setUsernameAvailable] = useState(null);
   const [usernameError, setUsernameError] = useState('');
+  const [emailChecking, setEmailChecking] = useState(false);
+  const [emailAvailable, setEmailAvailable] = useState(null);
+  const [emailError, setEmailError] = useState('');
+  const [passwordValidation, setPasswordValidation] = useState({
+    minLength: false,
+    hasUpperCase: false,
+    hasLowerCase: false,
+    hasNumber: false,
+    hasSpecialChar: false
+  });
 
-  const courses = [
-    'B.E (Bachelor of Engineering)',
-    'M.Tech (Master of Technology)',
-    'MBA (Master of Business Administration)',
-    'BBA (Bachelor of Business Administration)',
-    'B.Com (Bachelor of Commerce)',
-    'M.Com (Master of Commerce)',
-    'Ph.D (Doctor of Philosophy)',
-    'BCA (Bachelor of Computer Applications)',
-    'MCA (Master of Computer Applications)',
-    'Dental (Bachelor of Dental Surgery)',
-    'MBBS (Bachelor of Medicine and Bachelor of Surgery)',
-    'B.Sc (Bachelor of Science)',
-    'M.Sc (Master of Science)',
-    'BA (Bachelor of Arts)',
-    'MA (Master of Arts)',
-    'LLB (Bachelor of Laws)',
-    'LLM (Master of Laws)',
-    'B.Ed (Bachelor of Education)',
-    'M.Ed (Master of Education)',
-  ];
-
-  const departmentsByCourse = {
-    'B.E (Bachelor of Engineering)': [
-      'Artificial Intelligence and Machine Learning',
-      'Computer Science & Engineering (Data Science)',
-      'Information Science and Engineering',
-      'Computer Science & Engineering (Internet of Things and Cyber Security including Block Chain Technology)',
-      'Electronics and Instrumentation Engineering',
-      'Computer Science and Design',
-      'Mechanical Engineering',
-      'Computer Science and Engineering',
-      'Medical Electronics Engineering',
-      'Computer Science and Business Systems',
-      'Electronics and Telecommunication Engineering',
-      'Computer Science & Engineering (Cyber Security)',
-      'Robotics and Artificial Intelligence',
-      'Aeronautical Engineering',
-      'Chemical Engineering',
-      'Automobile Engineering',
-      'Civil Engineering',
-      'Biotechnology',
-      'Electrical & Electronics Engineering',
-      'Electronics & Communication Engineering'
-    ],
-    'M.Tech (Master of Technology)': [
-      'Artificial Intelligence and Machine Learning',
-      'Computer Science & Engineering (Data Science)',
-      'Information Science and Engineering',
-      'Computer Science & Engineering (Internet of Things and Cyber Security including Block Chain Technology)',
-      'Electronics and Instrumentation Engineering',
-      'Computer Science and Design',
-      'Mechanical Engineering',
-      'Computer Science and Engineering',
-      'Medical Electronics Engineering',
-      'Computer Science and Business Systems',
-      'Electronics and Telecommunication Engineering',
-      'Computer Science & Engineering (Cyber Security)',
-      'Robotics and Artificial Intelligence',
-      'Aeronautical Engineering',
-      'Chemical Engineering',
-      'Automobile Engineering',
-      'Civil Engineering',
-      'Biotechnology',
-      'Electrical & Electronics Engineering',
-      'Electronics & Communication Engineering'
-    ],
-    'MBA (Master of Business Administration)': [
-      'Finance',
-      'Marketing',
-      'Human Resources',
-      'Operations Management',
-      'International Business',
-      'Business Analytics',
-      'Entrepreneurship',
-      'Supply Chain Management'
-    ],
-    'BBA (Bachelor of Business Administration)': [
-      'Finance',
-      'Marketing',
-      'Human Resources',
-      'Operations Management',
-      'International Business',
-      'Business Analytics',
-      'Entrepreneurship',
-      'Supply Chain Management'
-    ],
-    'B.Com (Bachelor of Commerce)': [
-      'Accounting',
-      'Banking & Finance',
-      'Taxation',
-      'Economics',
-      'Business Mathematics',
-      'Corporate Secretaryship'
-    ],
-    'M.Com (Master of Commerce)': [
-      'Accounting',
-      'Banking & Finance',
-      'Taxation',
-      'Economics',
-      'Business Mathematics',
-      'Corporate Secretaryship'
-    ],
-    'BCA (Bachelor of Computer Applications)': [
-      'Software Development',
-      'Database Management',
-      'Web Technologies',
-      'Mobile Application Development',
-      'System Analysis and Design',
-      'Network Administration'
-    ],
-    'MCA (Master of Computer Applications)': [
-      'Software Development',
-      'Database Management',
-      'Web Technologies',
-      'Mobile Application Development',
-      'System Analysis and Design',
-      'Network Administration'
-    ],
-    'MBBS (Bachelor of Medicine and Bachelor of Surgery)': [
-      'General Medicine',
-      'Surgery',
-      'Pediatrics',
-      'Cardiology',
-      'Neurology',
-      'Orthopedics',
-      'Dermatology',
-      'Radiology',
-      'Anesthesiology',
-      'Pathology'
-    ],
-    'Dental (Bachelor of Dental Surgery)': [
-      'Oral & Maxillofacial Surgery',
-      'Orthodontics',
-      'Periodontics',
-      'Endodontics',
-      'Prosthodontics',
-      'Oral Medicine'
-    ],
-    'B.Sc (Bachelor of Science)': [
-      'Physics',
-      'Chemistry',
-      'Mathematics',
-      'Biology',
-      'Microbiology',
-      'Biochemistry',
-      'Zoology',
-      'Botany',
-      'Environmental Science',
-      'Statistics'
-    ],
-    'M.Sc (Master of Science)': [
-      'Physics',
-      'Chemistry',
-      'Mathematics',
-      'Biology',
-      'Microbiology',
-      'Biochemistry',
-      'Zoology',
-      'Botany',
-      'Environmental Science',
-      'Statistics'
-    ],
-    'BA (Bachelor of Arts)': [
-      'English Literature',
-      'Hindi Literature',
-      'History',
-      'Political Science',
-      'Sociology',
-      'Philosophy',
-      'Psychology',
-      'Geography',
-      'Journalism & Mass Communication',
-      'Fine Arts',
-      'Music',
-      'Dance'
-    ],
-    'MA (Master of Arts)': [
-      'English Literature',
-      'Hindi Literature',
-      'History',
-      'Political Science',
-      'Sociology',
-      'Philosophy',
-      'Psychology',
-      'Geography',
-      'Journalism & Mass Communication',
-      'Fine Arts',
-      'Music',
-      'Dance'
-    ],
-    'LLB (Bachelor of Laws)': [
-      'Constitutional Law',
-      'Criminal Law',
-      'Corporate Law',
-      'International Law',
-      'Civil Law',
-      'Intellectual Property Law',
-      'Environmental Law'
-    ],
-    'LLM (Master of Laws)': [
-      'Constitutional Law',
-      'Criminal Law',
-      'Corporate Law',
-      'International Law',
-      'Civil Law',
-      'Intellectual Property Law',
-      'Environmental Law'
-    ],
-    'B.Ed (Bachelor of Education)': [
-      'Primary Education',
-      'Secondary Education',
-      'Special Education',
-      'Educational Psychology',
-      'Curriculum Development',
-      'Educational Technology',
-      'Physical Education'
-    ],
-    'M.Ed (Master of Education)': [
-      'Primary Education',
-      'Secondary Education',
-      'Special Education',
-      'Educational Psychology',
-      'Curriculum Development',
-      'Educational Technology',
-      'Physical Education'
-    ],
-    'Ph.D (Doctor of Philosophy)': [
-      'Engineering & Technology',
-      'Business & Management',
-      'Commerce & Economics',
-      'Computer Applications',
-      'Medical Sciences',
-      'Basic Sciences',
-      'Arts & Humanities',
-      'Law',
-      'Education'
-    ]
+  // Course code mapping for auto-selection
+  const courseCodeMapping = {
+    'BEN': 'B.E (Bachelor of Engineering)',
+    'MTE': 'M.Tech (Master of Technology)',
+    'MBA': 'MBA (Master of Business Administration)',
+    'BBA': 'BBA (Bachelor of Business Administration)',
+    'BCO': 'B.Com (Bachelor of Commerce)',
+    'MCO': 'M.Com (Master of Commerce)',
+    'PHD': 'Ph.D (Doctor of Philosophy)',
+    'BCA': 'BCA (Bachelor of Computer Applications)',
+    'MCA': 'MCA (Master of Computer Applications)',
+    'BDS': 'Dental (Bachelor of Dental Surgery)',
+    'MBS': 'MBBS (Bachelor of Medicine and Bachelor of Surgery)',
+    'BSC': 'B.Sc (Bachelor of Science)',
+    'MSC': 'M.Sc (Master of Science)',
+    'BAR': 'BA (Bachelor of Arts)',
+    'MAR': 'MA (Master of Arts)',
+    'LLB': 'LLB (Bachelor of Laws)',
+    'LLM': 'LLM (Master of Laws)',
+    'BED': 'B.Ed (Bachelor of Education)',
+    'MED': 'M.Ed (Master of Education)',
   };
 
-  // Get available departments based on selected course
-  const getAvailableDepartments = () => {
-    if (!formData.course) return [];
-    return departmentsByCourse[formData.course] || [];
+  // Department code mapping (serial order for each course)
+  const departmentCodeMapping = {
+    'B.E (Bachelor of Engineering)': {
+      '01': 'Artificial Intelligence and Machine Learning',
+      '02': 'Computer Science & Engineering (Data Science)',
+      '03': 'Information Science and Engineering',
+      '04': 'Computer Science & Engineering (Internet of Things and Cyber Security including Block Chain Technology)',
+      '05': 'Electronics and Instrumentation Engineering',
+      '06': 'Computer Science and Design',
+      '07': 'Mechanical Engineering',
+      '08': 'Computer Science and Engineering',
+      '09': 'Medical Electronics Engineering',
+      '10': 'Computer Science and Business Systems',
+      '11': 'Electronics and Telecommunication Engineering',
+      '12': 'Computer Science & Engineering (Cyber Security)',
+      '13': 'Robotics and Artificial Intelligence',
+      '14': 'Aeronautical Engineering',
+      '15': 'Chemical Engineering',
+      '16': 'Automobile Engineering',
+      '17': 'Civil Engineering',
+      '18': 'Biotechnology',
+      '19': 'Electrical & Electronics Engineering',
+      '20': 'Electronics & Communication Engineering'
+    },
+    'M.Tech (Master of Technology)': {
+      '01': 'Artificial Intelligence and Machine Learning',
+      '02': 'Computer Science & Engineering (Data Science)',
+      '03': 'Information Science and Engineering',
+      '04': 'Computer Science & Engineering (Internet of Things and Cyber Security including Block Chain Technology)',
+      '05': 'Electronics and Instrumentation Engineering',
+      '06': 'Computer Science and Design',
+      '07': 'Mechanical Engineering',
+      '08': 'Computer Science and Engineering',
+      '09': 'Medical Electronics Engineering',
+      '10': 'Computer Science and Business Systems',
+      '11': 'Electronics and Telecommunication Engineering',
+      '12': 'Computer Science & Engineering (Cyber Security)',
+      '13': 'Robotics and Artificial Intelligence',
+      '14': 'Aeronautical Engineering',
+      '15': 'Chemical Engineering',
+      '16': 'Automobile Engineering',
+      '17': 'Civil Engineering',
+      '18': 'Biotechnology',
+      '19': 'Electrical & Electronics Engineering',
+      '20': 'Electronics & Communication Engineering'
+    },
+    'MBA (Master of Business Administration)': {
+      '01': 'Finance',
+      '02': 'Marketing',
+      '03': 'Human Resources',
+      '04': 'Operations Management',
+      '05': 'International Business',
+      '06': 'Business Analytics',
+      '07': 'Entrepreneurship',
+      '08': 'Supply Chain Management'
+    },
+    'BBA (Bachelor of Business Administration)': {
+      '01': 'Finance',
+      '02': 'Marketing',
+      '03': 'Human Resources',
+      '04': 'Operations Management',
+      '05': 'International Business',
+      '06': 'Business Analytics',
+      '07': 'Entrepreneurship',
+      '08': 'Supply Chain Management'
+    },
+    'B.Com (Bachelor of Commerce)': {
+      '01': 'Accounting',
+      '02': 'Banking & Finance',
+      '03': 'Taxation',
+      '04': 'Economics',
+      '05': 'Business Mathematics',
+      '06': 'Corporate Secretaryship'
+    },
+    'M.Com (Master of Commerce)': {
+      '01': 'Accounting',
+      '02': 'Banking & Finance',
+      '03': 'Taxation',
+      '04': 'Economics',
+      '05': 'Business Mathematics',
+      '06': 'Corporate Secretaryship'
+    },
+    'BCA (Bachelor of Computer Applications)': {
+      '01': 'Software Development',
+      '02': 'Database Management',
+      '03': 'Web Technologies',
+      '04': 'Mobile Application Development',
+      '05': 'System Analysis and Design',
+      '06': 'Network Administration'
+    },
+    'MCA (Master of Computer Applications)': {
+      '01': 'Software Development',
+      '02': 'Database Management',
+      '03': 'Web Technologies',
+      '04': 'Mobile Application Development',
+      '05': 'System Analysis and Design',
+      '06': 'Network Administration'
+    },
+    'MBBS (Bachelor of Medicine and Bachelor of Surgery)': {
+      '01': 'General Medicine',
+      '02': 'Surgery',
+      '03': 'Pediatrics',
+      '04': 'Cardiology',
+      '05': 'Neurology',
+      '06': 'Orthopedics',
+      '07': 'Dermatology',
+      '08': 'Radiology',
+      '09': 'Anesthesiology',
+      '10': 'Pathology'
+    },
+    'Dental (Bachelor of Dental Surgery)': {
+      '01': 'Oral & Maxillofacial Surgery',
+      '02': 'Orthodontics',
+      '03': 'Periodontics',
+      '04': 'Endodontics',
+      '05': 'Prosthodontics',
+      '06': 'Oral Medicine'
+    },
+    'B.Sc (Bachelor of Science)': {
+      '01': 'Physics',
+      '02': 'Chemistry',
+      '03': 'Mathematics',
+      '04': 'Biology',
+      '05': 'Microbiology',
+      '06': 'Biochemistry',
+      '07': 'Zoology',
+      '08': 'Botany',
+      '09': 'Environmental Science',
+      '10': 'Statistics'
+    },
+    'M.Sc (Master of Science)': {
+      '01': 'Physics',
+      '02': 'Chemistry',
+      '03': 'Mathematics',
+      '04': 'Biology',
+      '05': 'Microbiology',
+      '06': 'Biochemistry',
+      '07': 'Zoology',
+      '08': 'Botany',
+      '09': 'Environmental Science',
+      '10': 'Statistics'
+    },
+    'BA (Bachelor of Arts)': {
+      '01': 'English Literature',
+      '02': 'Hindi Literature',
+      '03': 'History',
+      '04': 'Political Science',
+      '05': 'Sociology',
+      '06': 'Philosophy',
+      '07': 'Psychology',
+      '08': 'Geography',
+      '09': 'Journalism & Mass Communication',
+      '10': 'Fine Arts',
+      '11': 'Music',
+      '12': 'Dance'
+    },
+    'MA (Master of Arts)': {
+      '01': 'English Literature',
+      '02': 'Hindi Literature',
+      '03': 'History',
+      '04': 'Political Science',
+      '05': 'Sociology',
+      '06': 'Philosophy',
+      '07': 'Psychology',
+      '08': 'Geography',
+      '09': 'Journalism & Mass Communication',
+      '10': 'Fine Arts',
+      '11': 'Music',
+      '12': 'Dance'
+    },
+    'LLB (Bachelor of Laws)': {
+      '01': 'Constitutional Law',
+      '02': 'Criminal Law',
+      '03': 'Corporate Law',
+      '04': 'International Law',
+      '05': 'Civil Law',
+      '06': 'Intellectual Property Law',
+      '07': 'Environmental Law'
+    },
+    'LLM (Master of Laws)': {
+      '01': 'Constitutional Law',
+      '02': 'Criminal Law',
+      '03': 'Corporate Law',
+      '04': 'International Law',
+      '05': 'Civil Law',
+      '06': 'Intellectual Property Law',
+      '07': 'Environmental Law'
+    },
+    'B.Ed (Bachelor of Education)': {
+      '01': 'Primary Education',
+      '02': 'Secondary Education',
+      '03': 'Special Education',
+      '04': 'Educational Psychology',
+      '05': 'Curriculum Development',
+      '06': 'Educational Technology',
+      '07': 'Physical Education'
+    },
+    'M.Ed (Master of Education)': {
+      '01': 'Primary Education',
+      '02': 'Secondary Education',
+      '03': 'Special Education',
+      '04': 'Educational Psychology',
+      '05': 'Curriculum Development',
+      '06': 'Educational Technology',
+      '07': 'Physical Education'
+    },
+    'Ph.D (Doctor of Philosophy)': {
+      '01': 'Engineering & Technology',
+      '02': 'Business & Management',
+      '03': 'Commerce & Economics',
+      '04': 'Computer Applications',
+      '05': 'Medical Sciences',
+      '06': 'Basic Sciences',
+      '07': 'Arts & Humanities',
+      '08': 'Law',
+      '09': 'Education'
+    }
+  };
+
+  // Function to auto-select course and department based on student ID
+  const autoSelectCourseAndDepartment = (studentId) => {
+    if (!studentId || studentId.length !== 10) return { course: '', department: '' };
+    
+    const courseCode = studentId.substring(2, 5);  // Extract CCC part
+    const deptCode = studentId.substring(5, 7);    // Extract DD part
+    
+    // Find course by code
+    const course = courseCodeMapping[courseCode.toUpperCase()] || '';
+    
+    // Find department by code and course
+    let department = '';
+    if (course && departmentCodeMapping[course] && departmentCodeMapping[course][deptCode]) {
+      department = departmentCodeMapping[course][deptCode];
+    }
+    
+    return { course, department };
   };
 
   const years = [
@@ -297,16 +322,90 @@ const Register = () => {
     'Ph.D'
   ];
 
+  // Password validation function
+  const validatePassword = (password) => {
+    const validation = {
+      minLength: password.length >= 8,
+      hasUpperCase: /[A-Z]/.test(password),
+      hasLowerCase: /[a-z]/.test(password),
+      hasNumber: /\d/.test(password),
+      hasSpecialChar: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+    };
+    
+    setPasswordValidation(validation);
+    return validation;
+  };
+
+  // Calculate password strength
+  const getPasswordStrength = () => {
+    const validCount = Object.values(passwordValidation).filter(Boolean).length;
+    if (validCount === 0) return { strength: 0, label: '', color: '' };
+    if (validCount <= 2) return { strength: 25, label: 'Weak', color: 'bg-red-500' };
+    if (validCount <= 3) return { strength: 50, label: 'Fair', color: 'bg-yellow-500' };
+    if (validCount <= 4) return { strength: 75, label: 'Good', color: 'bg-blue-500' };
+    return { strength: 100, label: 'Strong', color: 'bg-green-500' };
+  };
+
+  // Function to generate campusId from studentId and firstName
+  const generateCampusId = (studentId, firstName) => {
+    if (!studentId || !firstName) return '';
+    
+    // New format: firstname_studentid (e.g., lochan_22BEN03073)
+    const cleanFirstName = firstName.replace(/[^a-zA-Z]/g, '').toLowerCase();
+    const cleanStudentId = studentId.replace(/[^a-zA-Z0-9]/g, '');
+    
+    if (cleanFirstName && cleanStudentId) {
+      return `${cleanFirstName}_${cleanStudentId}`;
+    }
+    
+    return '';
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     
-    // If course changes, reset department
-    if (name === 'course') {
-      setFormData({
-        ...formData,
-        [name]: value,
-        department: '' // Reset department when course changes
-      });
+    // Only allow changes to specific fields (not course or department)
+    if (name === 'course' || name === 'department') {
+      // Prevent manual changes to course and department
+      toast.error('Course and department are auto-selected based on Student ID');
+      return;
+    }
+    
+    if (name === 'studentId' || name === 'firstName') {
+      // If studentId or firstName changes, automatically generate campusId
+      const newFormData = { ...formData, [name]: value };
+      const campusId = generateCampusId(
+        name === 'studentId' ? value : formData.studentId,
+        name === 'firstName' ? value : formData.firstName
+      );
+      
+      // If studentId changes, also auto-select course and department
+      if (name === 'studentId') {
+        const { course, department } = autoSelectCourseAndDepartment(value);
+        setFormData({
+          ...newFormData,
+          campusId: campusId,
+          course: course,
+          department: department
+        });
+        
+        // Show toast notification about auto-selection
+        if (course && department) {
+          toast.success(`Auto-selected: ${course} - ${department}`);
+        } else if (course) {
+          toast.success(`Auto-selected course: ${course}`);
+          if (value.length === 10) {
+            toast.error('Department code not found for this course');
+          }
+        } else if (value.length === 10) {
+          toast.error('Course code not recognized. Please select manually.');
+        }
+      } else {
+        setFormData({
+          ...newFormData,
+          campusId: campusId
+        });
+      }
     } else {
       setFormData({
         ...formData,
@@ -321,6 +420,56 @@ const Register = () => {
       if (value.trim().length >= 3) {
         checkUsernameAvailability(value.trim());
       }
+    }
+
+    // Check email availability when email changes
+    if (name === 'email') {
+      setEmailAvailable(null);
+      setEmailError('');
+      // Basic email format validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (emailRegex.test(value.trim())) {
+        checkEmailAvailability(value.trim());
+      }
+    }
+
+    // Validate password when it changes
+    if (name === 'password') {
+      validatePassword(value);
+    }
+  };
+
+  const checkEmailAvailability = async (email) => {
+    try {
+      setEmailChecking(true);
+      setEmailError('');
+      
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        setEmailError('Please enter a valid email address');
+        setEmailAvailable(false);
+        return;
+      }
+
+      // Check availability with backend
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/users/check-email/${encodeURIComponent(email)}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        setEmailAvailable(data.available);
+        if (!data.available) {
+          setEmailError('This email is already registered');
+        }
+      } else {
+        setEmailError('Error checking email availability');
+        setEmailAvailable(false);
+      }
+    } catch (error) {
+      setEmailError('Error checking email availability');
+      setEmailAvailable(false);
+    } finally {
+      setEmailChecking(false);
     }
   };
 
@@ -363,7 +512,6 @@ const Register = () => {
         setUsernameAvailable(false);
       }
     } catch (error) {
-      console.error('Error checking username:', error);
       setUsernameError('Error checking username availability');
       setUsernameAvailable(false);
     } finally {
@@ -403,9 +551,42 @@ const Register = () => {
       toast.error('Please enter your email');
       return false;
     }
+
+    // Check if email is available
+    if (emailAvailable === false) {
+      toast.error('This email is already registered. Please use a different email or try logging in.');
+      return false;
+    }
+
+    if (emailAvailable === null && email.trim().length > 0) {
+      // Check if email has valid format first
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (emailRegex.test(email.trim())) {
+        toast.error('Please wait for email availability check');
+        return false;
+      }
+    }
     
-    if (password.length < 6) {
-      toast.error('Password must be at least 6 characters');
+    // Validate password strength
+    const validation = validatePassword(password);
+    if (!validation.minLength) {
+      toast.error('Password must be at least 8 characters long');
+      return false;
+    }
+    if (!validation.hasUpperCase) {
+      toast.error('Password must contain at least one uppercase letter');
+      return false;
+    }
+    if (!validation.hasLowerCase) {
+      toast.error('Password must contain at least one lowercase letter');
+      return false;
+    }
+    if (!validation.hasNumber) {
+      toast.error('Password must contain at least one number');
+      return false;
+    }
+    if (!validation.hasSpecialChar) {
+      toast.error('Password must contain at least one special character');
       return false;
     }
     
@@ -425,13 +606,20 @@ const Register = () => {
       return false;
     }
     
+    // Validate student ID format: YYCCCDDNNN
+    const studentIdRegex = /^\d{2}[A-Z]{3}\d{5}$/i;
+    if (!studentIdRegex.test(studentId.trim())) {
+      toast.error('Student ID must be in format YYCCCDDNNN (e.g., 22BEN03073). Course and department will be auto-selected from this ID.');
+      return false;
+    }
+    
     if (!course) {
-      toast.error('Please select your course');
+      toast.error('Course could not be auto-selected. Please check your Student ID format.');
       return false;
     }
     
     if (!department) {
-      toast.error('Please select your department');
+      toast.error('Department could not be auto-selected. Please check your Student ID format.');
       return false;
     }
     
@@ -473,14 +661,27 @@ const Register = () => {
       toast.success('Account created successfully!');
       navigate('/');
     } catch (error) {
-      toast.error(error.message || 'Registration failed');
+      const errorMessage = error.message || 'Registration failed';
+      
+      // Handle specific error cases
+      if (errorMessage.includes('email address is already in use')) {
+        toast.error('This email is already registered. Please try logging in instead.');
+      } else if (errorMessage.includes('email-already-exists')) {
+        toast.error('This email is already registered. Please try logging in instead.');
+      } else if (errorMessage.includes('weak-password')) {
+        toast.error('Password is too weak. Please choose a stronger password.');
+      } else if (errorMessage.includes('invalid-email')) {
+        toast.error('Please enter a valid email address.');
+      } else {
+        toast.error(errorMessage);
+      }
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex relative">
       {/* Left side - Registration form */}
       <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-4">
         <motion.div
@@ -657,10 +858,50 @@ const Register = () => {
                       required
                       value={formData.email}
                       onChange={handleChange}
-                      className="pl-10 w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      className={`pl-10 pr-10 w-full px-3 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition-colors ${
+                        emailError 
+                          ? 'border-red-500 focus:border-red-500' 
+                          : emailAvailable === true 
+                            ? 'border-green-500 focus:border-green-500'
+                            : 'border-gray-300 focus:border-blue-500'
+                      }`}
                       placeholder="Enter your email"
                     />
+                    
+                    {/* Email status indicator */}
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                      {emailChecking && (
+                        <FiLoader className="w-5 h-5 text-gray-400 animate-spin" />
+                      )}
+                      {!emailChecking && emailAvailable === true && (
+                        <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                      )}
+                      {!emailChecking && emailAvailable === false && (
+                        <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
                   </div>
+                  
+                  {/* Email feedback */}
+                  {emailError && (
+                    <p className="mt-1 text-sm text-red-600">{emailError}</p>
+                  )}
+                  {!emailError && emailAvailable === true && (
+                    <p className="mt-1 text-sm text-green-600">Email is available!</p>
+                  )}
+                  {!emailError && emailAvailable === false && (
+                    <p className="mt-1 text-sm text-red-600">
+                      This email is already registered. <Link to="/login" className="underline hover:text-red-700">Try logging in instead</Link>.
+                    </p>
+                  )}
                 </div>
 
                 {/* Password fields */}
@@ -689,6 +930,51 @@ const Register = () => {
                       {showPassword ? <FiEyeOff className="w-5 h-5" /> : <FiEye className="w-5 h-5" />}
                     </button>
                   </div>
+                  
+                  {/* Password validation indicators */}
+                  {formData.password && (
+                    <div className="mt-2">
+                      {/* Password strength bar */}
+                      <div className="mb-2">
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="text-xs text-gray-600">Password Strength</span>
+                          <span className={`text-xs font-medium ${getPasswordStrength().label === 'Strong' ? 'text-green-600' : getPasswordStrength().label === 'Good' ? 'text-blue-600' : getPasswordStrength().label === 'Fair' ? 'text-yellow-600' : 'text-red-600'}`}>
+                            {getPasswordStrength().label}
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div 
+                            className={`h-2 rounded-full transition-all duration-300 ${getPasswordStrength().color}`}
+                            style={{ width: `${getPasswordStrength().strength}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                      
+                      {/* Validation checklist */}
+                      <div className="space-y-1">
+                        <div className={`flex items-center space-x-2 text-xs ${passwordValidation.minLength ? 'text-green-600' : 'text-red-600'}`}>
+                          <span>{passwordValidation.minLength ? '✓' : '✗'}</span>
+                          <span>At least 8 characters</span>
+                        </div>
+                        <div className={`flex items-center space-x-2 text-xs ${passwordValidation.hasUpperCase ? 'text-green-600' : 'text-red-600'}`}>
+                          <span>{passwordValidation.hasUpperCase ? '✓' : '✗'}</span>
+                          <span>One uppercase letter</span>
+                        </div>
+                        <div className={`flex items-center space-x-2 text-xs ${passwordValidation.hasLowerCase ? 'text-green-600' : 'text-red-600'}`}>
+                          <span>{passwordValidation.hasLowerCase ? '✓' : '✗'}</span>
+                          <span>One lowercase letter</span>
+                        </div>
+                        <div className={`flex items-center space-x-2 text-xs ${passwordValidation.hasNumber ? 'text-green-600' : 'text-red-600'}`}>
+                          <span>{passwordValidation.hasNumber ? '✓' : '✗'}</span>
+                          <span>One number</span>
+                        </div>
+                        <div className={`flex items-center space-x-2 text-xs ${passwordValidation.hasSpecialChar ? 'text-green-600' : 'text-red-600'}`}>
+                          <span>{passwordValidation.hasSpecialChar ? '✓' : '✗'}</span>
+                          <span>One special character (!@#$%^&*)</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -741,55 +1027,88 @@ const Register = () => {
                       value={formData.studentId}
                       onChange={handleChange}
                       className="pl-10 w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                      placeholder="Enter your student ID"
+                      placeholder="YYCCCDDNNN (e.g., 22BEN01001)"
                     />
                   </div>
+                  <p className="text-xs text-blue-600 mt-1">
+                    💡 Course and department will be auto-selected based on your Student ID
+                  </p>
+                  {/* Campus ID Preview */}
+                  {formData.studentId && formData.firstName && formData.campusId && (
+                    <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-lg">
+                      <div className="flex items-center space-x-2">
+                        <FiMapPin className="w-4 h-4 text-blue-600" />
+                        <span className="text-sm text-blue-700">
+                          Campus ID: <span className="font-medium font-mono">{formData.campusId}</span>
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Course */}
                 <div>
                   <label htmlFor="course" className="block text-sm font-medium text-gray-700 mb-1">
-                    Course
+                    Course {formData.course && formData.studentId && formData.studentId.length === 10 && (
+                      <span className="text-green-600 text-xs">(Auto-selected)</span>
+                    )}
                   </label>
-                  <select
-                    id="course"
-                    name="course"
-                    required
-                    value={formData.course}
-                    onChange={handleChange}
-                    className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  >
-                    <option value="">Select your course</option>
-                    {courses.map((course) => (
-                      <option key={course} value={course}>{course}</option>
-                    ))}
-                  </select>
+                  <div className={`w-full px-3 py-3 border rounded-lg transition-colors ${
+                    formData.course && formData.studentId && formData.studentId.length === 10
+                      ? 'border-green-500 bg-green-50' 
+                      : 'border-gray-300 bg-gray-50'
+                  }`}>
+                    {formData.course || (
+                      <span className="text-gray-500">
+                        {formData.studentId && formData.studentId.length === 10 
+                          ? 'Course code not recognized' 
+                          : 'Enter Student ID to auto-select course'
+                        }
+                      </span>
+                    )}
+                  </div>
+                  {!formData.course && formData.studentId && formData.studentId.length === 10 && (
+                    <p className="mt-1 text-sm text-red-600">
+                      ❌ Course code not recognized. Please check your Student ID.
+                    </p>
+                  )}
                 </div>
 
                 {/* Department */}
                 <div>
                   <label htmlFor="department" className="block text-sm font-medium text-gray-700 mb-1">
-                    Department
+                    Department {formData.department && formData.studentId && formData.studentId.length === 10 && (
+                      <span className="text-green-600 text-xs">(Auto-selected)</span>
+                    )}
                   </label>
-                  <select
-                    id="department"
-                    name="department"
-                    required
-                    value={formData.department}
-                    onChange={handleChange}
-                    disabled={!formData.course}
-                    className={`w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
-                      !formData.course ? 'bg-gray-100 cursor-not-allowed' : ''
-                    }`}
-                  >
-                    <option value="">
-                      {formData.course ? 'Select your department' : 'Select course first'}
-                    </option>
-                    {getAvailableDepartments().map((dept) => (
-                      <option key={dept} value={dept}>{dept}</option>
-                    ))}
-                  </select>
+                  <div className={`w-full px-3 py-3 border rounded-lg transition-colors ${
+                    formData.department && formData.studentId && formData.studentId.length === 10
+                      ? 'border-green-500 bg-green-50'
+                      : formData.course && !formData.department && formData.studentId && formData.studentId.length === 10
+                        ? 'border-red-500 bg-red-50'
+                        : 'border-gray-300 bg-gray-50'
+                  }`}>
+                    {formData.department || (
+                      <span className="text-gray-500">
+                        {!formData.course 
+                          ? 'Enter Student ID to auto-select department'
+                          : formData.studentId && formData.studentId.length === 10
+                            ? 'Department code not recognized'
+                            : 'Enter Student ID to auto-select department'
+                        }
+                      </span>
+                    )}
+                  </div>
+                  {formData.course && !formData.department && formData.studentId && formData.studentId.length === 10 && (
+                    <p className="mt-1 text-sm text-red-600">
+                      ❌ Department code not recognized for this course. Please check your Student ID.
+                    </p>
+                  )}
                 </div>
+
+                {/* Hidden inputs for course and department to ensure they're submitted */}
+                <input type="hidden" name="course" value={formData.course} />
+                <input type="hidden" name="department" value={formData.department} />
 
                 {/* Year */}
                 <div>
