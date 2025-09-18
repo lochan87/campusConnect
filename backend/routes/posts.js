@@ -61,7 +61,7 @@ router.get('/', async (req, res) => {
     // Get user likes for all posts if userId is provided
     let userLikes = {};
     if (userId) {
-      const likesSnapshot = await db.collection('likes')
+      const likesSnapshot = await db.collection('like_post')
         .where('userId', '==', userId)
         .get();
       
@@ -341,7 +341,7 @@ router.post('/:id/like', async (req, res) => {
     const { userId } = req.body;
 
     const postRef = db.collection('posts').doc(id);
-    const likeRef = db.collection('likes').doc(`${id}_${userId}`);
+    const likeRef = db.collection('like_post').doc(`${id}_${userId}`);
 
     const result = await db.runTransaction(async (transaction) => {
       // ALL READS MUST HAPPEN FIRST
@@ -415,9 +415,11 @@ router.post('/:id/like', async (req, res) => {
       return { likes, reputationChange, isLiked };
     });
 
-    // After transaction, get the current like status
-    const finalLikeDoc = await likeRef.get();
-    const userHasLiked = finalLikeDoc.exists;
+    // Use the transaction result for consistency
+    const userHasLiked = result.isLiked;
+
+    // Log like/unlike operation
+    console.log(`${userHasLiked ? '👍' : '👎'} Post ${id} ${userHasLiked ? 'liked' : 'unliked'} by user ${userId}. New like count: ${result.likes}`);
 
     // Log reputation changes
     if (result.reputationChange > 0) {
@@ -623,10 +625,31 @@ router.delete('/:id', async (req, res) => {
       });
     }
 
-    // No need to delete images from external storage since they're stored in the document
-    // Image data will be automatically deleted with the post document
+    // Use a transaction to ensure all related data is deleted atomically
+    await db.runTransaction(async (transaction) => {
+      // Delete the post
+      transaction.delete(db.collection('posts').doc(id));
 
-    await db.collection('posts').doc(id).delete();
+      // Get and delete all likes for this post
+      const likesSnapshot = await db.collection('like_post')
+        .where('postId', '==', id)
+        .get();
+      
+      likesSnapshot.forEach(likeDoc => {
+        transaction.delete(likeDoc.ref);
+      });
+
+      // Get and delete all comments for this post
+      const commentsSnapshot = await db.collection('comment_post')
+        .where('postId', '==', id)
+        .get();
+      
+      commentsSnapshot.forEach(commentDoc => {
+        transaction.delete(commentDoc.ref);
+      });
+
+      console.log(`🗑️ Post deletion: Deleted post ${id} with ${likesSnapshot.size} likes and ${commentsSnapshot.size} comments`);
+    });
 
     // Emit real-time update
     if (req.app.get('io')) {
@@ -654,7 +677,7 @@ router.get('/:id/comments', async (req, res) => {
     const { id } = req.params;
     const { limit = 50, offset = 0 } = req.query;
 
-    const commentsSnapshot = await db.collection('comments')
+    const commentsSnapshot = await db.collection('comment_post')
       .where('postId', '==', id)
       .limit(parseInt(limit))
       .get();
@@ -748,11 +771,42 @@ router.post('/:id/comments', async (req, res) => {
       }
     };
 
-    const commentRef = await db.collection('comments').add(commentData);
+    const commentRef = await db.collection('comment_post').add(commentData);
     
-    // Update post comment count
+    // Update post comment count and award reputation to post author
     const postData = postDoc.data();
     const newCommentCount = (postData.commentCount || 0) + 1;
+    
+    // Award reputation to post author for receiving a comment (if not anonymous and not self-comment)
+    if (!isAnonymous && userId && postData.userId && postData.userId !== userId) {
+      const isDemoUser = (userId) => {
+        return userId.startsWith('demo-') || userId.includes('demo');
+      };
+      
+      if (!isDemoUser(postData.userId)) {
+        try {
+          const authorRef = db.collection('users').doc(postData.userId);
+          const authorDoc = await authorRef.get();
+          
+          if (authorDoc.exists) {
+            const authorData = authorDoc.data();
+            const currentReputation = authorData.reputation || 0;
+            const newReputation = currentReputation + 1; // +1 reputation for receiving a comment
+            
+            await authorRef.update({
+              reputation: newReputation,
+              lastActive: new Date()
+            });
+            
+            console.log(`📈 Post comment: Awarded +1 reputation to post author ${postData.userId}: ${currentReputation} -> ${newReputation}`);
+          }
+        } catch (error) {
+          console.error('Error updating author reputation for comment:', error);
+        }
+      } else {
+        console.log(`🚫 Demo user ${postData.userId} - no reputation awarded for comment`);
+      }
+    }
     
     await db.collection('posts').doc(id).update({
       commentCount: newCommentCount,
@@ -795,7 +849,7 @@ router.delete('/:postId/comments/:commentId', async (req, res) => {
     const { postId, commentId } = req.params;
     const { userId } = req.body;
 
-    const commentDoc = await db.collection('comments').doc(commentId).get();
+    const commentDoc = await db.collection('comment_post').doc(commentId).get();
 
     if (!commentDoc.exists) {
       return res.status(404).json({
@@ -835,7 +889,7 @@ router.delete('/:postId/comments/:commentId', async (req, res) => {
       console.log(`🗑️ Comment author (${userId}) deleted their own comment (${commentId}) on post (${postId})`);
     }
 
-    await db.collection('comments').doc(commentId).delete();
+    await db.collection('comment_post').doc(commentId).delete();
 
     // Update post comment count
     if (postDoc.exists) {

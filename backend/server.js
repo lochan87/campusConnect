@@ -10,6 +10,7 @@ const postRoutes = require('./routes/posts');
 const userRoutes = require('./routes/users');
 const pollRoutes = require('./routes/polls');
 const eventRoutes = require('./routes/events');
+const statsRoutes = require('./routes/stats');
 const leaderboardRoutes = require('./routes/leaderboard');
 const { initializeFirebase } = require('./config/firebase');
 const { setupWebSocket } = require('./services/websocket');
@@ -66,6 +67,7 @@ app.use('/api/posts', postRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/polls', pollRoutes);
 app.use('/api/events', eventRoutes);
+app.use('/api/stats', statsRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 
 // Health check
@@ -96,7 +98,7 @@ server.listen(PORT, () => {
   console.log(`🚀 CampusConnect server running on port ${PORT}`);
   console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
   
-  // Start cleanup service for expired polls
+  // Start cleanup service for expired polls and events
   // Run every 6 hours in production, every hour in development
   const cleanupInterval = process.env.NODE_ENV === 'production' ? 360 : 60;
   cleanupService.start(cleanupInterval);

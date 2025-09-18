@@ -143,7 +143,11 @@ const CreatePost = () => {
 
       const response = await apiService.createPost(postData);
       
-      if (response.data.success) {
+      console.log('Post creation response:', response);
+      console.log('Response data:', response.data);
+      console.log('Response data success:', response.data.success);
+      
+      if (response.data && response.data.success) {
         toast.success('Post created successfully!');
         
         // Refresh user data to get updated reputation and postCount
@@ -170,7 +174,9 @@ const CreatePost = () => {
         // Navigate back to home
         navigate('/');
       } else {
-        toast.error(response.data.message || 'Failed to create post');
+        const errorMessage = response.data?.message || response.data?.error || 'Failed to create post';
+        console.error('Post creation failed:', errorMessage);
+        toast.error(errorMessage);
       }
     } catch (error) {
       console.error('Error creating post:', error);

@@ -1,13 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { FiCalendar, FiMapPin, FiClock, FiUser, FiMoreHorizontal, FiEdit2, FiTrash2, FiFlag } from 'react-icons/fi';
+import { FiCalendar, FiMapPin, FiClock, FiUser, FiMoreHorizontal, FiEdit2, FiTrash2, FiFlag, FiHeart, FiMessageCircle } from 'react-icons/fi';
 import ReportEventModal from './ReportEventModal';
 
-const EventCard = ({ event, currentUser, onEdit, onDelete }) => {
+const EventCard = ({ event, currentUser, onEdit, onDelete, onLike }) => {
   const navigate = useNavigate();
   const [showMenu, setShowMenu] = useState(false);
   const [reportModal, setReportModal] = useState({ isOpen: false });
+  const [imageError, setImageError] = useState(false);
+  const [imageLoading, setImageLoading] = useState(true);
+  const [isVoting, setIsVoting] = useState(false);
   const menuRef = useRef(null);
 
   useEffect(() => {
@@ -39,6 +42,19 @@ const EventCard = ({ event, currentUser, onEdit, onDelete }) => {
     });
   };
 
+  const handleImageLoad = () => {
+    setImageLoading(false);
+  };
+
+  const handleImageError = () => {
+    setImageError(true);
+    setImageLoading(false);
+  };
+
+  const getImageSrc = () => {
+    return event.posterData || event.poster || event.image || event.posterUrl;
+  };
+
   const handleCardClick = (e) => {
     // Don't navigate if clicking on interactive elements
     const clickableElements = ['button', 'a', 'input', 'textarea'];
@@ -50,6 +66,20 @@ const EventCard = ({ event, currentUser, onEdit, onDelete }) => {
     }
   };
 
+  const handleLike = async (e) => {
+    e.stopPropagation(); // Prevent card click
+    if (isVoting || !currentUser) return;
+    
+    setIsVoting(true);
+    try {
+      await onLike(event.id);
+    } catch (error) {
+      console.error('Error liking event:', error);
+    } finally {
+      setIsVoting(false);
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -58,13 +88,32 @@ const EventCard = ({ event, currentUser, onEdit, onDelete }) => {
       onClick={handleCardClick}
     >
       {/* Event Poster */}
-      {(event.posterData || event.poster) && (
-        <div className="h-48 bg-gray-100 overflow-hidden">
+      {getImageSrc() && !imageError && (
+        <div className="h-48 bg-gray-100 overflow-hidden relative">
+          {imageLoading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            </div>
+          )}
           <img
-            src={event.posterData || event.poster}
+            src={getImageSrc()}
             alt={event.title}
-            className="w-full h-full object-cover"
+            className={`w-full h-full object-cover transition-opacity duration-300 ${
+              imageLoading ? 'opacity-0' : 'opacity-100'
+            }`}
+            onLoad={handleImageLoad}
+            onError={handleImageError}
           />
+        </div>
+      )}
+
+      {/* Fallback when no image or image failed to load */}
+      {(!getImageSrc() || imageError) && (
+        <div className="h-48 bg-gradient-to-br from-purple-100 via-blue-100 to-indigo-100 flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-4xl mb-2">📅</div>
+            <p className="text-gray-600 font-medium">Event Image</p>
+          </div>
         </div>
       )}
 
@@ -168,11 +217,34 @@ const EventCard = ({ event, currentUser, onEdit, onDelete }) => {
 
         {/* Event Footer */}
         <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-          <span className="text-xs text-gray-500">
-            {new Date(event.createdAt).toLocaleDateString()}
-          </span>
+          <div className="flex items-center space-x-4">
+            {/* Like Button */}
+            <motion.button
+              onClick={handleLike}
+              disabled={isVoting || !currentUser}
+              className={`flex items-center space-x-1 transition-colors ${
+                event.userHasLiked
+                  ? 'text-red-500'
+                  : 'text-gray-500 hover:text-red-500'
+              } ${isVoting ? 'opacity-50 cursor-not-allowed' : ''}`}
+              whileHover={{ scale: event.userHasLiked ? 1 : 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <FiHeart className={`w-4 h-4 ${event.userHasLiked ? 'fill-current' : ''}`} />
+              <span className="text-sm">{event.likesCount || event.likes || 0}</span>
+            </motion.button>
+
+            {/* Comment Count */}
+            <div className="flex items-center space-x-1 text-gray-500">
+              <FiMessageCircle className="w-4 h-4" />
+              <span className="text-sm">{event.commentCount || 0}</span>
+            </div>
+          </div>
           
           <div className="flex items-center space-x-2">
+            <span className="text-xs text-gray-500">
+              {new Date(event.createdAt).toLocaleDateString()}
+            </span>
             <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
               <FiCalendar className="w-3 h-3 mr-1" />
               Event

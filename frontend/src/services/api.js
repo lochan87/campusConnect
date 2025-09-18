@@ -1,29 +1,24 @@
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
-// Request queue to limit concurrent requests
+// Request queue to track concurrent requests
 let pendingRequests = 0;
-const MAX_CONCURRENT_REQUESTS = 5;
 
 // Create axios instance with default config
 const api = axios.create({
   baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
-  timeout: 8000, // Reduced from 15000 to 8000ms
+  timeout: 30000, // Increased to 30 seconds
   headers: {
     'Content-Type': 'application/json',
   },
-  maxConcurrentRequests: 10, // Limit concurrent requests
+  maxConcurrentRequests: 15, // Increased limit
   maxRedirects: 3,
 });
 
 // Request interceptor
 api.interceptors.request.use(
   (config) => {
-    // Check if too many concurrent requests
-    if (pendingRequests >= MAX_CONCURRENT_REQUESTS) {
-      return Promise.reject(new Error('Too many concurrent requests'));
-    }
-    
+    // Simplified request handling - just count requests but don't block
     pendingRequests++;
     console.log(`🔄 API Request: ${config.method?.toUpperCase()} ${config.url} (${pendingRequests} pending)`);
     
@@ -51,16 +46,28 @@ api.interceptors.response.use(
   (response) => {
     pendingRequests = Math.max(0, pendingRequests - 1);
     console.log(`✅ API Success: ${response.config.method?.toUpperCase()} ${response.config.url} (${pendingRequests} pending)`);
+    
+    // Debug post creation responses
+    if (response.config.url === '/posts' && response.config.method === 'post') {
+      console.log('POST creation response data:', response.data);
+    }
+    
     return response;
   },
   (error) => {
     pendingRequests = Math.max(0, pendingRequests - 1);
     console.log(`❌ API Error: ${error.config?.method?.toUpperCase()} ${error.config?.url} (${pendingRequests} pending)`);
+    console.error('Full error object:', error);
     
     const message = error.response?.data?.error || error.message || 'An error occurred';
     
-    // Don't show toast for auth errors (handled separately) or concurrent request errors
-    if (error.response?.status !== 401 && error.response?.status !== 403 && !message.includes('concurrent')) {
+    // Don't show toast for auth errors or specific errors we handle elsewhere
+    if (error.response?.status !== 401 && 
+        error.response?.status !== 403 && 
+        !message.includes('concurrent') &&
+        !message.includes('timeout') &&
+        error.code !== 'ECONNABORTED') {
+      console.log('Showing error toast:', message);
       toast.error(message);
     }
     
@@ -84,7 +91,8 @@ export const apiService = {
     // If postData is already FormData, use it directly
     if (postData instanceof FormData) {
       return api.post('/posts', postData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 15000 // Increase timeout for file uploads
       });
     }
     
@@ -100,7 +108,8 @@ export const apiService = {
       }
     });
     return api.post('/posts', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 15000 // Increase timeout for file uploads
     });
   },
   editPost: (id, postData) => {
@@ -141,7 +150,7 @@ export const apiService = {
 
   // Events
   getEvents: (params = {}) => api.get('/events', { params }),
-  getEvent: (id) => api.get(`/events/${id}`),
+  getEvent: (id, userId) => api.get(`/events/${id}`, { params: { userId } }),
   createEvent: (eventData) => {
     return api.post('/events', eventData, {
       headers: {
@@ -157,6 +166,10 @@ export const apiService = {
     });
   },
   deleteEvent: (id, userId) => api.delete(`/events/${id}`, { data: { userId } }),
+  likeEvent: (id, userId) => api.post(`/events/${id}/like`, { userId }),
+  getEventComments: (id) => api.get(`/events/${id}/comments`),
+  addEventComment: (id, commentData) => api.post(`/events/${id}/comments`, commentData),
+  deleteEventComment: (eventId, commentId, userId) => api.delete(`/events/${eventId}/comments/${commentId}`, { data: { userId } }),
   reportEvent: (id, reportData) => api.post(`/events/${id}/report`, reportData),
 
   // Users
@@ -181,6 +194,9 @@ export const apiService = {
   // Leaderboard
   getLeaderboardData: () => api.get('/leaderboard'),
   
+  // Stats
+  getStats: (params = {}) => api.get('/stats', { params }),
+  
   // Comments (if implemented)
   getComments: (postId) => api.get(`/posts/${postId}/comments`),
   createComment: (postId, commentData) => api.post(`/posts/${postId}/comments`, commentData),
@@ -194,11 +210,21 @@ export const apiService = {
 
 // Convenient export functions for easy access
 export const getPost = (id, userId) => apiService.getPost(id, userId);
-export const getEvent = (id) => apiService.getEvent(id);
+export const getEvent = (id, userId) => apiService.getEvent(id, userId);
 export const deleteEvent = (id, userId) => apiService.deleteEvent(id, userId);
+export const likeEvent = (id, userId) => apiService.likeEvent(id, userId);
+export const getEventComments = (id) => apiService.getEventComments(id);
+export const addEventComment = (id, content, userId = null, isAnonymous = false) => 
+  apiService.addEventComment(id, { 
+    content, 
+    userId, 
+    isAnonymous 
+  });
+export const deleteEventComment = (eventId, commentId, userId) => apiService.deleteEventComment(eventId, commentId, userId);
 export const likePost = (id, userId) => apiService.likePost(id, userId);
 export const deletePost = (id, userId) => apiService.deletePost(id, userId);
 export const getComments = (postId) => apiService.getComments(postId);
+export const addComment = (postId, content) => apiService.createComment(postId, { content });
 export const createComment = (postId, commentData) => apiService.createComment(postId, commentData);
 export const deleteComment = (postId, commentId, userId) => apiService.deleteComment(postId, commentId, userId);
 

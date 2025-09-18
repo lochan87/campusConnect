@@ -64,7 +64,7 @@ const PostDetail = () => {
   const { postId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { likePost } = usePosts();
+  const { likePost, posts } = usePosts();
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [reportModal, setReportModal] = useState({ isOpen: false });
@@ -78,11 +78,22 @@ const PostDetail = () => {
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [comments, setComments] = useState([]);
   const [loadingComments, setLoadingComments] = useState(false);
+  const [showImageModal, setShowImageModal] = useState(false);
   const hasFetchedComments = useRef(false);
 
   useEffect(() => {
     const fetchPost = async () => {
       try {
+        // First check if the post exists in PostContext
+        const contextPost = posts.find(p => p.id === postId);
+        if (contextPost) {
+          console.log('Found post in context:', contextPost);
+          setPost(contextPost);
+          setLoading(false);
+          return;
+        }
+        
+        // If not found in context, fetch from API
         const response = await getPost(postId, user?.uid);
         console.log('Post response:', response.data); // Debug log
         console.log('Post commentCount from Firestore:', response.data.post?.commentCount); // Debug comment count
@@ -136,17 +147,47 @@ const PostDetail = () => {
       fetchPost();
       fetchComments();
     }
-  }, [postId, navigate]);
+  }, [postId, navigate, posts]);
+
+  // Update local post state when the corresponding post in context changes
+  useEffect(() => {
+    if (postId && posts.length > 0) {
+      const contextPost = posts.find(p => p.id === postId);
+      if (contextPost && post && (
+        contextPost.userHasLiked !== post.userHasLiked || 
+        contextPost.likes !== post.likes ||
+        contextPost.likesCount !== post.likesCount
+      )) {
+        console.log('Updating post from context:', {
+          old: { userHasLiked: post.userHasLiked, likes: post.likes },
+          new: { userHasLiked: contextPost.userHasLiked, likes: contextPost.likes }
+        });
+        setPost(prev => ({
+          ...prev,
+          userHasLiked: contextPost.userHasLiked,
+          likes: contextPost.likes,
+          likesCount: contextPost.likesCount || contextPost.likes
+        }));
+      }
+    }
+  }, [postId, posts, post]);
 
   const handleLike = async () => {
     if (isVoting || !user) return;
     
     setIsVoting(true);
     try {
-      await likePost(postId);
-      // Refresh post data to get updated like counts
-      const response = await getPost(postId, user?.uid);
-      setPost(response.data.post); // Access the post property
+      const result = await likePost(postId);
+      
+      // Update local state with the result
+      if (result && result.success) {
+        setPost(prev => ({
+          ...prev,
+          likes: result.likes,
+          userHasLiked: result.userHasLiked,
+          likesCount: result.likes
+        }));
+      }
     } catch (error) {
       console.error('Error liking post:', error);
       toast.error('Failed to like post');
@@ -219,36 +260,67 @@ const PostDetail = () => {
         isAnonymous: false
       });
 
-      if (response.data.success) {
-        // Replace optimistic comment with real one from backend
-        const realComment = response.data.comment;
-        setComments(prev => 
-          prev.map(c => c.id === optimisticComment.id ? realComment : c)
-        );
-        
-        // Refresh post data to get the updated commentCount from Firestore
-        const postResponse = await getPost(postId, user?.uid);
-        if (postResponse.data.post) {
-          console.log('Updated commentCount from Firestore after comment creation:', postResponse.data.post.commentCount);
-          setPost(postResponse.data.post);
+      console.log('Comment creation response:', response); // Debug log
+
+      // Check if response exists and has data
+      if (response && response.data) {
+        if (response.data.success && response.data.comment) {
+          // Replace optimistic comment with real one from backend
+          const realComment = response.data.comment;
+          setComments(prev => 
+            prev.map(c => c.id === optimisticComment.id ? realComment : c)
+          );
+          
+          // Refresh post data to get the updated commentCount from Firestore
+          const postResponse = await getPost(postId, user?.uid);
+          if (postResponse.data.post) {
+            console.log('Updated commentCount from Firestore after comment creation:', postResponse.data.post.commentCount);
+            setPost(postResponse.data.post);
+          }
+          
+          toast.success('Comment added successfully!');
+        } else {
+          // Backend returned an error
+          throw new Error(response.data.error || response.data.message || 'Failed to create comment');
         }
-        
-        toast.success('Comment added successfully!');
       } else {
-        throw new Error(response.data.error || 'Failed to create comment');
+        // No response or response.data
+        throw new Error('Invalid response from server');
       }
     } catch (error) {
       console.error('Error submitting comment:', error);
+      console.error('Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
       
-      // Remove optimistic comment on error
-      setComments(prev => prev.filter(c => c.id !== optimisticComment.id));
+      // For network errors or timeouts, the comment might still have been created
+      // Check if it's a network error vs actual server error
+      const isNetworkError = !error.response || error.code === 'NETWORK_ERROR' || error.message.includes('timeout');
       
-      // Restore comment text
-      setCommentText(currentComment);
-      
-      // No need to revert comment count since we don't update it optimistically
-      
-      toast.error('Failed to add comment');
+      if (isNetworkError) {
+        // Don't remove optimistic comment immediately for network errors
+        toast.error('Network error - please check if your comment was posted');
+        
+        // Give user option to refresh
+        setTimeout(() => {
+          toast('Refresh the page to see if your comment was posted', {
+            duration: 5000,
+            icon: '🔄'
+          });
+        }, 2000);
+      } else {
+        // Remove optimistic comment for actual server errors
+        setComments(prev => prev.filter(c => c.id !== optimisticComment.id));
+        
+        // Restore comment text
+        setCommentText(currentComment);
+        
+        // Show specific error message
+        const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to add comment';
+        toast.error(errorMessage);
+      }
     } finally {
       setIsSubmittingComment(false);
     }
@@ -310,6 +382,36 @@ const PostDetail = () => {
       handleSubmitComment();
     }
   };
+
+  // Image modal handlers
+  const handleImageClick = () => {
+    setShowImageModal(true);
+  };
+
+  const handleImageModalClose = () => {
+    setShowImageModal(false);
+  };
+
+  const handleModalKeyPress = (e) => {
+    if (e.key === 'Escape') {
+      handleImageModalClose();
+    }
+  };
+
+  // Add keyboard event listener for modal
+  useEffect(() => {
+    if (showImageModal) {
+      document.addEventListener('keydown', handleModalKeyPress);
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleModalKeyPress);
+      document.body.style.overflow = 'unset';
+    };
+  }, [showImageModal]);
 
   const timeAgo = (timestamp) => {
     const now = new Date();
@@ -381,65 +483,58 @@ const PostDetail = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
+      className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6"
     >
       {/* Header */}
-      <div className="flex items-center space-x-4 mb-8">
+      <div className="flex items-center space-x-3 mb-6">
         <motion.button
           onClick={() => navigate(-1)}
-          className="w-12 h-12 bg-white rounded-xl border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors shadow-sm"
+          className="w-10 h-10 bg-white rounded-lg border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
-          <FiArrowLeft className="w-5 h-5 text-gray-600" />
+          <FiArrowLeft className="w-4 h-4 text-gray-600" />
         </motion.button>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold text-gray-900">Post Details</h1>
-          <p className="text-gray-600">View post and interact with the community</p>
+          <h1 className="text-xl font-bold text-gray-900">Post Details</h1>
         </div>
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-2">
           <motion.button
             onClick={handleShare}
-            className="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors flex items-center space-x-2"
+            className="px-3 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors flex items-center space-x-1"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
             <FiShare2 className="w-4 h-4" />
-            <span className="hidden sm:block">Share</span>
           </motion.button>
           {isOwner && (
             <>
               <motion.button
                 onClick={handleEdit}
-                className="px-4 py-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors flex items-center space-x-2"
+                className="px-3 py-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors flex items-center space-x-1"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
                 <FiEdit2 className="w-4 h-4" />
-                <span className="hidden sm:block">Edit</span>
               </motion.button>
               <motion.button
                 onClick={handleDelete}
-                className="px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors flex items-center space-x-2"
+                className="px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors flex items-center space-x-1"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
                 <FiTrash2 className="w-4 h-4" />
-                <span className="hidden sm:block">Delete</span>
               </motion.button>
             </>
           )}
-          {/* Report button available to all authenticated users */}
           {user && (
             <motion.button
               onClick={() => setReportModal({ isOpen: true })}
-              className="px-4 py-2 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors flex items-center space-x-2"
+              className="px-3 py-2 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors flex items-center space-x-1"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              title={isOwner ? "Report this post (as moderator)" : "Report this post"}
             >
               <FiFlag className="w-4 h-4" />
-              <span className="hidden sm:block">Report</span>
             </motion.button>
           )}
         </div>
@@ -447,132 +542,247 @@ const PostDetail = () => {
 
       {/* Post Content */}
       <motion.div
-        className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden"
+        className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
       >
-        <div className="p-8">
-          {/* Post Header */}
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center">
-                {post.isAnonymous ? (
-                  <span className="text-lg">👤</span>
-                ) : (
-                  <span className="text-lg font-medium text-gray-600">
-                    {post.userName?.charAt(0) || 'U'}
+        {/* Post with image - separated containers */}
+        {(post.imageData || post.imageUrl) ? (
+          <div className="grid grid-cols-1 lg:grid-cols-5 min-h-[400px]">
+            {/* Post Content Container */}
+            <motion.div 
+              className="lg:col-span-3 p-6 flex flex-col"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              {/* Post Header */}
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
+                    {post.isAnonymous ? (
+                      <span className="text-lg">👤</span>
+                    ) : (
+                      <span className="text-sm font-medium text-gray-600">
+                        {post.userName?.charAt(0) || 'U'}
+                      </span>
+                    )}
+                  </div>
+                  <div>
+                    <div className="flex items-center space-x-2">
+                      <p className="font-semibold text-gray-900">
+                        {post.isAnonymous ? 'Anonymous' : post.userName || 'Unknown User'}
+                      </p>
+                      {isOwner && (
+                        <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                          Your Post
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center space-x-2 text-sm text-gray-500">
+                      <span className="flex items-center">
+                        <FiClock className="w-3 h-3 mr-1" />
+                        {timeAgo(post.createdAt)}
+                      </span>
+                      {post.location && (
+                        <span className="flex items-center">
+                          <FiMapPin className="w-3 h-3 mr-1" />
+                          {formatLocation(post.location)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                {post.category && (
+                  <span className={`px-2 py-1 text-xs font-medium rounded-full ${getCategoryColor(post.category)}`}>
+                    {post.category.replace(/_/g, ' ')}
                   </span>
                 )}
               </div>
-              <div>
-                <div className="flex items-center space-x-2">
-                  <p className="font-semibold text-gray-900">
-                    {post.isAnonymous ? 'Anonymous' : post.userName || 'Unknown User'}
-                  </p>
-                  {isOwner && (
-                    <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                      Your Post
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center space-x-3 text-sm text-gray-500">
-                  <span className="flex items-center">
-                    <FiClock className="w-4 h-4 mr-1" />
-                    {timeAgo(post.createdAt)}
-                  </span>
-                  {post.location && (
-                    <span className="flex items-center">
-                      <FiMapPin className="w-4 h-4 mr-1" />
-                      {formatLocation(post.location)}
-                    </span>
-                  )}
+
+              {/* Post Title */}
+              {post.title && (
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">{post.title}</h2>
+              )}
+
+              {/* Post Content */}
+              <div className="flex-1 mb-4">
+                <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{post.content}</p>
+              </div>
+
+              {/* Post Actions */}
+              <div className="flex items-center justify-between pt-4 border-t border-gray-200 mt-auto">
+                <div className="flex items-center space-x-4">
+                  <motion.button
+                    onClick={handleLike}
+                    className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-all ${
+                      post.userHasLiked
+                        ? 'bg-red-50 text-red-600'
+                        : 'text-gray-600 hover:bg-gray-50'
+                    } ${isVoting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    disabled={isVoting}
+                    whileHover={{ scale: post.userHasLiked ? 1 : 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <FiHeart className={`w-4 h-4 ${post.userHasLiked ? 'fill-current' : ''}`} />
+                    <span className="font-medium">{post.likes || 0}</span>
+                  </motion.button>
+
+                  <motion.button
+                    onClick={() => {
+                      document.getElementById('comments-section')?.scrollIntoView({ 
+                        behavior: 'smooth' 
+                      });
+                    }}
+                    className="flex items-center space-x-1 px-2 py-1 text-gray-600 hover:bg-gray-50 rounded-lg transition-all"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <FiMessageCircle className="w-4 h-4" />
+                    <span className="font-medium">{post.commentCount || 0}</span>
+                  </motion.button>
                 </div>
               </div>
+            </motion.div>
+
+            {/* Post Image Container */}
+            <motion.div 
+              className="lg:col-span-2 relative group cursor-pointer bg-gray-50"
+              onClick={handleImageClick}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3 }}
+              whileHover={{ scale: 1.02 }}
+            >
+              <div className="relative h-full min-h-[300px] lg:min-h-[400px] overflow-hidden">
+                <img 
+                  src={post.imageData || post.imageUrl} 
+                  alt="Post content"
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-300 flex items-center justify-center">
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white bg-opacity-90 rounded-full p-3">
+                    <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        ) : (
+          /* Post without image - single container */
+          <div className="p-6">
+            {/* Post Header */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
+                  {post.isAnonymous ? (
+                    <span className="text-lg">👤</span>
+                  ) : (
+                    <span className="text-sm font-medium text-gray-600">
+                      {post.userName?.charAt(0) || 'U'}
+                    </span>
+                  )}
+                </div>
+                <div>
+                  <div className="flex items-center space-x-2">
+                    <p className="font-semibold text-gray-900">
+                      {post.isAnonymous ? 'Anonymous' : post.userName || 'Unknown User'}
+                    </p>
+                    {isOwner && (
+                      <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                        Your Post
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center space-x-2 text-sm text-gray-500">
+                    <span className="flex items-center">
+                      <FiClock className="w-3 h-3 mr-1" />
+                      {timeAgo(post.createdAt)}
+                    </span>
+                    {post.location && (
+                      <span className="flex items-center">
+                        <FiMapPin className="w-3 h-3 mr-1" />
+                        {formatLocation(post.location)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+              {post.category && (
+                <span className={`px-2 py-1 text-xs font-medium rounded-full ${getCategoryColor(post.category)}`}>
+                  {post.category.replace(/_/g, ' ')}
+                </span>
+              )}
             </div>
-            {post.category && (
-              <span className={`px-3 py-1 text-sm font-medium rounded-full ${getCategoryColor(post.category)}`}>
-                {post.category.replace(/_/g, ' ')}
-              </span>
+
+            {/* Post Title */}
+            {post.title && (
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">{post.title}</h2>
             )}
-          </div>
 
-          {/* Post Title */}
-          {post.title && (
-            <h2 className="text-3xl font-bold text-gray-900 mb-6">{post.title}</h2>
-          )}
-
-          {/* Post Content */}
-          <div className="prose prose-gray max-w-none mb-8">
-            <p className="text-gray-700 text-lg leading-relaxed whitespace-pre-wrap">{post.content}</p>
-          </div>
-
-          {/* Post Image */}
-          {(post.imageData || post.imageUrl) && (
-            <div className="mb-8">
-              <img 
-                src={post.imageData || post.imageUrl} 
-                alt="Post content"
-                className="w-full h-auto rounded-xl border border-gray-200 shadow-sm"
-              />
-            </div>
-          )}
-
-          {/* Post Actions */}
-          <div className="flex items-center justify-between pt-6 border-t border-gray-200">
-            <div className="flex items-center space-x-6">
-              <motion.button
-                onClick={handleLike}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all ${
-                  post.userHasLiked
-                    ? 'bg-red-50 text-red-600'
-                    : 'text-gray-600 hover:bg-gray-50'
-                } ${isVoting ? 'opacity-50 cursor-not-allowed' : ''}`}
-                disabled={isVoting}
-                whileHover={{ scale: post.userHasLiked ? 1 : 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <FiHeart className={`w-5 h-5 ${post.userHasLiked ? 'fill-current' : ''}`} />
-                <span className="font-medium">{post.likes || 0}</span>
-              </motion.button>
-
-              <motion.button
-                onClick={() => {
-                  document.getElementById('comments-section')?.scrollIntoView({ 
-                    behavior: 'smooth' 
-                  });
-                }}
-                className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-all"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <FiMessageCircle className="w-5 h-5" />
-                <span className="font-medium">{post.commentCount || 0}</span>
-              </motion.button>
+            {/* Post Content */}
+            <div className="mb-4">
+              <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{post.content}</p>
             </div>
 
+            {/* Post Actions */}
+            <div className="flex items-center justify-between pt-2 border-t border-gray-200">
+              <div className="flex items-center space-x-4">
+                <motion.button
+                  onClick={handleLike}
+                  className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-all ${
+                    post.userHasLiked
+                      ? 'bg-red-50 text-red-600'
+                      : 'text-gray-600 hover:bg-gray-50'
+                  } ${isVoting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  disabled={isVoting}
+                  whileHover={{ scale: post.userHasLiked ? 1 : 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <FiHeart className={`w-4 h-4 ${post.userHasLiked ? 'fill-current' : ''}`} />
+                  <span className="font-medium">{post.likes || 0}</span>
+                </motion.button>
+
+                <motion.button
+                  onClick={() => {
+                    document.getElementById('comments-section')?.scrollIntoView({ 
+                      behavior: 'smooth' 
+                    });
+                  }}
+                  className="flex items-center space-x-1 px-2 py-1 text-gray-600 hover:bg-gray-50 rounded-lg transition-all"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <FiMessageCircle className="w-4 h-4" />
+                  <span className="font-medium">{post.commentCount || 0}</span>
+                </motion.button>
+              </div>
+            </div>
           </div>
-        </div>
+        )}
       </motion.div>
 
       {/* Comments Section */}
       <motion.div
         id="comments-section"
-        className="bg-white rounded-2xl shadow-lg border border-gray-100 mt-8 p-8"
+        className="bg-white rounded-xl shadow-sm border border-gray-100 mt-6 p-6"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
       >
-        <h3 className="text-xl font-bold text-gray-900 mb-6">
+        <h3 className="text-lg font-bold text-gray-900 mb-4">
           Comments ({post.commentCount || 0})
         </h3>
         
         {/* Comment Input */}
         {user ? (
-          <div className="mb-6 p-4 bg-gray-50 rounded-xl">
+          <div className="mb-4 p-4 bg-gray-50 rounded-lg">
             <div className="flex items-start space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center shadow-sm">
-                <span className="text-white text-sm font-semibold">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
+                <span className="text-white text-xs font-semibold">
                   {user.displayName?.charAt(0) || user.email?.charAt(0) || 'U'}
                 </span>
               </div>
@@ -583,14 +793,14 @@ const PostDetail = () => {
                     onChange={(e) => setCommentText(e.target.value)}
                     onKeyDown={handleKeyPress}
                     placeholder="What are your thoughts?"
-                    className="w-full p-3 pb-8 border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
-                    rows={3}
+                    className="w-full p-3 pb-6 border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                    rows={2}
                     maxLength={500}
                     disabled={isSubmittingComment}
                   />
                   
                   {/* Character count */}
-                  <div className={`absolute bottom-2 right-3 text-xs font-medium ${
+                  <div className={`absolute bottom-2 right-3 text-xs ${
                     commentText.length > 400 
                       ? 'text-red-500' 
                       : commentText.length > 300 
@@ -601,17 +811,16 @@ const PostDetail = () => {
                   </div>
                 </div>
                 
-                <div className="flex items-center justify-between mt-3">
-                  <div className="flex items-center space-x-2 text-sm text-gray-500">
-                    <span>💬</span>
-                    <span>Press Ctrl+Enter to submit quickly</span>
+                <div className="flex items-center justify-between mt-2">
+                  <div className="text-xs text-gray-500">
+                    Press Ctrl+Enter to submit
                   </div>
                   <motion.button
                     onClick={handleSubmitComment}
                     disabled={!commentText.trim() || isSubmittingComment}
-                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-all ${
+                    className={`flex items-center space-x-1 px-3 py-1 rounded-lg text-sm font-medium transition-all ${
                       commentText.trim() && !isSubmittingComment
-                        ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm hover:shadow-md'
+                        ? 'bg-blue-600 text-white hover:bg-blue-700'
                         : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     }`}
                     whileHover={commentText.trim() && !isSubmittingComment ? { scale: 1.05 } : {}}
@@ -619,13 +828,13 @@ const PostDetail = () => {
                   >
                     {isSubmittingComment ? (
                       <>
-                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                         <span>Posting...</span>
                       </>
                     ) : (
                       <>
-                        <FiMessageCircle className="w-4 h-4" />
-                        <span>Post Comment</span>
+                        <FiMessageCircle className="w-3 h-3" />
+                        <span>Post</span>
                       </>
                     )}
                   </motion.button>
@@ -634,8 +843,8 @@ const PostDetail = () => {
             </div>
           </div>
         ) : (
-          <div className="mb-6 p-4 bg-gray-50 rounded-xl text-center">
-            <p className="text-gray-600">
+          <div className="mb-4 p-3 bg-gray-50 rounded-lg text-center">
+            <p className="text-gray-600 text-sm">
               <button 
                 onClick={() => navigate('/login')}
                 className="text-blue-600 hover:text-blue-700 font-medium"
@@ -648,30 +857,19 @@ const PostDetail = () => {
         )}
 
         {/* Comments List */}
-        <div className="space-y-4">
+        <div className="space-y-3">
           {loadingComments ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-              <span className="ml-3 text-gray-600">Loading comments...</span>
+            <div className="flex items-center justify-center py-6">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+              <span className="ml-2 text-gray-600">Loading comments...</span>
             </div>
           ) : comments.length > 0 ? (
             <>
-              <div className="flex items-center justify-between mb-4">
-                <h4 className="text-sm font-semibold text-gray-700 flex items-center space-x-2">
-                  <FiMessageCircle className="w-4 h-4" />
-                  <span>{post?.commentCount || 0} {(post?.commentCount || 0) === 1 ? 'Comment' : 'Comments'}</span>
-                </h4>
-              </div>
-              
-              {/* Debug info */}
-              {console.log('Rendering comments:', comments)}
-              
               {comments.map((comment, index) => {
-                console.log(`Rendering comment ${index}:`, comment.id, comment.content);
                 return (
                 <motion.div
                   key={comment.id}
-                  className={`group relative bg-white rounded-lg p-4 border transition-all duration-200 hover:shadow-sm ${
+                  className={`group relative bg-white rounded-lg p-3 border transition-all duration-200 hover:shadow-sm ${
                     comment.isOptimistic 
                       ? 'border-l-4 border-l-blue-400 bg-blue-50/50 animate-pulse border-blue-200' 
                       : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
@@ -681,9 +879,9 @@ const PostDetail = () => {
                   transition={{ duration: 0.3 }}
                 >
                   <div className="flex space-x-3">
-                    {/* Enhanced Avatar */}
-                    <div className="relative flex-shrink-0">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold text-sm shadow-sm ${
+                    {/* Avatar */}
+                    <div className="flex-shrink-0">
+                      <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white font-semibold text-xs ${
                           comment.isAnonymous 
                             ? 'bg-gradient-to-br from-gray-500 to-gray-600' 
                             : comment.userId === post.userId
@@ -693,50 +891,36 @@ const PostDetail = () => {
                       >
                         {comment.isAnonymous ? '🎭' : (comment.userName?.charAt(0)?.toUpperCase() || 'U')}
                       </div>
-                      {/* Online indicator */}
-                      {!comment.isAnonymous && !comment.isOptimistic && (
-                        <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-400 border-2 border-white rounded-full"></div>
-                      )}
                     </div>
                     
                     <div className="flex-1 min-w-0">
                       {/* Comment Header */}
-                      <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-start justify-between mb-1">
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center space-x-2 flex-wrap mb-1">
+                          <div className="flex items-center space-x-2 flex-wrap">
                             <h4 className="text-sm font-semibold text-gray-900 truncate">
-                              {comment.isAnonymous ? 'Anonymous User' : comment.userName || 'Unknown User'}
+                              {comment.isAnonymous ? 'Anonymous' : comment.userName || 'Unknown User'}
                             </h4>
                             
                             {/* User badges */}
                             <div className="flex items-center space-x-1">
                               {comment.userId === post.userId && !comment.isAnonymous && (
                                 <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                  <span className="w-1 h-1 bg-green-400 rounded-full mr-1"></span>
                                   Author
                                 </span>
                               )}
-                              {comment.isAnonymous && (
-                                <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-                                  <span className="w-1 h-1 bg-gray-400 rounded-full mr-1"></span>
-                                  Anonymous
+                              {comment.isOptimistic && (
+                                <span className="inline-flex items-center px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                                  Posting...
                                 </span>
                               )}
                             </div>
                           </div>
                           
-                          {/* Timestamp and status */}
-                          <div className="flex items-center space-x-3">
-                            <div className="flex items-center space-x-1 text-xs text-gray-500">
-                              <FiClock className="w-3 h-3" />
-                              <span>{timeAgo(comment.createdAt)}</span>
-                            </div>
-                            {comment.isOptimistic && (
-                              <div className="flex items-center space-x-1 px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
-                                <div className="w-1 h-1 bg-blue-500 rounded-full animate-pulse"></div>
-                                <span>Posting...</span>
-                              </div>
-                            )}
+                          {/* Timestamp */}
+                          <div className="flex items-center space-x-1 text-xs text-gray-500">
+                            <FiClock className="w-3 h-3" />
+                            <span>{timeAgo(comment.createdAt)}</span>
                           </div>
                         </div>
                         
@@ -745,38 +929,21 @@ const PostDetail = () => {
                           (comment.userId === user.uid || user.uid === post.userId) && (
                             <motion.button
                               onClick={() => handleDeleteComment(comment.id)}
-                              className="flex items-center justify-center w-8 h-8 rounded-full transition-all duration-200 opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 hover:bg-red-50"
-                              title={
-                                comment.userId === user.uid 
-                                  ? "Delete your comment" 
-                                  : "Delete comment (as post owner)"
-                              }
+                              className="flex items-center justify-center w-6 h-6 rounded-full transition-all duration-200 opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 hover:bg-red-50"
                               whileHover={{ scale: 1.1 }}
                               whileTap={{ scale: 0.9 }}
                             >
-                              <FiTrash2 className="w-4 h-4" />
+                              <FiTrash2 className="w-3 h-3" />
                             </motion.button>
                           )
                         )}
                       </div>
                       
                       {/* Comment Content */}
-                      <div className="mt-2">
+                      <div className="mt-1">
                         <p className="text-gray-800 text-sm leading-relaxed whitespace-pre-wrap break-words">
                           {comment.content}
                         </p>
-                      </div>
-                      
-                      {/* Comment Footer */}
-                      <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
-                        <div className="flex items-center space-x-2">
-                          <span className="text-xs text-gray-500">
-                            {comment.content.length} chars
-                          </span>
-                          {!comment.isOptimistic && (
-                            <span className="text-xs text-green-500 font-medium">✓</span>
-                          )}
-                        </div>
                       </div>
                     </div>
                   </div>
@@ -785,25 +952,57 @@ const PostDetail = () => {
               })}
             </>
           ) : (
-            <div className="text-center py-12">
-              <div className="relative mb-6">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-100 via-blue-200 to-indigo-200 rounded-full flex items-center justify-center shadow-lg mx-auto">
-                  <FiMessageCircle className="w-8 h-8 text-blue-500" />
-                </div>
-                <div className="absolute -top-1 -right-1 text-2xl">💭</div>
+            <div className="text-center py-8">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-100 via-blue-200 to-indigo-200 rounded-full flex items-center justify-center mx-auto mb-3">
+                <FiMessageCircle className="w-6 h-6 text-blue-500" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-2">Start the conversation</h3>
-              <p className="text-gray-500 mb-4 max-w-xs mx-auto">
+              <h3 className="text-base font-semibold text-gray-800 mb-2">Start the conversation</h3>
+              <p className="text-gray-500 text-sm">
                 {user ? 'Be the first to share your thoughts!' : 'Sign in to start the conversation!'}
               </p>
-              <div className="flex items-center justify-center space-x-2 text-blue-500 text-sm font-medium">
-                <span>✨</span>
-                <span>Your voice matters</span>
-              </div>
             </div>
           )}
         </div>
       </motion.div>
+
+      {/* Image Modal */}
+      {showImageModal && (post.imageData || post.imageUrl) && (
+        <motion.div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 p-4"
+          onClick={handleImageModalClose}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <motion.div
+            className="relative max-w-4xl max-h-[90vh] w-full h-full flex items-center justify-center"
+            onClick={(e) => e.stopPropagation()}
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.8, opacity: 0 }}
+            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+          >
+            <img
+              src={post.imageData || post.imageUrl}
+              alt="Post content"
+              className="max-w-full max-h-full object-contain rounded-lg"
+            />
+            <motion.button
+              onClick={handleImageModalClose}
+              className="absolute top-4 right-4 w-10 h-10 bg-white bg-opacity-20 backdrop-blur-sm text-white rounded-full flex items-center justify-center hover:bg-opacity-30 transition-all"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </motion.button>
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white text-sm bg-black bg-opacity-50 px-3 py-1 rounded-full">
+              Click outside or press ESC to close
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
 
       {/* Report Modal */}
       <ReportPostModal

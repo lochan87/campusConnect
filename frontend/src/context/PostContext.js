@@ -277,8 +277,10 @@ export const PostProvider = ({ children }) => {
     if (state.loading || !user?.campusId) return;
     
     try {
-      console.log('🔄 Fetching posts..., loadMore:', loadMore);
-      console.log('👤 User:', user);
+      // Reduced logging for better performance
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔄 Fetching posts..., loadMore:', loadMore);
+      }
       
       if (!loadMore) {
         dispatch({ type: POST_ACTIONS.SET_LOADING, payload: true });
@@ -292,15 +294,11 @@ export const PostProvider = ({ children }) => {
         limit: state.pagination.limit,
         offset: loadMore ? state.pagination.offset : 0
       };
-
-      console.log('📋 API params:', params);
       
       const response = await apiService.getPosts(params);
-      console.log('📡 API response:', response);
       
       if (response.data.success) {
         const posts = response.data.posts;
-        console.log('📄 Posts received:', posts.length, posts);
         
         if (loadMore) {
           dispatch({ type: POST_ACTIONS.ADD_POSTS, payload: posts });
@@ -356,6 +354,7 @@ export const PostProvider = ({ children }) => {
       
       const params = {
         campusId: user?.campusId,
+        userId: user?.uid, // Add userId to get like status
         limit: 10,
         sortBy: 'date',
         order: 'asc' // Show upcoming events first
@@ -423,14 +422,70 @@ export const PostProvider = ({ children }) => {
   // Like/unlike post
   const likePost = async (postId) => {
     try {
+      console.log('Attempting to like/unlike post:', postId);
       const response = await apiService.likePost(postId, user.uid);
       
+      console.log('Like post response:', response.data);
+      
       if (response.data.success) {
-        // Like will be updated via socket event
-        return { success: true };
+        // Update the post using the reducer's UPDATE_POST action
+        dispatch({
+          type: POST_ACTIONS.UPDATE_POST,
+          payload: {
+            id: postId,
+            likes: response.data.likes,
+            userHasLiked: response.data.userHasLiked,
+            likesCount: response.data.likes // For consistency
+          }
+        });
+        
+        console.log('Updated post state with likes:', response.data.likes, 'userHasLiked:', response.data.userHasLiked);
+        
+        return { 
+          success: true, 
+          likes: response.data.likes, 
+          userHasLiked: response.data.userHasLiked 
+        };
       }
     } catch (error) {
+      console.error('Error in likePost:', error);
       const errorMessage = error.response?.data?.error || 'Failed to like post';
+      toast.error(errorMessage);
+      throw error;
+    }
+  };
+
+  // Like/unlike event
+  const likeEvent = async (eventId) => {
+    try {
+      console.log('Attempting to like/unlike event:', eventId);
+      const response = await apiService.likeEvent(eventId, user.uid);
+      
+      console.log('Like event response:', response.data);
+      
+      if (response.data.success) {
+        // Update the event using the reducer's UPDATE_EVENT action
+        dispatch({
+          type: POST_ACTIONS.UPDATE_EVENT,
+          payload: {
+            id: eventId,
+            likes: response.data.likes,
+            userHasLiked: response.data.isLiked,
+            likesCount: response.data.likes // For consistency
+          }
+        });
+        
+        console.log('Updated event state with likes:', response.data.likes, 'userHasLiked:', response.data.isLiked);
+        
+        return { 
+          success: true, 
+          likes: response.data.likes, 
+          userHasLiked: response.data.isLiked 
+        };
+      }
+    } catch (error) {
+      console.error('Error in likeEvent:', error);
+      const errorMessage = error.response?.data?.error || 'Failed to like event';
       toast.error(errorMessage);
       throw error;
     }
@@ -621,6 +676,7 @@ export const PostProvider = ({ children }) => {
     createPost,
     createPoll,
     likePost,
+    likeEvent,
     voteOnPoll,
     deletePost,
     editPost,

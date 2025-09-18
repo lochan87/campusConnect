@@ -1605,7 +1605,7 @@ router.delete('/delete-account', requireAuth, async (req, res) => {
       batch.delete(doc.ref);
     });
     
-    // Remove user's likes from all posts and polls
+    // Remove user's likes from all posts and polls (legacy)
     const allPostsSnapshot = await db.collection('posts').get();
     allPostsSnapshot.docs.forEach(doc => {
       const data = doc.data();
@@ -1625,6 +1625,42 @@ router.delete('/delete-account', requireAuth, async (req, res) => {
         });
       }
     });
+
+    // Remove user's likes from new separate collections
+    const postLikesSnapshot = await db.collection('like_post')
+      .where('userId', '==', userId)
+      .get();
+    
+    postLikesSnapshot.docs.forEach(doc => {
+      batch.delete(doc.ref);
+    });
+
+    const eventLikesSnapshot = await db.collection('like_event')
+      .where('userId', '==', userId)
+      .get();
+    
+    eventLikesSnapshot.docs.forEach(doc => {
+      batch.delete(doc.ref);
+    });
+
+    // Remove user's comments from separate collections
+    const userPostCommentsSnapshot = await db.collection('comment_post')
+      .where('userId', '==', userId)
+      .get();
+    
+    userPostCommentsSnapshot.docs.forEach(doc => {
+      batch.delete(doc.ref);
+    });
+
+    const userEventCommentsSnapshot = await db.collection('comment_event')
+      .where('userId', '==', userId)
+      .get();
+    
+    userEventCommentsSnapshot.docs.forEach(doc => {
+      batch.delete(doc.ref);
+    });
+
+    console.log(`🗑️ User deletion cleanup: Removed ${postLikesSnapshot.size} post likes, ${eventLikesSnapshot.size} event likes, ${userPostCommentsSnapshot.size} post comments, and ${userEventCommentsSnapshot.size} event comments for user ${userId}`);
     
     // Delete user document
     const userDoc = db.collection('users').doc(userId);

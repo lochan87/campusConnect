@@ -31,7 +31,8 @@ router.get('/', async (req, res) => {
       sortBy = 'date', 
       order = 'asc',
       location,
-      upcoming = true 
+      upcoming = true,
+      userId // Add userId from query params
     } = req.query;
 
     const db = getFirestore();
@@ -49,6 +50,17 @@ router.get('/', async (req, res) => {
 
     for (const doc of snapshot.docs) {
       const eventData = doc.data();
+      
+      // Check if user has liked this event
+      let userHasLiked = false;
+      if (userId) {
+        try {
+          const likeDoc = await db.collection('like_event').doc(`${doc.id}_${userId}`).get();
+          userHasLiked = likeDoc.exists;
+        } catch (error) {
+          console.error('Error checking like status:', error);
+        }
+      }
       
       // Get creator info
       let creator = null;
@@ -72,6 +84,9 @@ router.get('/', async (req, res) => {
         id: doc.id,
         ...eventData,
         creator,
+        userHasLiked,
+        likesCount: eventData.likes || 0,
+        commentCount: eventData.comments || 0,
         createdAt: eventData.createdAt?.toDate?.()?.toISOString() || eventData.createdAt
       });
     }
@@ -128,6 +143,7 @@ router.get('/', async (req, res) => {
 router.get('/:eventId', async (req, res) => {
   try {
     const { eventId } = req.params;
+    const { userId } = req.query; // Get userId from query params
     
     const db = getFirestore();
     const doc = await db.collection('events').doc(eventId).get();
@@ -140,6 +156,13 @@ router.get('/:eventId', async (req, res) => {
     }
 
     const eventData = doc.data();
+    
+    // Check if user has liked this event
+    let userHasLiked = false;
+    if (userId) {
+      const likeDoc = await db.collection('like_event').doc(`${eventId}_${userId}`).get();
+      userHasLiked = likeDoc.exists;
+    }
     
     // Get creator info
     let creator = null;
@@ -165,6 +188,9 @@ router.get('/:eventId', async (req, res) => {
         id: doc.id,
         ...eventData,
         creator,
+        userHasLiked,
+        likesCount: eventData.likes || 0,
+        commentsCount: eventData.comments || 0,
         createdAt: eventData.createdAt?.toDate?.()?.toISOString() || eventData.createdAt
       }
     });
@@ -487,7 +513,31 @@ router.delete('/:eventId', requireAuth, async (req, res) => {
       });
     }
 
-    await db.collection('events').doc(eventId).delete();
+    // Use a transaction to ensure all related data is deleted atomically
+    await db.runTransaction(async (transaction) => {
+      // Delete the event
+      transaction.delete(db.collection('events').doc(eventId));
+
+      // Get and delete all likes for this event
+      const likesSnapshot = await db.collection('like_event')
+        .where('eventId', '==', eventId)
+        .get();
+      
+      likesSnapshot.forEach(likeDoc => {
+        transaction.delete(likeDoc.ref);
+      });
+
+      // Get and delete all comments for this event
+      const commentsSnapshot = await db.collection('comment_event')
+        .where('eventId', '==', eventId)
+        .get();
+      
+      commentsSnapshot.forEach(commentDoc => {
+        transaction.delete(commentDoc.ref);
+      });
+
+      console.log(`🗑️ Event deletion: Deleted event ${eventId} with ${likesSnapshot.size} likes and ${commentsSnapshot.size} comments`);
+    });
 
     res.json({
       success: true,
@@ -571,6 +621,320 @@ router.post('/:eventId/report', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to report event'
+    });
+  }
+});
+
+// Like/Unlike event
+router.post('/:id/like', async (req, res) => {
+  try {
+    const db = getFirestore();
+    const { id } = req.params;
+    const { userId } = req.body;
+
+    const eventRef = db.collection('events').doc(id);
+    const likeRef = db.collection('like_event').doc(`${id}_${userId}`);
+
+    const result = await db.runTransaction(async (transaction) => {
+      // ALL READS MUST HAPPEN FIRST
+      const eventDoc = await transaction.get(eventRef);
+      const likeDoc = await transaction.get(likeRef);
+
+      if (!eventDoc.exists) {
+        throw new Error('Event not found');
+      }
+
+      const eventData = eventDoc.data();
+      
+      // Pre-read author document if we might need it
+      let authorDoc = null;
+      let authorRef = null;
+      if (eventData.userId && eventData.userId !== userId) {
+        const isDemoUser = (userId) => {
+          return userId.startsWith('demo-') || userId.includes('demo');
+        };
+        
+        if (!isDemoUser(eventData.userId)) {
+          authorRef = db.collection('users').doc(eventData.userId);
+          authorDoc = await transaction.get(authorRef);
+        }
+      }
+
+      // NOW PROCESS THE LIKE LOGIC
+      let likes = eventData.likes || 0;
+      let reputationChange = 0; // Track reputation changes for event author
+      let isLiked = false;
+
+      if (likeDoc.exists) {
+        // Unlike - remove the like
+        likes--;
+        transaction.delete(likeRef);
+        isLiked = false;
+        // No reputation change when removing like (reputation never decreases)
+      } else {
+        // Like - add the like
+        likes++;
+        reputationChange = +1; // Give reputation for new like
+        isLiked = true;
+        transaction.set(likeRef, {
+          eventId: id,
+          userId,
+          createdAt: new Date()
+        });
+      }
+
+      // Update event like count
+      transaction.update(eventRef, {
+        likes,
+        updatedAt: new Date()
+      });
+
+      // Update author's reputation if there's a positive change and we have the author doc
+      if (reputationChange > 0 && authorDoc && authorDoc.exists) {
+        const authorData = authorDoc.data();
+        const currentReputation = authorData.reputation || 0;
+        const newReputation = currentReputation + reputationChange;
+        
+        transaction.update(authorRef, {
+          reputation: newReputation,
+          updatedAt: new Date()
+        });
+      }
+
+      return { likes, isLiked, reputationChange };
+    });
+
+    res.json({
+      success: true,
+      likes: result.likes,
+      isLiked: result.isLiked,
+      message: result.isLiked ? 'Event liked successfully' : 'Event unliked successfully'
+    });
+
+  } catch (error) {
+    console.error('Error toggling event like:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to toggle like'
+    });
+  }
+});
+
+// GET /api/events/:id/comments - Get comments for an event
+router.get('/:id/comments', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const db = getFirestore();
+
+    const commentsSnapshot = await db.collection('comment_event')
+      .where('eventId', '==', id)
+      .get();
+
+    const comments = [];
+    commentsSnapshot.forEach(doc => {
+      comments.push({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate?.()?.toISOString() || doc.data().createdAt
+      });
+    });
+
+    comments.sort((a, b) => {
+      const dateA = new Date(a.createdAt);
+      const dateB = new Date(b.createdAt);
+      return dateB - dateA; // Most recent first
+    });
+
+    res.json({
+      success: true,
+      comments,
+      total: comments.length
+    });
+  } catch (error) {
+    console.error('Error fetching comments:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch comments'
+    });
+  }
+});
+
+// POST /api/events/:id/comments - Add a comment to an event
+router.post('/:id/comments', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { content, userId, isAnonymous = false } = req.body;
+
+    if (!content || content.trim().length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Comment content is required'
+      });
+    }
+
+    if (!isAnonymous && !userId) {
+      return res.status(400).json({
+        success: false,
+        error: 'User ID is required for non-anonymous comments'
+      });
+    }
+
+    const db = getFirestore();
+    
+    // Check if event exists
+    const eventRef = db.collection('events').doc(id);
+    const eventDoc = await eventRef.get();
+    
+    if (!eventDoc.exists) {
+      return res.status(404).json({
+        success: false,
+        error: 'Event not found'
+      });
+    }
+
+    // Get user info if not anonymous
+    let userName = 'Anonymous';
+    if (!isAnonymous && userId) {
+      try {
+        const userDoc = await db.collection('users').doc(userId).get();
+        if (userDoc.exists) {
+          const userData = userDoc.data();
+          userName = userData.displayName || userData.firstName || 'Anonymous';
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
+    }
+
+    const commentData = {
+      eventId: id,
+      content: content.trim(),
+      userId: isAnonymous ? null : userId,
+      userName: isAnonymous ? 'Anonymous' : userName,
+      isAnonymous,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    const commentRef = await db.collection('comment_event').add(commentData);
+
+    // Update event comment count and award reputation to event author
+    const eventData = eventDoc.data();
+    const currentComments = eventData.comments || 0;
+    
+    // Award reputation to event author for receiving a comment (if not anonymous and not self-comment)
+    if (!isAnonymous && userId && eventData.userId && eventData.userId !== userId) {
+      const isDemoUser = (userId) => {
+        return userId.startsWith('demo-') || userId.includes('demo');
+      };
+      
+      if (!isDemoUser(eventData.userId)) {
+        try {
+          const authorRef = db.collection('users').doc(eventData.userId);
+          const authorDoc = await authorRef.get();
+          
+          if (authorDoc.exists) {
+            const authorData = authorDoc.data();
+            const currentReputation = authorData.reputation || 0;
+            const newReputation = currentReputation + 1; // +1 reputation for receiving a comment
+            
+            await authorRef.update({
+              reputation: newReputation,
+              updatedAt: new Date()
+            });
+            
+            console.log(`📈 Event comment: Awarded +1 reputation to event author ${eventData.userId}: ${currentReputation} -> ${newReputation}`);
+          }
+        } catch (error) {
+          console.error('Error updating author reputation for comment:', error);
+        }
+      } else {
+        console.log(`🚫 Demo user ${eventData.userId} - no reputation awarded for comment`);
+      }
+    }
+
+    await eventRef.update({
+      comments: currentComments + 1,
+      updatedAt: new Date()
+    });
+
+    res.json({
+      success: true,
+      comment: {
+        id: commentRef.id,
+        ...commentData,
+        createdAt: commentData.createdAt.toISOString()
+      },
+      message: 'Comment added successfully'
+    });
+
+  } catch (error) {
+    console.error('Error adding comment:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to add comment'
+    });
+  }
+});
+
+// DELETE /api/events/:eventId/comments/:commentId - Delete a comment
+router.delete('/:eventId/comments/:commentId', async (req, res) => {
+  try {
+    const { eventId, commentId } = req.params;
+    const { userId } = req.body;
+
+    const db = getFirestore();
+    const commentDoc = await db.collection('comment_event').doc(commentId).get();
+
+    if (!commentDoc.exists) {
+      return res.status(404).json({
+        success: false,
+        error: 'Comment not found'
+      });
+    }
+
+    const commentData = commentDoc.data();
+
+    // Check if user owns the comment or is admin
+    if (!userId || (commentData.userId !== userId)) {
+      // Allow deletion if user is admin (implement admin check here if needed)
+      const userDoc = await db.collection('users').doc(userId).get();
+      const userData = userDoc.exists ? userDoc.data() : null;
+      
+      if (!userData || userData.role !== 'admin') {
+        return res.status(403).json({
+          success: false,
+          error: 'You can only delete your own comments'
+        });
+      }
+    }
+
+    // Delete the comment
+    await db.collection('comment_event').doc(commentId).delete();
+
+    // Update event comment count
+    const eventRef = db.collection('events').doc(eventId);
+    const eventDoc = await eventRef.get();
+    
+    if (eventDoc.exists) {
+      const eventData = eventDoc.data();
+      const currentComments = Math.max((eventData.comments || 1) - 1, 0);
+      await eventRef.update({
+        comments: currentComments,
+        updatedAt: new Date()
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Comment deleted successfully'
+    });
+
+  } catch (error) {
+    console.error('Error deleting comment:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to delete comment'
     });
   }
 });

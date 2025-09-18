@@ -11,32 +11,63 @@ import EventCard from '../components/events/EventCard';
 import EditPostModal from '../components/posts/EditPostModal';
 import DeletePostModal from '../components/posts/DeletePostModal';
 import LoadingSkeleton from '../components/ui/LoadingSkeleton';
+import { apiService } from '../services/api';
 import toast from 'react-hot-toast';
 
 const Home = () => {
-  const { posts, polls, events, loading, fetchPosts, fetchPolls, fetchEvents, refreshPosts, likePost, voteOnPoll, deletePost, deleteEvent } = usePosts();
+  const { posts, polls, events, loading, fetchPosts, fetchPolls, fetchEvents, refreshPosts, likePost, likeEvent, voteOnPoll, deletePost, deleteEvent } = usePosts();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [editModal, setEditModal] = useState({ isOpen: false, post: null });
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, post: null });
   const [isDeleting, setIsDeleting] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
+  const [activeTab, setActiveTab] = useState('posts'); // Add active tab state
+  const [quickStats, setQuickStats] = useState({ posts: 0, polls: 0, events: 0 });
+  const [statsLoading, setStatsLoading] = useState(true);
+
+  // Fetch quick stats first for immediate display
+  useEffect(() => {
+    const fetchQuickStats = async () => {
+      if (!user?.campusId) return;
+      
+      try {
+        setStatsLoading(true);
+        const response = await apiService.getStats({
+          campusId: user.campusId,
+          userId: user.uid
+        });
+        
+        if (response.data.success) {
+          setQuickStats(response.data.stats);
+        }
+      } catch (error) {
+        console.error('Error fetching quick stats:', error);
+      } finally {
+        setStatsLoading(false);
+      }
+    };
+
+    fetchQuickStats();
+  }, [user?.campusId, user?.uid]);
 
   useEffect(() => {
     if (user && !hasInitialized) {
+      // Stagger the API calls to prevent overwhelming the server
       fetchPosts();
-      fetchPolls();
-      fetchEvents();
+      // Delay polls and events fetching to reduce concurrent load
+      setTimeout(() => fetchPolls(), 150);
+      setTimeout(() => fetchEvents(), 300);
       setHasInitialized(true);
     }
   }, [user?.uid, hasInitialized]); // Only run once when user is available
 
   const handleRefresh = async () => {
     if (user) {
-      // Add a small delay between calls to prevent concurrent request issues
+      // Stagger refresh calls to prevent overwhelming the server
       refreshPosts();
-      setTimeout(() => fetchPolls(), 100);
-      setTimeout(() => fetchEvents(), 200);
+      setTimeout(() => fetchPolls(), 150);
+      setTimeout(() => fetchEvents(), 300);
     }
   };
 
@@ -45,6 +76,14 @@ const Home = () => {
       await likePost(postId);
     } catch (error) {
       console.error('Error liking post:', error);
+    }
+  };
+
+  const handleLikeEvent = async (eventId) => {
+    try {
+      await likeEvent(eventId);
+    } catch (error) {
+      console.error('Error liking event:', error);
     }
   };
 
@@ -123,38 +162,29 @@ const Home = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="max-w-full 2xl:max-w-[1600px] mx-auto space-y-8 px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-6"
+      className="max-w-6xl mx-auto space-y-6 px-4 sm:px-6 lg:px-8 py-6"
     >
       {/* Header */}
       <motion.div 
-        className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 rounded-2xl p-6 sm:p-8 text-white shadow-xl"
-        initial={{ opacity: 0, y: -30 }}
+        className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-6 text-white shadow-lg"
+        initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
+        transition={{ duration: 0.5 }}
       >
-        <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
-          <motion.div
-            initial={{ opacity: 0, x: -50 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2 bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold mb-2">
               Campus Feed 🎓
             </h1>
-            <p className="text-blue-100 text-base sm:text-lg opacity-90">
-              Stay updated with your campus community
+            <p className="text-blue-100">
+              Stay connected with your campus community
             </p>
-          </motion.div>
+          </div>
           
-          <motion.div 
-            className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4"
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-          >
+          <div className="flex flex-col sm:flex-row gap-3">
             <motion.button
               onClick={handleRefresh}
-              className="flex items-center justify-center space-x-2 px-4 py-3 sm:px-5 bg-white bg-opacity-10 backdrop-blur-sm hover:bg-opacity-20 rounded-xl transition-all duration-300 font-medium border border-white border-opacity-20 hover:border-opacity-40 w-full sm:w-auto"
+              className="flex items-center justify-center space-x-2 px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition-all font-medium"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
@@ -162,460 +192,403 @@ const Home = () => {
                 animate={loading ? { rotate: 360 } : {}}
                 transition={{ duration: 1, repeat: loading ? Infinity : 0, ease: "linear" }}
               >
-                <FiRefreshCw className="w-5 h-5" />
+                <FiRefreshCw className="w-4 h-4" />
               </motion.div>
-              <span className="text-sm sm:text-base">Refresh</span>
+              <span>Refresh</span>
             </motion.button>
             
             <Link
               to="/create-post"
-              className="flex items-center justify-center space-x-3 px-4 py-3 sm:px-6 bg-white bg-opacity-20 backdrop-blur-sm hover:bg-opacity-30 text-white rounded-xl transition-all duration-300 font-medium border border-white border-opacity-20 hover:border-opacity-40 group w-full sm:w-auto"
+              className="flex items-center justify-center space-x-2 px-4 py-2 bg-white text-blue-600 hover:bg-blue-50 rounded-lg transition-all font-medium"
             >
-              <motion.div
-                whileHover={{ rotate: 180 }}
-                transition={{ duration: 0.3 }}
-              >
-                <FiPlus className="w-5 h-5" />
-              </motion.div>
-              <span className="text-sm sm:text-base font-semibold">New Post</span>
-              <motion.div
-                className="w-2 h-2 bg-white rounded-full opacity-60"
-                animate={{ scale: [1, 1.5, 1] }}
-                transition={{ duration: 2, repeat: Infinity }}
-              />
+              <FiPlus className="w-4 h-4" />
+              <span>New Post</span>
             </Link>
-          </motion.div>
+          </div>
         </div>
       </motion.div>
 
       {/* Quick Stats */}
       <motion.div 
-        className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-6"
+        className="grid grid-cols-2 lg:grid-cols-4 gap-4"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
       >
         {[
           { 
             icon: FiBarChart2, 
-            value: activePolls.length, 
+            value: statsLoading ? '...' : (posts.length > 0 ? posts.length : quickStats.posts || 0), 
+            label: "Posts", 
+            color: "from-blue-500 to-blue-600",
+            isLoading: statsLoading && posts.length === 0
+          },
+          { 
+            icon: FiBarChart2, 
+            value: statsLoading ? '...' : (activePolls.length > 0 ? activePolls.length : quickStats.polls || 0), 
             label: "Active Polls", 
-            bgColor: "bg-gradient-to-br from-green-50 to-emerald-50", 
-            iconBg: "bg-gradient-to-br from-green-100 to-emerald-100",
-            iconColor: "text-green-600",
-            delay: 0.1
+            color: "from-green-500 to-green-600",
+            isLoading: statsLoading && activePolls.length === 0
           },
           { 
             icon: FiCalendar, 
-            value: upcomingEvents.length, 
-            label: "Upcoming Events", 
-            bgColor: "bg-gradient-to-br from-purple-50 to-violet-50", 
-            iconBg: "bg-gradient-to-br from-purple-100 to-violet-100",
-            iconColor: "text-purple-600",
-            delay: 0.2
+            value: statsLoading ? '...' : (events.length > 0 ? events.length : quickStats.events || 0), 
+            label: "Events", 
+            color: "from-purple-500 to-purple-600",
+            isLoading: statsLoading && events.length === 0
           },
           { 
             icon: FiStar, 
             value: user?.reputation || 0, 
             label: "Reputation", 
-            bgColor: "bg-gradient-to-br from-amber-50 to-orange-50", 
-            iconBg: "bg-gradient-to-br from-amber-100 to-orange-100",
-            iconColor: "text-amber-600",
-            delay: 0.3
-          },
-          { 
-            icon: FiBarChart2, 
-            value: posts.length, 
-            label: "Total Posts", 
-            bgColor: "bg-gradient-to-br from-blue-50 to-indigo-50", 
-            iconBg: "bg-gradient-to-br from-blue-100 to-indigo-100",
-            iconColor: "text-blue-600",
-            delay: 0.4
+            color: "from-amber-500 to-amber-600",
+            isLoading: false
           }
         ].map((stat, index) => (
           <motion.div
             key={index}
-            className={`${stat.bgColor} rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer group`}
+            className="bg-white rounded-lg shadow-sm border p-4 hover:shadow-md transition-shadow"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: stat.delay }}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            transition={{ duration: 0.4, delay: index * 0.1 }}
           >
-            <div className="flex items-center space-x-4">
-              <motion.div 
-                className={`w-12 h-12 ${stat.iconBg} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}
-                whileHover={{ rotate: 360 }}
-                transition={{ duration: 0.6 }}
-              >
-                <stat.icon className={`w-6 h-6 ${stat.iconColor}`} />
-              </motion.div>
+            <div className="flex items-center space-x-3">
+              <div className={`w-10 h-10 bg-gradient-to-r ${stat.color} rounded-lg flex items-center justify-center`}>
+                <stat.icon className="w-5 h-5 text-white" />
+              </div>
               <div>
-                <motion.p 
-                  className="text-3xl font-bold text-gray-900"
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ duration: 0.5, delay: stat.delay + 0.2, type: "spring", stiffness: 200 }}
-                >
+                <p className={`text-2xl font-bold text-gray-900 ${stat.isLoading ? 'animate-pulse' : ''}`}>
                   {stat.value}
-                </motion.p>
-                <p className="text-sm font-medium text-gray-600">{stat.label}</p>
+                </p>
+                <p className="text-sm text-gray-600">{stat.label}</p>
               </div>
             </div>
           </motion.div>
         ))}
       </motion.div>
 
-      {/* Main Content */}
+      {/* Navigation Tabs */}
       <motion.div 
-        className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6 gap-6 lg:gap-8"
+        className="bg-white rounded-lg shadow-sm border p-1"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+      >
+        <div className="flex space-x-1">
+          <button 
+            onClick={() => setActiveTab('posts')}
+            className={`flex-1 px-4 py-2 rounded-md font-medium transition-all ${
+              activeTab === 'posts' 
+                ? 'bg-blue-100 text-blue-700' 
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            📝 Posts
+          </button>
+          <button 
+            onClick={() => setActiveTab('polls')}
+            className={`flex-1 px-4 py-2 rounded-md font-medium transition-all ${
+              activeTab === 'polls' 
+                ? 'bg-blue-100 text-blue-700' 
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            📊 Polls
+          </button>
+          <button 
+            onClick={() => setActiveTab('events')}
+            className={`flex-1 px-4 py-2 rounded-md font-medium transition-all ${
+              activeTab === 'events' 
+                ? 'bg-blue-100 text-blue-700' 
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            📅 Events
+          </button>
+        </div>
+      </motion.div>
+
+      {/* Main Content Area */}
+      <motion.div 
+        className="grid grid-cols-1 lg:grid-cols-3 gap-6"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.6, delay: 0.4 }}
+        transition={{ duration: 0.6, delay: 0.3 }}
       >
-        {/* Left Sidebar - Active Polls */}
-        <motion.div 
-          className="lg:order-first xl:col-span-2 2xl:col-span-2"
-          initial={{ opacity: 0, x: -30 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.6, delay: 0.6 }}
-        >
-          <div className="bg-white rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow duration-300">
-            <div className="p-8 border-b border-gray-100 bg-gradient-to-r from-green-50 via-emerald-50 to-teal-50 rounded-t-xl">
-              <h3 className="text-xl font-bold text-gray-900 flex items-center space-x-3">
-                <motion.span 
-                  className="text-2xl"
-                  animate={{ rotate: [0, 10, -10, 0] }}
-                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                >
-                  📊
-                </motion.span>
-                <span>Active Polls</span>
-                <span className="ml-auto bg-green-100 text-green-800 text-xs font-medium px-2.5 py-1 rounded-full">
-                  {activePolls.length}
-                </span>
-              </h3>
-            </div>
-            <div className="p-8">
-              {activePolls.length === 0 ? (
-                <motion.div 
-                  className="text-center py-12"
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.5 }}
-                >
-                  <motion.div
-                    className="w-20 h-20 bg-gradient-to-br from-green-100 to-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6"
-                    animate={{ rotate: [0, 10, -10, 0] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                  >
-                    <span className="text-4xl">📊</span>
-                  </motion.div>
-                  <p className="text-gray-600 font-medium">No active polls</p>
-                  <p className="text-gray-500 text-sm mt-2">Check back later for new polls!</p>
-                </motion.div>
-              ) : (
-                <div className="space-y-6">
-                  {activePolls.slice(0, 4).map((poll, index) => (
-                    <motion.div
-                      key={poll.id}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.4, delay: index * 0.1 }}
-                      className="transform hover:scale-[1.02] transition-transform duration-200"
-                    >
-                      <PollCard
-                        poll={poll}
-                        onVote={handlePollVote}
-                        hasVoted={poll.hasVoted}
-                      />
-                    </motion.div>
-                  ))}
-                  {activePolls.length > 4 && (
-                    <motion.div 
-                      className="text-center pt-4"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ duration: 0.4, delay: 0.5 }}
-                    >
-                      <motion.button 
-                        className="text-blue-600 hover:text-blue-700 font-medium px-6 py-3 rounded-xl hover:bg-blue-50 transition-all duration-200 border border-blue-200 hover:border-blue-300"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        View All Polls ({activePolls.length})
-                      </motion.button>
-                    </motion.div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Feed */}
-        <motion.div 
-          className="lg:col-span-1 xl:col-span-1 2xl:col-span-2"
-          initial={{ opacity: 0, x: -50 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.6, delay: 0.5 }}
-        >
-          <div className="bg-white rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow duration-300">
-            <div className="p-8 border-b border-gray-100 bg-gradient-to-r from-gray-50 via-blue-50 to-indigo-50 rounded-t-xl">
-              <h2 className="text-xl font-bold text-gray-900 flex items-center space-x-3">
-                <motion.span 
-                  className="text-2xl"
-                  animate={{ scale: [1, 1.1, 1] }}
-                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                >
-                  📝
-                </motion.span>
-                <span>Recent Posts</span>
-                <span className="ml-auto bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-1 rounded-full">
-                  {posts.length}
-                </span>
+        {/* Main Content - Dynamic based on active tab */}
+        <div className="lg:col-span-2">
+          <div className="bg-white rounded-lg shadow-sm border">
+            <div className="p-6 border-b">
+              <h2 className="text-xl font-bold text-gray-900 flex items-center space-x-2">
+                {activeTab === 'posts' && (
+                  <>
+                    <span>📝</span>
+                    <span>Posts</span>
+                    <span className="ml-auto bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded-full">
+                      {posts.length}
+                    </span>
+                  </>
+                )}
+                {activeTab === 'polls' && (
+                  <>
+                    <span>📊</span>
+                    <span>Polls</span>
+                    <span className="ml-auto bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded-full">
+                      {polls.length}
+                    </span>
+                  </>
+                )}
+                {activeTab === 'events' && (
+                  <>
+                    <span>📅</span>
+                    <span>Events</span>
+                    <span className="ml-auto bg-purple-100 text-purple-800 text-xs font-medium px-2 py-1 rounded-full">
+                      {events.length}
+                    </span>
+                  </>
+                )}
               </h2>
             </div>
-            <div className="p-8">
-              {loading ? (
-                <LoadingSkeleton type="post" count={3} />
-              ) : posts.length === 0 ? (
-                <motion.div 
-                  className="text-center py-16"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6 }}
-                >
-                  <motion.div 
-                    className="w-24 h-24 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-6"
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ duration: 0.5, type: "spring", stiffness: 200 }}
-                  >
-                    <span className="text-4xl">📝</span>
-                  </motion.div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-3">No posts yet</h3>
-                  <p className="text-gray-600 mb-6 max-w-sm mx-auto">
-                    Be the first to share something with your campus community!
-                  </p>
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <Link
-                      to="/create-post"
-                      className="inline-flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl transition-all duration-300 font-medium shadow-lg hover:shadow-xl"
-                    >
-                      <FiPlus className="w-5 h-5" />
-                      <span>Create First Post</span>
-                    </Link>
-                  </motion.div>
-                </motion.div>
-              ) : (
-                <div className="space-y-6">
-                  {posts.slice(0, 5).map((post, index) => (
-                    <motion.div
-                      key={post.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.4, delay: index * 0.1 }}
-                    >
-                      <PostCard
-                        post={post}
-                        currentUser={user}
-                        onLike={handleLike}
-                        onShare={handleShare}
-                        onEdit={handleEdit}
-                        onDelete={handleDelete}
-                      />
-                    </motion.div>
-                  ))}
-                  {posts.length > 5 && (
-                    <motion.div 
-                      className="text-center py-4"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ duration: 0.4, delay: 0.6 }}
-                    >
-                      <motion.button 
-                        className="text-blue-600 hover:text-blue-700 font-medium px-6 py-3 rounded-xl hover:bg-blue-50 transition-all duration-200 border border-blue-200 hover:border-blue-300"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
+            <div className="p-6">
+              {/* Posts Content */}
+              {activeTab === 'posts' && (
+                <>
+                  {loading ? (
+                    <LoadingSkeleton type="post" count={3} />
+                  ) : posts.length === 0 ? (
+                    <div className="text-center py-12">
+                      <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span className="text-2xl">📝</span>
+                      </div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">No posts yet</h3>
+                      <p className="text-gray-600 mb-4">
+                        Be the first to share something with your campus community!
+                      </p>
+                      <Link
+                        to="/create-post"
+                        className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
                       >
-                        View More Posts ({posts.length})
-                      </motion.button>
-                    </motion.div>
+                        <FiPlus className="w-4 h-4" />
+                        <span>Create First Post</span>
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {posts.map((post, index) => (
+                        <motion.div
+                          key={post.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.4, delay: index * 0.1 }}
+                        >
+                          <PostCard
+                            post={post}
+                            currentUser={user}
+                            onLike={handleLike}
+                            onShare={handleShare}
+                            onEdit={handleEdit}
+                            onDelete={handleDelete}
+                          />
+                        </motion.div>
+                      ))}
+                    </div>
                   )}
-                </div>
+                </>
+              )}
+
+              {/* Polls Content */}
+              {activeTab === 'polls' && (
+                <>
+                  {loading ? (
+                    <LoadingSkeleton type="poll" count={3} />
+                  ) : polls.length === 0 ? (
+                    <div className="text-center py-12">
+                      <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span className="text-2xl">📊</span>
+                      </div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">No polls yet</h3>
+                      <p className="text-gray-600 mb-4">
+                        Create a poll to gather opinions from your campus community!
+                      </p>
+                      <Link
+                        to="/create-poll"
+                        className="inline-flex items-center space-x-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+                      >
+                        <FiPlus className="w-4 h-4" />
+                        <span>Create First Poll</span>
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {polls.map((poll, index) => (
+                        <motion.div
+                          key={poll.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.4, delay: index * 0.1 }}
+                        >
+                          <PollCard
+                            poll={poll}
+                            onVote={handlePollVote}
+                            hasVoted={poll.hasVoted}
+                          />
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* Events Content */}
+              {activeTab === 'events' && (
+                <>
+                  {loading ? (
+                    <LoadingSkeleton type="event" count={3} />
+                  ) : events.length === 0 ? (
+                    <div className="text-center py-12">
+                      <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span className="text-2xl">📅</span>
+                      </div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">No events yet</h3>
+                      <p className="text-gray-600 mb-4">
+                        Create an event to bring your campus community together!
+                      </p>
+                      <Link
+                        to="/create-event"
+                        className="inline-flex items-center space-x-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+                      >
+                        <FiPlus className="w-4 h-4" />
+                        <span>Create First Event</span>
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {events.map((event, index) => (
+                        <motion.div
+                          key={event.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.4, delay: index * 0.1 }}
+                        >
+                          <EventCard
+                            event={event}
+                            currentUser={user}
+                            onEdit={handleEditEvent}
+                            onDelete={handleDeleteEvent}
+                            onLike={handleLikeEvent}
+                          />
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>
-        </motion.div>
+        </div>
 
-        {/* Right Sidebar */}
-        <motion.div 
-          className="xl:col-span-2 2xl:col-span-2 space-y-8"
-          initial={{ opacity: 0, x: 30 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.6, delay: 0.7 }}
-        >
-          {/* Upcoming Events */}
-          <div className="bg-white rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow duration-300">
-            <div className="p-8 border-b border-gray-100 bg-gradient-to-r from-purple-50 via-violet-50 to-indigo-50 rounded-t-xl">
-              <h3 className="text-xl font-bold text-gray-900 flex items-center space-x-3">
-                <motion.span 
-                  className="text-2xl"
-                  animate={{ y: [0, -5, 0] }}
-                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                >
-                  📅
-                </motion.span>
-                <span>Upcoming Events</span>
-                <span className="ml-auto bg-purple-100 text-purple-800 text-xs font-medium px-2.5 py-1 rounded-full">
-                  {upcomingEvents.length}
-                </span>
-              </h3>
-            </div>
-            <div className="p-8">
-              {upcomingEvents.length === 0 ? (
-                <motion.div 
-                  className="text-center py-12"
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.5 }}
-                >
-                  <motion.div
-                    className="w-20 h-20 bg-gradient-to-br from-purple-100 to-violet-100 rounded-full flex items-center justify-center mx-auto mb-6"
-                    animate={{ y: [0, -10, 0] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                  >
-                    <span className="text-4xl">📅</span>
-                  </motion.div>
-                  <p className="text-gray-600 font-medium">No upcoming events</p>
-                  <p className="text-gray-500 text-sm mt-2">Stay tuned for exciting events!</p>
-                </motion.div>
-              ) : (
-                <div className="space-y-6">
-                  {upcomingEvents.slice(0, 4).map((event, index) => (
-                    <motion.div
-                      key={event.id}
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.4, delay: index * 0.1 }}
-                      className="transform hover:scale-[1.02] transition-transform duration-200"
-                    >
-                      <EventCard
-                        event={event}
-                        currentUser={user}
-                        onEdit={handleEditEvent}
-                        onDelete={handleDeleteEvent}
-                      />
-                    </motion.div>
-                  ))}
-                  {upcomingEvents.length > 4 && (
-                    <motion.div 
-                      className="text-center pt-4"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ duration: 0.4, delay: 0.4 }}
-                    >
-                      <motion.button 
-                        className="text-blue-600 hover:text-blue-700 font-medium px-6 py-3 rounded-xl hover:bg-blue-50 transition-all duration-200 border border-blue-200 hover:border-blue-300"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        View All Events ({upcomingEvents.length})
-                      </motion.button>
-                    </motion.div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-
+        {/* Sidebar */}
+        <div className="space-y-6">
           {/* Quick Actions */}
-          <div className="bg-white rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow duration-300">
-            <div className="p-8 border-b border-gray-100 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 rounded-t-xl">
-              <h3 className="text-xl font-bold text-gray-900 flex items-center space-x-3">
-                <motion.span 
-                  className="text-2xl"
-                  animate={{ rotate: [0, 10, -10, 0] }}
-                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                >
-                  ⚡
-                </motion.span>
+          <div className="bg-white rounded-lg shadow-sm border">
+            <div className="p-4 border-b">
+              <h3 className="font-semibold text-gray-900 flex items-center space-x-2">
+                <span>⚡</span>
                 <span>Quick Actions</span>
               </h3>
             </div>
-            <div className="p-8 space-y-4">
+            <div className="p-4 space-y-1">
               {[
-                { to: "/create-post", icon: "📝", label: "Create Post", color: "hover:bg-blue-50", gradient: "from-blue-500 to-indigo-600" },
-                { to: "/create-poll", icon: "📊", label: "Create Poll", color: "hover:bg-green-50", gradient: "from-green-500 to-emerald-600" },
-                { to: "/create-event", icon: "📅", label: "Create Event", color: "hover:bg-purple-50", gradient: "from-purple-500 to-violet-600" },
-                { to: "/leaderboard", icon: "🏆", label: "View Leaderboard", color: "hover:bg-amber-50", gradient: "from-amber-500 to-orange-600" }
+                { to: "/create-post", icon: "📝", label: "Create Post" },
+                { to: "/create-poll", icon: "📊", label: "Create Poll" },
+                { to: "/create-event", icon: "📅", label: "Create Event" }
               ].map((action, index) => (
-                <motion.div
+                <Link
                   key={index}
-                  whileHover={{ x: 8, scale: 1.02 }}
-                  transition={{ duration: 0.2 }}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
+                  to={action.to}
+                  className="flex items-center space-x-3 p-3 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
                 >
-                  <Link
-                    to={action.to}
-                    className={`block w-full text-left px-6 py-4 text-gray-700 ${action.color} rounded-xl transition-all duration-200 flex items-center space-x-4 group border border-gray-100 hover:border-gray-200 shadow-sm hover:shadow-md`}
-                  >
-                    <div className={`w-10 h-10 bg-gradient-to-r ${action.gradient} rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-200`}>
-                      <span className="text-lg filter drop-shadow-sm">{action.icon}</span>
-                    </div>
-                    <span className="font-medium group-hover:text-gray-900">{action.label}</span>
-                    <motion.div
-                      className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                      whileHover={{ x: 5 }}
-                    >
-                      <span className="text-gray-400">→</span>
-                    </motion.div>
-                  </Link>
-                </motion.div>
+                  <span className="text-lg">{action.icon}</span>
+                  <span className="font-medium">{action.label}</span>
+                </Link>
               ))}
             </div>
           </div>
 
-          {/* Campus Info */}
-          <motion.div 
-            className="bg-gradient-to-br from-blue-500 via-purple-600 to-indigo-700 rounded-xl p-8 text-white shadow-lg hover:shadow-xl transition-shadow duration-300"
-            whileHover={{ scale: 1.02 }}
-            transition={{ duration: 0.3 }}
-          >
-            <h3 className="font-bold text-xl mb-4 flex items-center space-x-3">
-              <motion.span 
-                className="text-3xl"
-                animate={{ rotate: [0, 10, -10, 0] }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-              >
-                🌟
-              </motion.span>
-              <span>Campus Community</span>
-            </h3>
-            <p className="opacity-90 mb-6 leading-relaxed text-base">
-              Welcome to CampusConnect! Share, discover, and stay connected with your campus community.
-            </p>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <motion.div 
-                  className="w-4 h-4 bg-green-400 rounded-full shadow-lg"
-                  animate={{ scale: [1, 1.3, 1] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                ></motion.div>
-                <span className="font-medium">Real-time updates active</span>
+          {/* Active Polls */}
+          {activePolls.length > 0 && (
+            <div className="bg-white rounded-lg shadow-sm border">
+              <div className="p-4 border-b">
+                <h3 className="font-semibold text-gray-900 flex items-center space-x-2">
+                  <span>📊</span>
+                  <span>Active Polls</span>
+                  <span className="ml-auto bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded-full">
+                    {activePolls.length}
+                  </span>
+                </h3>
               </div>
-              <div className="text-right">
-                <p className="text-xs opacity-75">Online now</p>
-                <p className="font-bold text-lg">🔥 Live</p>
+              <div className="p-4 space-y-4">
+                {activePolls.slice(0, 2).map((poll, index) => (
+                  <motion.div
+                    key={poll.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.4, delay: index * 0.1 }}
+                  >
+                    <PollCard
+                      poll={poll}
+                      onVote={handlePollVote}
+                      hasVoted={poll.hasVoted}
+                    />
+                  </motion.div>
+                ))}
+                {activePolls.length > 2 && (
+                  <button className="w-full text-center text-blue-600 hover:text-blue-700 font-medium py-2">
+                    View All Polls ({activePolls.length})
+                  </button>
+                )}
               </div>
             </div>
-          </motion.div>
-        </motion.div>
+          )}
+
+          {/* Upcoming Events */}
+          {upcomingEvents.length > 0 && (
+            <div className="bg-white rounded-lg shadow-sm border">
+              <div className="p-4 border-b">
+                <h3 className="font-semibold text-gray-900 flex items-center space-x-2">
+                  <span>📅</span>
+                  <span>Upcoming Events</span>
+                  <span className="ml-auto bg-purple-100 text-purple-800 text-xs font-medium px-2 py-1 rounded-full">
+                    {upcomingEvents.length}
+                  </span>
+                </h3>
+              </div>
+              <div className="p-4 space-y-4">
+                {upcomingEvents.slice(0, 2).map((event, index) => (
+                  <motion.div
+                    key={event.id}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.4, delay: index * 0.1 }}
+                  >
+                    <EventCard
+                      event={event}
+                      currentUser={user}
+                      onEdit={handleEditEvent}
+                      onDelete={handleDeleteEvent}
+                      onLike={handleLikeEvent}
+                    />
+                  </motion.div>
+                ))}
+                {upcomingEvents.length > 2 && (
+                  <button className="w-full text-center text-blue-600 hover:text-blue-700 font-medium py-2">
+                    View All Events ({upcomingEvents.length})
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
       </motion.div>
 
       {/* Edit Post Modal */}
