@@ -202,8 +202,8 @@ const CreatePost = () => {
     return (
       <div className="max-w-2xl mx-auto p-6">
         <div className="text-center py-12">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Please Log In</h2>
-          <p className="text-gray-600">You need to be logged in to create a post.</p>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Please Log In</h2>
+          <p className="text-gray-600 dark:text-gray-300">You need to be logged in to create a post.</p>
         </div>
       </div>
     );
@@ -214,18 +214,18 @@ const CreatePost = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-lg shadow-lg p-6"
+        className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-6"
       >
         <div className="flex items-center gap-3 mb-6">
-          <PencilIcon className="h-6 w-6 text-blue-600" />
-          <h1 className="text-2xl font-bold text-gray-900">Create New Post</h1>
+          <PencilIcon className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Create New Post</h1>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Title */}
           <div>
-            <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
-              Title <span className="text-red-500">*</span>
+            <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Title <span className="text-red-500 dark:text-red-400">*</span>
             </label>
             <div className="relative">
               <input
@@ -234,12 +234,12 @@ const CreatePost = () => {
                 name="title"
                 value={formData.title}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 pr-16 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 pr-16 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                 placeholder="Enter post title..."
                 maxLength={100}
                 required
               />
-              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-gray-400">
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-gray-400 dark:text-gray-500">
                 {formData.title.length}/100
               </div>
             </div>
@@ -247,8 +247,8 @@ const CreatePost = () => {
 
           {/* Content */}
           <div>
-            <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-2">
-              Content <span className="text-red-500">*</span>
+            <label htmlFor="content" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Content <span className="text-red-500 dark:text-red-400">*</span>
             </label>
             <div className="relative">
               <textarea
@@ -257,12 +257,12 @@ const CreatePost = () => {
                 value={formData.content}
                 onChange={handleInputChange}
                 rows={6}
-                className="w-full px-3 py-2 pr-16 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                className="w-full px-3 py-2 pr-16 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent resize-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                 placeholder="What's on your mind?"
                 maxLength={2000}
                 required
               />
-              <div className="absolute right-3 bottom-2 text-xs text-gray-400">
+              <div className="absolute right-3 bottom-2 text-xs text-gray-400 dark:text-gray-500">
                 {formData.content.length}/2000
               </div>
             </div>
@@ -270,15 +270,15 @@ const CreatePost = () => {
 
           {/* Category */}
           <div>
-            <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
-              Category <span className="text-red-500">*</span>
+            <label htmlFor="category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Category <span className="text-red-500 dark:text-red-400">*</span>
             </label>
             <select
               id="category"
               name="category"
               value={formData.category}
               onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               required
             >
               <option value="">Select a category</option>
@@ -290,7 +290,7 @@ const CreatePost = () => {
 
           {/* Location */}
           <div>
-            <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="location" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               <MapPinIcon className="h-4 w-4 inline mr-1" />
               Location
             </label>
@@ -299,7 +299,7 @@ const CreatePost = () => {
               name="location"
               value={formData.location}
               onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             >
               <option value="">Select a location</option>
               {locationOptions.map((location) => (
@@ -312,17 +312,17 @@ const CreatePost = () => {
 
           {/* Image Upload */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               <PhotoIcon className="h-4 w-4 inline mr-1" />
               Image (optional)
             </label>
             
             {!imagePreview ? (
               <label htmlFor="image" className="cursor-pointer">
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
-                  <PhotoIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-sm text-gray-600">Click to upload an image</p>
-                  <p className="text-xs text-gray-500 mt-1">PNG, JPG up to 1MB</p>
+                <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center hover:border-blue-400 dark:hover:border-blue-500 transition-colors bg-gray-50 dark:bg-gray-700">
+                  <PhotoIcon className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+                  <p className="text-sm text-gray-600 dark:text-gray-300">Click to upload an image</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">PNG, JPG up to 1MB</p>
                 </div>
                 <input
                   type="file"
@@ -343,7 +343,7 @@ const CreatePost = () => {
                 <button
                   type="button"
                   onClick={removeImage}
-                  className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                  className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 transition-colors"
                 >
                   <XMarkIcon className="h-4 w-4" />
                 </button>
@@ -359,9 +359,9 @@ const CreatePost = () => {
               name="isAnonymous"
               checked={formData.isAnonymous}
               onChange={handleInputChange}
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700"
             />
-            <label htmlFor="isAnonymous" className="flex items-center text-sm font-medium text-gray-700">
+            <label htmlFor="isAnonymous" className="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300">
               <EyeSlashIcon className="h-4 w-4 mr-1" />
               Post anonymously
             </label>
@@ -372,7 +372,7 @@ const CreatePost = () => {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 dark:focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {isSubmitting ? (
                 <div className="flex items-center justify-center gap-2">

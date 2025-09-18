@@ -132,18 +132,18 @@ const Profile = () => {
     return (
       <div className="max-w-4xl mx-auto p-6">
         <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/3 mb-6"></div>
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-6"></div>
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
             <div className="flex space-x-4 mb-6">
-              <div className="w-20 h-20 bg-gray-200 rounded-full"></div>
+              <div className="w-20 h-20 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
               <div className="flex-1">
-                <div className="h-6 bg-gray-200 rounded w-1/2 mb-2"></div>
-                <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+                <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mb-2"></div>
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
               </div>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
               {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="h-16 bg-gray-200 rounded"></div>
+                <div key={i} className="h-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
               ))}
             </div>
           </div>
@@ -156,9 +156,9 @@ const Profile = () => {
     return (
       <div className="max-w-4xl mx-auto p-6">
         <div className="text-center py-12">
-          <UserIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Profile not found</h3>
-          <p className="text-gray-600">The requested user profile could not be found.</p>
+          <UserIcon className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Profile not found</h3>
+          <p className="text-gray-600 dark:text-gray-300">The requested user profile could not be found.</p>
         </div>
       </div>
     );
@@ -181,7 +181,7 @@ const Profile = () => {
         <motion.h1
           initial={{ y: -20 }}
           animate={{ y: 0 }}
-          className="text-3xl font-bold text-gray-900 mb-2"
+          className="text-3xl font-bold text-gray-900 dark:text-white mb-2"
         >
           {isOwnProfile ? 'My Profile' : `${profile.displayName}'s Profile`}
         </motion.h1>
@@ -191,7 +191,7 @@ const Profile = () => {
       <motion.div
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 mb-6"
+        className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 sm:p-6 mb-6"
       >
         {/* Profile Header */}
         <div className="space-y-4">
@@ -213,21 +213,21 @@ const Profile = () => {
                     type="text"
                     value={editData.displayName}
                     onChange={(e) => setEditData({...editData, displayName: e.target.value})}
-                    className="text-xl sm:text-2xl font-bold text-gray-900 border-b border-gray-300 focus:border-blue-500 outline-none bg-transparent w-full mb-1"
+                    className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white border-b border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 outline-none bg-transparent w-full mb-1"
                     placeholder="Display Name"
                   />
                 ) : (
-                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900 break-words">{profile.displayName}</h2>
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white break-words">{profile.displayName}</h2>
                 )}
                 
                 {profile.username && (
-                  <p className="text-blue-600 font-medium text-sm sm:text-base break-words">@{profile.username}</p>
+                  <p className="text-blue-600 dark:text-blue-400 font-medium text-sm sm:text-base break-words">@{profile.username}</p>
                 )}
                 
-                <p className="text-gray-600 text-sm sm:text-base break-words">{profile.email}</p>
+                <p className="text-gray-600 dark:text-gray-300 text-sm sm:text-base break-words">{profile.email}</p>
                 
                 {/* Student ID - Display only, no editing */}
-                <p className="text-gray-600 text-sm sm:text-base mt-1">
+                <p className="text-gray-600 dark:text-gray-300 text-sm sm:text-base mt-1">
                   Student ID: {profile.studentId || 'Not provided'}
                 </p>
               </div>
@@ -238,7 +238,7 @@ const Profile = () => {
               <div className="flex justify-center sm:justify-end">
                 <button
                   onClick={() => setEditing(true)}
-                  className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-md w-full sm:w-auto justify-center"
+                  className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 transition-colors shadow-md w-full sm:w-auto justify-center"
                 >
                   <PencilIcon className="w-4 h-4" />
                   <span className="font-medium">Edit Profile</span>
@@ -248,36 +248,36 @@ const Profile = () => {
           </div>
           
           {/* Academic Info */}
-          <div className="border-t pt-4">
+          <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
             {editing ? (
               <div className="space-y-4">
                 {/* Course and Department - Display only, auto-selected from Student ID */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Course</label>
-                    <div className="w-full border border-gray-200 bg-gray-50 rounded-lg px-3 py-2 text-sm text-gray-600">
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Course</label>
+                    <div className="w-full border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 rounded-lg px-3 py-2 text-sm text-gray-600 dark:text-gray-300">
                       {profile.course || 'Auto-selected from Student ID'}
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">Auto-selected from Student ID</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Auto-selected from Student ID</p>
                   </div>
                   
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Department</label>
-                    <div className="w-full border border-gray-200 bg-gray-50 rounded-lg px-3 py-2 text-sm text-gray-600">
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Department</label>
+                    <div className="w-full border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 rounded-lg px-3 py-2 text-sm text-gray-600 dark:text-gray-300">
                       {profile.department || 'Auto-selected from Student ID'}
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">Auto-selected from Student ID</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Auto-selected from Student ID</p>
                   </div>
                 </div>
                 
                 {/* Year - Editable */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Year</label>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Year</label>
                     <select
                       value={editData.year}
                       onChange={(e) => setEditData({...editData, year: e.target.value})}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                     >
                       <option value="">Select Year</option>
                       <option value="1st Year">1st Year</option>
@@ -295,19 +295,19 @@ const Profile = () => {
             ) : (
               <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                 {profile.course && (
-                  <span className="flex items-center bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs sm:text-sm mb-4">
+                  <span className="flex items-center bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 px-3 py-1 rounded-full text-xs sm:text-sm mb-4">
                     <AcademicCapIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                     {profile.course}
                   </span>
                 )}
                 {profile.department && (
-                  <span className="flex items-center bg-green-50 text-green-700 px-3 py-1 rounded-full text-xs sm:text-sm mb-4">
+                  <span className="flex items-center bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 px-3 py-1 rounded-full text-xs sm:text-sm mb-4">
                     <AcademicCapIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                     {profile.department}
                   </span>
                 )}
                 {profile.year && (
-                  <span className="flex items-center bg-purple-50 text-purple-700 px-3 py-1 rounded-full text-xs sm:text-sm mb-4">
+                  <span className="flex items-center bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 px-3 py-1 rounded-full text-xs sm:text-sm mb-4">
                     <CalendarIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                     {profile.year}
                   </span>
@@ -318,16 +318,16 @@ const Profile = () => {
         </div>
 
         {/* Bio Section */}
-        <div className="border-t pt-4">
+        <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
           <div className="space-y-4">
             <div className="mb-6">
-              <h3 className="text-sm font-medium text-gray-700 mb-2">Bio</h3>
+              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Bio</h3>
               {editing ? (
                 <>
                   <textarea
                     value={editData.bio}
                     onChange={(e) => setEditData({...editData, bio: e.target.value})}
-                    className="w-full p-3 border border-gray-300 rounded-lg resize-none mb-4"
+                    className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg resize-none mb-4 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                     rows={3}
                     placeholder="Tell us about yourself..."
                   />
@@ -337,13 +337,13 @@ const Profile = () => {
                     <div className="flex flex-col sm:flex-row sm:justify-end gap-3">
                       <button
                         onClick={() => setEditing(false)}
-                        className="w-full sm:w-auto px-6 py-2.5 sm:py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium text-center text-sm sm:text-base"
+                        className="w-full sm:w-auto px-6 py-2.5 sm:py-2 text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium text-center text-sm sm:text-base"
                       >
                         Cancel
                       </button>
                       <button
                         onClick={handleSaveProfile}
-                        className="w-full sm:w-auto px-6 py-2.5 sm:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-center text-sm sm:text-base"
+                        className="w-full sm:w-auto px-6 py-2.5 sm:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 transition-colors font-medium text-center text-sm sm:text-base"
                       >
                         Save Changes
                       </button>
@@ -351,7 +351,7 @@ const Profile = () => {
                   )}
                 </>
               ) : (
-                <p className="text-gray-600">
+                <p className="text-gray-600 dark:text-gray-300">
                   {profile.bio || 'No bio available.'}
                 </p>
               )}
@@ -361,25 +361,25 @@ const Profile = () => {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="text-center p-4 bg-yellow-50 rounded-lg">
-            <TrophyIcon className="w-6 h-6 text-yellow-600 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-gray-900">{profile.reputation || 0}</div>
-            <div className="text-sm text-gray-600">Reputation</div>
+          <div className="text-center p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+            <TrophyIcon className="w-6 h-6 text-yellow-600 dark:text-yellow-400 mx-auto mb-2" />
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">{profile.reputation || 0}</div>
+            <div className="text-sm text-gray-600 dark:text-gray-300">Reputation</div>
           </div>
-          <div className="text-center p-4 bg-blue-50 rounded-lg">
-            <DocumentTextIcon className="w-6 h-6 text-blue-600 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-gray-900">{profile.stats?.totalPosts || 0}</div>
-            <div className="text-sm text-gray-600">Posts</div>
+          <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+            <DocumentTextIcon className="w-6 h-6 text-blue-600 dark:text-blue-400 mx-auto mb-2" />
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">{profile.stats?.totalPosts || 0}</div>
+            <div className="text-sm text-gray-600 dark:text-gray-300">Posts</div>
           </div>
-          <div className="text-center p-4 bg-green-50 rounded-lg">
-            <ChatBubbleLeftRightIcon className="w-6 h-6 text-green-600 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-gray-900">{profile.stats?.totalPolls || 0}</div>
-            <div className="text-sm text-gray-600">Polls</div>
+          <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+            <ChatBubbleLeftRightIcon className="w-6 h-6 text-green-600 dark:text-green-400 mx-auto mb-2" />
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">{profile.stats?.totalPolls || 0}</div>
+            <div className="text-sm text-gray-600 dark:text-gray-300">Polls</div>
           </div>
-          <div className="text-center p-4 bg-red-50 rounded-lg">
-            <FireIcon className="w-6 h-6 text-red-600 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-gray-900">{profile.stats?.recentActivity || 0}</div>
-            <div className="text-sm text-gray-600">Recent Activity</div>
+          <div className="text-center p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
+            <FireIcon className="w-6 h-6 text-red-600 dark:text-red-400 mx-auto mb-2" />
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">{profile.stats?.recentActivity || 0}</div>
+            <div className="text-sm text-gray-600 dark:text-gray-300">Recent Activity</div>
           </div>
         </div>
       </motion.div>
@@ -390,15 +390,15 @@ const Profile = () => {
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.2 }}
-          className="bg-white rounded-lg border border-gray-200 p-6 mb-6"
+          className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 mb-6"
         >
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Posts</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Recent Posts</h3>
           <div className="space-y-3">
             {profile.recentPosts.slice(0, 5).map((post, index) => (
-              <div key={post.id} className="p-3 bg-gray-50 rounded-lg">
-                <h4 className="font-medium text-gray-900">{post.title}</h4>
-                <p className="text-sm text-gray-600 mt-1 line-clamp-2">{post.content}</p>
-                <div className="flex items-center justify-between mt-2 text-xs text-gray-500">
+              <div key={post.id} className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <h4 className="font-medium text-gray-900 dark:text-white">{post.title}</h4>
+                <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 line-clamp-2">{post.content}</p>
+                <div className="flex items-center justify-between mt-2 text-xs text-gray-500 dark:text-gray-400">
                   <span>{formatDate(post.createdAt)}</span>
                   <span>{post.likes} likes</span>
                 </div>
@@ -414,14 +414,14 @@ const Profile = () => {
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.3 }}
-          className="bg-white rounded-lg border border-gray-200 p-6"
+          className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6"
         >
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Polls</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Recent Polls</h3>
           <div className="space-y-3">
             {activeRecentPolls.slice(0, 5).map((poll, index) => (
-              <div key={poll.id} className="p-3 bg-gray-50 rounded-lg">
-                <h4 className="font-medium text-gray-900">{poll.question}</h4>
-                <div className="flex items-center justify-between mt-2 text-xs text-gray-500">
+              <div key={poll.id} className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <h4 className="font-medium text-gray-900 dark:text-white">{poll.question}</h4>
+                <div className="flex items-center justify-between mt-2 text-xs text-gray-500 dark:text-gray-400">
                   <span>{formatDate(poll.createdAt)}</span>
                   <span>{poll.totalVotes} votes</span>
                 </div>
@@ -436,7 +436,7 @@ const Profile = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.4 }}
-        className="text-center mt-6 text-sm text-gray-500"
+        className="text-center mt-6 text-sm text-gray-500 dark:text-gray-400"
       >
         Member since {formatDate(profile.joinedAt)}
       </motion.div>

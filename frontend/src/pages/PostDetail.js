@@ -48,14 +48,14 @@ const formatLocation = (location) => {
 
 const getCategoryColor = (category) => {
   const colors = {
-    'academic': 'bg-blue-100 text-blue-800',
-    'social': 'bg-green-100 text-green-800',
-    'sports': 'bg-orange-100 text-orange-800',
-    'clubs': 'bg-purple-100 text-purple-800',
-    'events': 'bg-pink-100 text-pink-800',
-    'housing': 'bg-yellow-100 text-yellow-800',
-    'jobs': 'bg-indigo-100 text-indigo-800',
-    'general': 'bg-gray-100 text-gray-800'
+    'academic': 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+    'social': 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+    'sports': 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
+    'clubs': 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
+    'events': 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300',
+    'housing': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
+    'jobs': 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300',
+    'general': 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
   };
   return colors[category] || colors.general;
 };
@@ -427,12 +427,12 @@ const PostDetail = () => {
 
   const getCategoryColor = (category) => {
     const colors = {
-      events: 'bg-blue-100 text-blue-800',
-      lost_found: 'bg-yellow-100 text-yellow-800',
-      food: 'bg-green-100 text-green-800',
-      memes: 'bg-purple-100 text-purple-800',
-      announcements: 'bg-red-100 text-red-800',
-      general: 'bg-gray-100 text-gray-800'
+      events: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300',
+      lost_found: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300',
+      food: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300',
+      memes: 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300',
+      announcements: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300',
+      general: 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
     };
     return colors[category?.toLowerCase()] || colors.general;
   };
@@ -454,8 +454,8 @@ const PostDetail = () => {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="text-center py-12">
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Post not found</h3>
-          <p className="text-gray-600 mb-4">The post you're looking for doesn't exist or has been removed.</p>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Post not found</h3>
+          <p className="text-gray-600 dark:text-gray-300 mb-4">The post you're looking for doesn't exist or has been removed.</p>
           <button
             onClick={() => navigate('/')}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -489,19 +489,19 @@ const PostDetail = () => {
       <div className="flex items-center space-x-3 mb-6">
         <motion.button
           onClick={() => navigate(-1)}
-          className="w-10 h-10 bg-white rounded-lg border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors"
+          className="w-10 h-10 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
-          <FiArrowLeft className="w-4 h-4 text-gray-600" />
+          <FiArrowLeft className="w-4 h-4 text-gray-600 dark:text-gray-300" />
         </motion.button>
         <div className="flex-1">
-          <h1 className="text-xl font-bold text-gray-900">Post Details</h1>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">Post Details</h1>
         </div>
         <div className="flex items-center space-x-2">
           <motion.button
             onClick={handleShare}
-            className="px-3 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors flex items-center space-x-1"
+            className="px-3 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors flex items-center space-x-1"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
@@ -511,7 +511,7 @@ const PostDetail = () => {
             <>
               <motion.button
                 onClick={handleEdit}
-                className="px-3 py-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors flex items-center space-x-1"
+                className="px-3 py-2 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors flex items-center space-x-1"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
@@ -519,7 +519,7 @@ const PostDetail = () => {
               </motion.button>
               <motion.button
                 onClick={handleDelete}
-                className="px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors flex items-center space-x-1"
+                className="px-3 py-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors flex items-center space-x-1"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
@@ -527,10 +527,10 @@ const PostDetail = () => {
               </motion.button>
             </>
           )}
-          {user && (
+          {user && !isOwner && (
             <motion.button
               onClick={() => setReportModal({ isOpen: true })}
-              className="px-3 py-2 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors flex items-center space-x-1"
+              className="px-3 py-2 bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center space-x-1"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
@@ -542,7 +542,7 @@ const PostDetail = () => {
 
       {/* Post Content */}
       <motion.div
-        className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
+        className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
@@ -560,27 +560,27 @@ const PostDetail = () => {
               {/* Post Header */}
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
+                  <div className="w-10 h-10 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
                     {post.isAnonymous ? (
                       <span className="text-lg">👤</span>
                     ) : (
-                      <span className="text-sm font-medium text-gray-600">
+                      <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
                         {post.userName?.charAt(0) || 'U'}
                       </span>
                     )}
                   </div>
                   <div>
                     <div className="flex items-center space-x-2">
-                      <p className="font-semibold text-gray-900">
+                      <p className="font-semibold text-gray-900 dark:text-white">
                         {post.isAnonymous ? 'Anonymous' : post.userName || 'Unknown User'}
                       </p>
                       {isOwner && (
-                        <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                        <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 px-2 py-1 rounded-full">
                           Your Post
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center space-x-2 text-sm text-gray-500">
+                    <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
                       <span className="flex items-center">
                         <FiClock className="w-3 h-3 mr-1" />
                         {timeAgo(post.createdAt)}
@@ -603,23 +603,23 @@ const PostDetail = () => {
 
               {/* Post Title */}
               {post.title && (
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">{post.title}</h2>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">{post.title}</h2>
               )}
 
               {/* Post Content */}
               <div className="flex-1 mb-4">
-                <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{post.content}</p>
+                <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">{post.content}</p>
               </div>
 
               {/* Post Actions */}
-              <div className="flex items-center justify-between pt-4 border-t border-gray-200 mt-auto">
+              <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700 mt-auto">
                 <div className="flex items-center space-x-4">
                   <motion.button
                     onClick={handleLike}
                     className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-all ${
                       post.userHasLiked
-                        ? 'bg-red-50 text-red-600'
-                        : 'text-gray-600 hover:bg-gray-50'
+                        ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400'
+                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
                     } ${isVoting ? 'opacity-50 cursor-not-allowed' : ''}`}
                     disabled={isVoting}
                     whileHover={{ scale: post.userHasLiked ? 1 : 1.05 }}
@@ -635,7 +635,7 @@ const PostDetail = () => {
                         behavior: 'smooth' 
                       });
                     }}
-                    className="flex items-center space-x-1 px-2 py-1 text-gray-600 hover:bg-gray-50 rounded-lg transition-all"
+                    className="flex items-center space-x-1 px-2 py-1 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-all"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
@@ -648,7 +648,7 @@ const PostDetail = () => {
 
             {/* Post Image Container */}
             <motion.div 
-              className="lg:col-span-2 relative group cursor-pointer bg-gray-50"
+              className="lg:col-span-2 relative group cursor-pointer bg-gray-50 dark:bg-gray-700"
               onClick={handleImageClick}
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -677,27 +677,27 @@ const PostDetail = () => {
             {/* Post Header */}
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
+                <div className="w-10 h-10 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
                   {post.isAnonymous ? (
                     <span className="text-lg">👤</span>
                   ) : (
-                    <span className="text-sm font-medium text-gray-600">
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
                       {post.userName?.charAt(0) || 'U'}
                     </span>
                   )}
                 </div>
                 <div>
                   <div className="flex items-center space-x-2">
-                    <p className="font-semibold text-gray-900">
+                    <p className="font-semibold text-gray-900 dark:text-white">
                       {post.isAnonymous ? 'Anonymous' : post.userName || 'Unknown User'}
                     </p>
                     {isOwner && (
-                      <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                      <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 px-2 py-1 rounded-full">
                         Your Post
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center space-x-2 text-sm text-gray-500">
+                  <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
                     <span className="flex items-center">
                       <FiClock className="w-3 h-3 mr-1" />
                       {timeAgo(post.createdAt)}
@@ -720,23 +720,23 @@ const PostDetail = () => {
 
             {/* Post Title */}
             {post.title && (
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">{post.title}</h2>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">{post.title}</h2>
             )}
 
             {/* Post Content */}
             <div className="mb-4">
-              <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{post.content}</p>
+              <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">{post.content}</p>
             </div>
 
             {/* Post Actions */}
-            <div className="flex items-center justify-between pt-2 border-t border-gray-200">
+            <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
               <div className="flex items-center space-x-4">
                 <motion.button
                   onClick={handleLike}
                   className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-all ${
                     post.userHasLiked
-                      ? 'bg-red-50 text-red-600'
-                      : 'text-gray-600 hover:bg-gray-50'
+                      ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400'
+                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
                   } ${isVoting ? 'opacity-50 cursor-not-allowed' : ''}`}
                   disabled={isVoting}
                   whileHover={{ scale: post.userHasLiked ? 1 : 1.05 }}
@@ -752,7 +752,7 @@ const PostDetail = () => {
                       behavior: 'smooth' 
                     });
                   }}
-                  className="flex items-center space-x-1 px-2 py-1 text-gray-600 hover:bg-gray-50 rounded-lg transition-all"
+                  className="flex items-center space-x-1 px-2 py-1 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-all"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
@@ -768,18 +768,18 @@ const PostDetail = () => {
       {/* Comments Section */}
       <motion.div
         id="comments-section"
-        className="bg-white rounded-xl shadow-sm border border-gray-100 mt-6 p-6"
+        className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 mt-6 p-6"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
       >
-        <h3 className="text-lg font-bold text-gray-900 mb-4">
+        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
           Comments ({post.commentCount || 0})
         </h3>
         
         {/* Comment Input */}
         {user ? (
-          <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+          <div className="mb-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
             <div className="flex items-start space-x-3">
               <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
                 <span className="text-white text-xs font-semibold">
@@ -793,7 +793,7 @@ const PostDetail = () => {
                     onChange={(e) => setCommentText(e.target.value)}
                     onKeyDown={handleKeyPress}
                     placeholder="What are your thoughts?"
-                    className="w-full p-3 pb-6 border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                    className="w-full p-3 pb-6 border border-gray-200 dark:border-gray-600 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
                     rows={2}
                     maxLength={500}
                     disabled={isSubmittingComment}
@@ -805,14 +805,14 @@ const PostDetail = () => {
                       ? 'text-red-500' 
                       : commentText.length > 300 
                         ? 'text-yellow-500' 
-                        : 'text-gray-400'
+                        : 'text-gray-400 dark:text-gray-500'
                   }`}>
                     {commentText.length}/500
                   </div>
                 </div>
                 
                 <div className="flex items-center justify-between mt-2">
-                  <div className="text-xs text-gray-500">
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
                     Press Ctrl+Enter to submit
                   </div>
                   <motion.button
@@ -821,7 +821,7 @@ const PostDetail = () => {
                     className={`flex items-center space-x-1 px-3 py-1 rounded-lg text-sm font-medium transition-all ${
                       commentText.trim() && !isSubmittingComment
                         ? 'bg-blue-600 text-white hover:bg-blue-700'
-                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        : 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
                     }`}
                     whileHover={commentText.trim() && !isSubmittingComment ? { scale: 1.05 } : {}}
                     whileTap={commentText.trim() && !isSubmittingComment ? { scale: 0.95 } : {}}
@@ -843,11 +843,11 @@ const PostDetail = () => {
             </div>
           </div>
         ) : (
-          <div className="mb-4 p-3 bg-gray-50 rounded-lg text-center">
-            <p className="text-gray-600 text-sm">
+          <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg text-center">
+            <p className="text-gray-600 dark:text-gray-300 text-sm">
               <button 
                 onClick={() => navigate('/login')}
-                className="text-blue-600 hover:text-blue-700 font-medium"
+                className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
               >
                 Sign in
               </button>
@@ -861,7 +861,7 @@ const PostDetail = () => {
           {loadingComments ? (
             <div className="flex items-center justify-center py-6">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
-              <span className="ml-2 text-gray-600">Loading comments...</span>
+              <span className="ml-2 text-gray-600 dark:text-gray-300">Loading comments...</span>
             </div>
           ) : comments.length > 0 ? (
             <>
@@ -869,10 +869,10 @@ const PostDetail = () => {
                 return (
                 <motion.div
                   key={comment.id}
-                  className={`group relative bg-white rounded-lg p-3 border transition-all duration-200 hover:shadow-sm ${
+                  className={`group relative bg-white dark:bg-gray-800 rounded-lg p-3 border transition-all duration-200 hover:shadow-sm ${
                     comment.isOptimistic 
-                      ? 'border-l-4 border-l-blue-400 bg-blue-50/50 animate-pulse border-blue-200' 
-                      : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
+                      ? 'border-l-4 border-l-blue-400 bg-blue-50/50 dark:bg-blue-900/20 animate-pulse border-blue-200 dark:border-blue-700' 
+                      : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700'
                   }`}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -898,19 +898,19 @@ const PostDetail = () => {
                       <div className="flex items-start justify-between mb-1">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center space-x-2 flex-wrap">
-                            <h4 className="text-sm font-semibold text-gray-900 truncate">
+                            <h4 className="text-sm font-semibold text-gray-900 dark:text-white truncate">
                               {comment.isAnonymous ? 'Anonymous' : comment.userName || 'Unknown User'}
                             </h4>
                             
                             {/* User badges */}
                             <div className="flex items-center space-x-1">
                               {comment.userId === post.userId && !comment.isAnonymous && (
-                                <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
                                   Author
                                 </span>
                               )}
                               {comment.isOptimistic && (
-                                <span className="inline-flex items-center px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                                <span className="inline-flex items-center px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-xs font-medium">
                                   Posting...
                                 </span>
                               )}
@@ -918,7 +918,7 @@ const PostDetail = () => {
                           </div>
                           
                           {/* Timestamp */}
-                          <div className="flex items-center space-x-1 text-xs text-gray-500">
+                          <div className="flex items-center space-x-1 text-xs text-gray-500 dark:text-gray-400">
                             <FiClock className="w-3 h-3" />
                             <span>{timeAgo(comment.createdAt)}</span>
                           </div>
@@ -929,7 +929,7 @@ const PostDetail = () => {
                           (comment.userId === user.uid || user.uid === post.userId) && (
                             <motion.button
                               onClick={() => handleDeleteComment(comment.id)}
-                              className="flex items-center justify-center w-6 h-6 rounded-full transition-all duration-200 opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 hover:bg-red-50"
+                              className="flex items-center justify-center w-6 h-6 rounded-full transition-all duration-200 opacity-0 group-hover:opacity-100 text-gray-400 dark:text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
                               whileHover={{ scale: 1.1 }}
                               whileTap={{ scale: 0.9 }}
                             >
@@ -941,7 +941,7 @@ const PostDetail = () => {
                       
                       {/* Comment Content */}
                       <div className="mt-1">
-                        <p className="text-gray-800 text-sm leading-relaxed whitespace-pre-wrap break-words">
+                        <p className="text-gray-800 dark:text-gray-300 text-sm leading-relaxed whitespace-pre-wrap break-words">
                           {comment.content}
                         </p>
                       </div>
@@ -953,11 +953,11 @@ const PostDetail = () => {
             </>
           ) : (
             <div className="text-center py-8">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-100 via-blue-200 to-indigo-200 rounded-full flex items-center justify-center mx-auto mb-3">
-                <FiMessageCircle className="w-6 h-6 text-blue-500" />
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-100 via-blue-200 to-indigo-200 dark:from-blue-900/30 dark:via-blue-800/30 dark:to-indigo-900/30 rounded-full flex items-center justify-center mx-auto mb-3">
+                <FiMessageCircle className="w-6 h-6 text-blue-500 dark:text-blue-400" />
               </div>
-              <h3 className="text-base font-semibold text-gray-800 mb-2">Start the conversation</h3>
-              <p className="text-gray-500 text-sm">
+              <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200 mb-2">Start the conversation</h3>
+              <p className="text-gray-500 dark:text-gray-400 text-sm">
                 {user ? 'Be the first to share your thoughts!' : 'Sign in to start the conversation!'}
               </p>
             </div>

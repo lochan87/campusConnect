@@ -70,46 +70,46 @@ const Sidebar = ({ onClose }) => {
   };
 
   return (
-    <div className="h-full bg-white border-r border-gray-200 flex flex-col">
+    <div className="h-full bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
       {/* Header - Fixed at top of sidebar, below navbar with proper mobile spacing */}
-      <div className="flex-shrink-0 flex items-center justify-between p-4 border-b border-gray-200 bg-white shadow-sm mt-16 lg:mt-0">
-        <h2 className="text-lg font-semibold text-gray-900">Menu</h2>
+      <div className="flex-shrink-0 flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm mt-16 lg:mt-0">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Menu</h2>
         <button
           onClick={onClose}
-          className="p-2 rounded-lg hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
           aria-label="Close sidebar"
         >
-          <FiX className="w-5 h-5 text-gray-600 hover:text-gray-800" />
+          <FiX className="w-5 h-5 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100" />
         </button>
       </div>
 
       {/* Scrollable content - independent of header with mobile navbar spacing */}
-      <div className="flex-1 overflow-y-auto bg-white lg:pt-0">
+      <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-800 lg:pt-0">
         <div className="p-4 space-y-6 pb-6">
           {/* Mobile Search Bar - only visible on mobile */}
           <div className="md:hidden">
             <div className="relative">
-              <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
               <input
                 type="text"
                 placeholder="Search posts, polls, events..."
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 focus:bg-white transition-colors text-sm"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 dark:bg-gray-700 dark:text-white focus:bg-white dark:focus:bg-gray-600 transition-colors text-sm placeholder-gray-500 dark:placeholder-gray-400"
               />
             </div>
           </div>
 
           {/* User info */}
-          <div className="flex items-center space-x-3 bg-gray-50 rounded-lg">
+          <div className="flex items-center space-x-3 bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
             <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
               <span className="text-white font-medium">
                 {user?.firstName?.charAt(0) || 'U'}
               </span>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">
+              <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                 {user?.displayName || 'User'}
               </p>
-              <p className="text-xs text-gray-500 truncate">
+              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                 {user?.department || 'Student'}
               </p>
             </div>
@@ -117,7 +117,7 @@ const Sidebar = ({ onClose }) => {
 
           {/* Navigation */}
           <nav className="space-y-1">
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+            <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
               Navigation
             </h3>
             {navigationItems.map((item) => {
@@ -131,8 +131,8 @@ const Sidebar = ({ onClose }) => {
                   onClick={onClose}
                   className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
                     isActive
-                      ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border-r-2 border-blue-700 dark:border-blue-400'
+                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100'
                   }`}
                 >
                   <Icon className="w-5 h-5" />
@@ -144,17 +144,17 @@ const Sidebar = ({ onClose }) => {
 
           {/* Current Filters Status */}
         {(filters.category !== 'all' || filters.location !== 'all') && (
-          <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
-            <h4 className="text-xs font-semibold text-blue-800 mb-2">Active Filters</h4>
+          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 border border-blue-200 dark:border-blue-800">
+            <h4 className="text-xs font-semibold text-blue-800 dark:text-blue-300 mb-2">Active Filters</h4>
             <div className="space-y-1">
               {filters.category !== 'all' && (
-                <div className="text-xs text-blue-700 flex items-center">
+                <div className="text-xs text-blue-700 dark:text-blue-400 flex items-center">
                   <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
                   Category: {categories.find(c => c.id === filters.category)?.name}
                 </div>
               )}
               {filters.location !== 'all' && (
-                <div className="text-xs text-blue-700 flex items-center">
+                <div className="text-xs text-blue-700 dark:text-blue-400 flex items-center">
                   <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
                   Location: {locations.find(l => l.id === filters.location)?.name}
                 </div>
@@ -162,7 +162,7 @@ const Sidebar = ({ onClose }) => {
             </div>
             <button
               onClick={() => updateFilters({ category: 'all', location: 'all' })}
-              className="mt-2 text-xs text-blue-600 hover:text-blue-800 font-medium"
+              className="mt-2 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
             >
               Clear all filters
             </button>
@@ -171,7 +171,7 @@ const Sidebar = ({ onClose }) => {
 
         {/* Categories Filter */}
         <div className="space-y-2">
-          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+          <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
             Categories
           </h3>
           {categories.map((category) => {
@@ -184,17 +184,17 @@ const Sidebar = ({ onClose }) => {
                 onClick={() => handleCategoryChange(category.id)}
                 className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors text-left ${
                   isActive
-                    ? 'bg-blue-50 text-blue-700'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
+                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100'
                 }`}
               >
-                <Icon className={`w-4 h-4 ${isActive ? 'text-blue-700' : category.color}`} />
+                <Icon className={`w-4 h-4 ${isActive ? 'text-blue-700 dark:text-blue-400' : category.color}`} />
                 <span className="text-sm">{category.name}</span>
                 {isActive && (
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    className="ml-auto w-2 h-2 bg-blue-700 rounded-full"
+                    className="ml-auto w-2 h-2 bg-blue-700 dark:bg-blue-400 rounded-full"
                   />
                 )}
               </button>
@@ -204,7 +204,7 @@ const Sidebar = ({ onClose }) => {
 
         {/* Location Filter */}
         <div className="space-y-2">
-          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+          <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
             Locations
           </h3>
           {locations.map((location) => {
@@ -217,17 +217,17 @@ const Sidebar = ({ onClose }) => {
                 onClick={() => handleLocationChange(location.id)}
                 className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors text-left ${
                   isActive
-                    ? 'bg-green-50 text-green-700'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100'
                 }`}
               >
-                <Icon className={`w-4 h-4 ${isActive ? 'text-green-700' : 'text-gray-500'}`} />
+                <Icon className={`w-4 h-4 ${isActive ? 'text-green-700 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}`} />
                 <span className="text-sm">{location.name}</span>
                 {isActive && (
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    className="ml-auto w-2 h-2 bg-green-700 rounded-full"
+                    className="ml-auto w-2 h-2 bg-green-700 dark:bg-green-400 rounded-full"
                   />
                 )}
               </button>
@@ -236,28 +236,28 @@ const Sidebar = ({ onClose }) => {
         </div>
 
         {/* Quick Stats */}
-        <div className="pt-4 border-t border-gray-200">
-          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+        <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+          <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
             Your Stats
           </h3>
           <div className="grid grid-cols-2 gap-3">
-            <div className="text-center p-3 bg-blue-50 rounded-lg">
-              <p className="text-lg font-semibold text-blue-700">
+            <div className="text-center p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+              <p className="text-lg font-semibold text-blue-700 dark:text-blue-400">
                 {user?.postCount || 0}
               </p>
-              <p className="text-xs text-blue-600">Posts</p>
+              <p className="text-xs text-blue-600 dark:text-blue-500">Posts</p>
             </div>
-            <div className="text-center p-3 bg-purple-50 rounded-lg">
-              <p className="text-lg font-semibold text-purple-700">
+            <div className="text-center p-3 bg-purple-50 dark:bg-purple-900/30 rounded-lg">
+              <p className="text-lg font-semibold text-purple-700 dark:text-purple-400">
                 {user?.reputation || 0}
               </p>
-              <p className="text-xs text-purple-600">Reputation</p>
+              <p className="text-xs text-purple-600 dark:text-purple-500">Reputation</p>
             </div>
           </div>
         </div>
 
         {/* Campus Info */}
-        <div className="pt-4 border-t border-gray-200">
+        <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
           <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg p-4 text-white">
             <h4 className="font-semibold text-sm mb-1">Campus Community</h4>
             <p className="text-xs opacity-90">

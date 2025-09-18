@@ -25,6 +25,7 @@ import { socketService } from './services/socket';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { PostProvider } from './context/PostContext';
 import { NotificationProvider } from './context/NotificationContext';
+import { ThemeProvider } from './context/ThemeContext';
 
 // Styles
 import './App.css';
@@ -93,10 +94,10 @@ const AppContent = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="flex flex-col items-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          <p className="text-gray-600">Loading CampusConnect...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400"></div>
+          <p className="text-gray-600 dark:text-gray-300">Loading CampusConnect...</p>
         </div>
       </div>
     );
@@ -104,7 +105,7 @@ const AppContent = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
@@ -116,7 +117,7 @@ const AppContent = () => {
   }
 
   return (
-    <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
+    <div className="h-screen bg-gray-50 dark:bg-gray-900 flex flex-col overflow-hidden">
       {/* Navbar - fixed at top */}
       <Navbar 
         onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
@@ -133,7 +134,7 @@ const AppContent = () => {
               animate={{ x: 0 }}
               exit={{ x: -300 }}
               transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              className="fixed inset-y-0 left-0 z-40 w-64 bg-white shadow-lg lg:relative lg:inset-y-0 lg:z-auto lg:shadow-none lg:border-r"
+              className="fixed inset-y-0 left-0 z-40 w-64 bg-white dark:bg-gray-800 shadow-lg lg:relative lg:inset-y-0 lg:z-auto lg:shadow-none lg:border-r dark:border-gray-700"
             >
               <Sidebar onClose={() => setSidebarOpen(false)} />
             </motion.div>
@@ -149,7 +150,7 @@ const AppContent = () => {
         )}
 
         {/* Main content - independent scroll area with navbar spacing */}
-        <main className="flex-1 overflow-y-auto pt-16">
+        <main className="flex-1 overflow-y-auto pt-16 bg-gray-50 dark:bg-gray-900">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <AnimatePresence mode="wait">
               <Routes>
@@ -176,13 +177,15 @@ const AppContent = () => {
 
 const App = () => {
   return (
-    <AuthProvider>
-      <PostProvider>
-        <NotificationProvider>
-          <AppContent />
-        </NotificationProvider>
-      </PostProvider>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <PostProvider>
+          <NotificationProvider>
+            <AppContent />
+          </NotificationProvider>
+        </PostProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 };
 

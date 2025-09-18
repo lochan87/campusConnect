@@ -547,25 +547,25 @@ const CreateEvent = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-lg shadow-lg p-6"
+        className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-6"
       >
         <div className="flex items-center gap-3 mb-6">
-          <CalendarIcon className="h-6 w-6 text-blue-600" />
-          <h1 className="text-2xl font-bold text-gray-900">
+          <CalendarIcon className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
             {isEditMode ? 'Edit Event' : 'Create New Event'}
           </h1>
         </div>
 
         {loadingEvent ? (
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <span className="ml-3 text-gray-600">Loading event data...</span>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400"></div>
+            <span className="ml-3 text-gray-600 dark:text-gray-400">Loading event data...</span>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6">
           {/* Event Title */}
           <div>
-            <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Title <span className="text-red-500">*</span>
             </label>
             <div className="relative">
@@ -576,11 +576,11 @@ const CreateEvent = () => {
                 value={formData.title}
                 onChange={handleInputChange}
                 placeholder="What's the event about?"
-                className="w-full px-3 py-2 pr-16 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 pr-16 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                 maxLength={100}
                 required
               />
-              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-gray-400">
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-gray-400 dark:text-gray-500">
                 {formData.title.length}/100
               </div>
             </div>
@@ -588,7 +588,7 @@ const CreateEvent = () => {
 
           {/* Event Description */}
           <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               <InformationCircleIcon className="h-4 w-4 inline mr-1" />
               Description
             </label>
@@ -600,10 +600,10 @@ const CreateEvent = () => {
                 onChange={handleInputChange}
                 placeholder="Provide more details about the event..."
                 rows={3}
-                className="w-full px-3 py-2 pr-16 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                className="w-full px-3 py-2 pr-16 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent resize-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                 maxLength={500}
               />
-              <div className="absolute right-3 bottom-2 text-xs text-gray-400">
+              <div className="absolute right-3 bottom-2 text-xs text-gray-400 dark:text-gray-500">
                 {formData.description.length}/500
               </div>
             </div>
@@ -611,7 +611,7 @@ const CreateEvent = () => {
 
           {/* Location */}
           <div>
-            <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="location" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               <MapPinIcon className="h-4 w-4 inline mr-1" />
               Location <span className="text-red-500">*</span>
             </label>
@@ -620,7 +620,7 @@ const CreateEvent = () => {
               name="location"
               value={formData.location}
               onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               required
             >
               <option value="">Select a location</option>
@@ -635,7 +635,7 @@ const CreateEvent = () => {
           {/* Date and Time */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 <CalendarIcon className="h-4 w-4 inline mr-1" />
                 Start Date <span className="text-red-500">*</span>
               </label>
@@ -646,12 +646,12 @@ const CreateEvent = () => {
                 value={formData.startDate}
                 onChange={handleInputChange}
                 min={new Date().toISOString().split('T')[0]}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 required
               />
             </div>
             <div>
-              <label htmlFor="startTime" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="startTime" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 <ClockIcon className="h-4 w-4 inline mr-1" />
                 Start Time <span className="text-red-500">*</span>
               </label>
@@ -661,7 +661,7 @@ const CreateEvent = () => {
                 name="startTime"
                 value={formData.startTime}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 required
               />
             </div>
@@ -669,7 +669,7 @@ const CreateEvent = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 <CalendarIcon className="h-4 w-4 inline mr-1" />
                 End Date (Optional)
               </label>
@@ -680,11 +680,11 @@ const CreateEvent = () => {
                 value={formData.endDate}
                 onChange={handleInputChange}
                 min={formData.startDate || new Date().toISOString().split('T')[0]}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               />
             </div>
             <div>
-              <label htmlFor="endTime" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="endTime" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 <ClockIcon className="h-4 w-4 inline mr-1" />
                 End Time <span className="text-red-500">*</span>
               </label>
@@ -694,7 +694,7 @@ const CreateEvent = () => {
                 name="endTime"
                 value={formData.endTime}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 required
               />
             </div>
@@ -702,7 +702,7 @@ const CreateEvent = () => {
 
           {/* Event Type */}
           <div>
-            <label htmlFor="eventType" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="eventType" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               <UserGroupIcon className="h-4 w-4 inline mr-1" />
               Event Type <span className="text-red-500">*</span>
             </label>
@@ -711,7 +711,7 @@ const CreateEvent = () => {
               name="eventType"
               value={formData.eventType}
               onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               required
             >
               <option value="">Select event type</option>
@@ -725,7 +725,7 @@ const CreateEvent = () => {
 
           {/* Target Audience */}
           <div>
-            <label htmlFor="targetAudience" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="targetAudience" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               <UserGroupIcon className="h-4 w-4 inline mr-1" />
               Target Audience <span className="text-red-500">*</span>
             </label>
@@ -734,7 +734,7 @@ const CreateEvent = () => {
               name="targetAudience"
               value={formData.targetAudience}
               onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               required
             >
               <option value="">Select target audience</option>
@@ -748,13 +748,13 @@ const CreateEvent = () => {
 
           {/* Hosting Information */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               <UserGroupIcon className="h-4 w-4 inline mr-1" />
               Hosting Information <span className="text-red-500">*</span>
             </label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="stream" className="block text-xs font-medium text-gray-600 mb-1">
+                <label htmlFor="stream" className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
                   Stream
                 </label>
                 <select
@@ -762,7 +762,7 @@ const CreateEvent = () => {
                   name="stream"
                   value={formData.stream}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   required
                 >
                   <option value="">Select stream</option>
@@ -774,7 +774,7 @@ const CreateEvent = () => {
                 </select>
               </div>
               <div>
-                <label htmlFor="hostingDepartment" className="block text-xs font-medium text-gray-600 mb-1">
+                <label htmlFor="hostingDepartment" className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
                   Department
                 </label>
                 <select
@@ -782,7 +782,7 @@ const CreateEvent = () => {
                   name="hostingDepartment"
                   value={formData.hostingDepartment}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
                   required
                   disabled={!formData.stream}
                 >
@@ -801,7 +801,7 @@ const CreateEvent = () => {
 
           {/* User Role */}
           <div>
-            <label htmlFor="userRole" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="userRole" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               <UserGroupIcon className="h-4 w-4 inline mr-1" />
               Your Role in this Event <span className="text-red-500">*</span>
             </label>
@@ -810,7 +810,7 @@ const CreateEvent = () => {
               name="userRole"
               value={formData.userRole}
               onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               required
             >
               <option value="">Select your role</option>
@@ -827,17 +827,17 @@ const CreateEvent = () => {
 
           {/* Event Poster */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               <PhotoIcon className="h-4 w-4 inline mr-1" />
               Event Poster <span className="text-red-500">*</span>
             </label>
             
             {!posterPreview ? (
               <label htmlFor="poster" className="cursor-pointer">
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
-                  <PhotoIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-sm text-gray-600">Click to upload event poster</p>
-                  <p className="text-xs text-gray-500 mt-1">PNG, JPG, GIF up to 5MB</p>
+                <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center hover:border-blue-400 dark:hover:border-blue-500 transition-colors bg-white dark:bg-gray-700">
+                  <PhotoIcon className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Click to upload event poster</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">PNG, JPG, GIF up to 5MB</p>
                 </div>
                 <input
                   type="file"
@@ -871,14 +871,14 @@ const CreateEvent = () => {
             <button
               type="button"
               onClick={() => navigate('/')}
-              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+              className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="flex-1 bg-blue-600 dark:bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {loading ? (
                 <div className="flex items-center justify-center gap-2">

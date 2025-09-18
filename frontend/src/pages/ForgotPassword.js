@@ -39,7 +39,7 @@ const ForgotPassword = () => {
 
   if (emailSent) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-900">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -51,21 +51,21 @@ const ForgotPassword = () => {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-              className="w-16 h-16 bg-green-100 rounded-full mx-auto flex items-center justify-center mb-6"
+              className="w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full mx-auto flex items-center justify-center mb-6"
             >
-              <FiCheckCircle className="w-8 h-8 text-green-600" />
+              <FiCheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
             </motion.div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">Check your email</h2>
-            <p className="text-gray-600 mb-8">
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Check your email</h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-8">
               We've sent password reset instructions to{' '}
-              <span className="font-medium text-gray-900">{email}</span>
+              <span className="font-medium text-gray-900 dark:text-white">{email}</span>
             </p>
             
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-              <h3 className="text-sm font-medium text-blue-900 mb-2">
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4 mb-6">
+              <h3 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">
                 What's next?
               </h3>
-              <ul className="text-xs text-blue-700 space-y-1 text-left">
+              <ul className="text-xs text-blue-700 dark:text-blue-300 space-y-1 text-left">
                 <li>• Check your email inbox for reset instructions</li>
                 <li>• Click the reset link in the email</li>
                 <li>• Create a new password for your account</li>
@@ -76,20 +76,20 @@ const ForgotPassword = () => {
             <div className="space-y-4">
               <Link
                 to="/login"
-                className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center"
+                className="w-full bg-blue-600 dark:bg-blue-500 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors flex items-center justify-center"
               >
                 <FiArrowLeft className="w-4 h-4 mr-2" />
                 Back to Sign In
               </Link>
               
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
                 Didn't receive the email?{' '}
                 <button
                   onClick={() => {
                     setEmailSent(false);
                     setEmail('');
                   }}
-                  className="text-blue-600 hover:text-blue-500 font-medium"
+                  className="text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 font-medium"
                 >
                   Try again
                 </button>
@@ -102,7 +102,7 @@ const ForgotPassword = () => {
   }
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex bg-white dark:bg-gray-900">
       {/* Left side - Form */}
       <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-4">
         <motion.div
@@ -121,8 +121,8 @@ const ForgotPassword = () => {
             >
               <span className="text-white font-bold text-xl">CC</span>
             </motion.div>
-            <h2 className="text-3xl font-bold text-gray-900">Forgot your password?</h2>
-            <p className="mt-2 text-gray-600">
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Forgot your password?</h2>
+            <p className="mt-2 text-gray-600 dark:text-gray-400">
               Enter your email address and we'll send you instructions to reset your password
             </p>
           </div>
@@ -137,11 +137,11 @@ const ForgotPassword = () => {
           >
             {/* Email field */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Email Address
               </label>
               <div className="relative">
-                <FiMail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <FiMail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
                 <input
                   id="email"
                   name="email"
@@ -150,7 +150,7 @@ const ForgotPassword = () => {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10 w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="pl-10 w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                   placeholder="Enter your email address"
                 />
               </div>
@@ -160,7 +160,7 @@ const ForgotPassword = () => {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              className="w-full bg-blue-600 dark:bg-blue-500 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 dark:hover:bg-blue-600 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               {isSubmitting ? (
                 <FiLoader className="w-5 h-5 animate-spin" />
@@ -179,7 +179,7 @@ const ForgotPassword = () => {
           >
             <Link
               to="/login"
-              className="text-sm text-blue-600 hover:text-blue-500 font-medium flex items-center justify-center"
+              className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 font-medium flex items-center justify-center"
             >
               <FiArrowLeft className="w-4 h-4 mr-1" />
               Back to Sign In

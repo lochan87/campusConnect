@@ -101,8 +101,8 @@ const Leaderboard = () => {
         transition={{ delay: index * 0.1 }}
         className={`p-4 rounded-lg border transition-all duration-200 hover:shadow-md ${
           isCurrentUser 
-            ? 'bg-blue-50 border-blue-200 ring-2 ring-blue-500' 
-            : 'bg-white border-gray-200 hover:border-gray-300'
+            ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700 ring-2 ring-blue-500 dark:ring-blue-400' 
+            : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
         }`}
       >
         <div className="flex items-center justify-between">
@@ -110,27 +110,27 @@ const Leaderboard = () => {
             {getRankIcon(index)}
             <div className="flex-1">
               <div className="flex items-center space-x-2">
-                <h3 className={`font-semibold ${isCurrentUser ? 'text-blue-900' : 'text-gray-900'}`}>
+                <h3 className={`font-semibold ${isCurrentUser ? 'text-blue-900 dark:text-blue-100' : 'text-gray-900 dark:text-white'}`}>
                   {userData.displayName}
-                  {isCurrentUser && <span className="text-xs text-blue-600 ml-1">(You)</span>}
+                  {isCurrentUser && <span className="text-xs text-blue-600 dark:text-blue-400 ml-1">(You)</span>}
                 </h3>
                 {userData.department && (
-                  <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full">
+                  <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-1 rounded-full">
                     {userData.department}
                   </span>
                 )}
               </div>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
                 {userData.year && `${userData.year} • `}
                 {userData.email}
               </p>
             </div>
           </div>
           <div className="text-right">
-            <div className={`text-lg font-bold ${isCurrentUser ? 'text-blue-700' : 'text-gray-900'}`}>
+            <div className={`text-lg font-bold ${isCurrentUser ? 'text-blue-700 dark:text-blue-300' : 'text-gray-900 dark:text-white'}`}>
               {getValue()}
             </div>
-            <div className="text-xs text-gray-500">{getLabel()}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">{getLabel()}</div>
           </div>
         </div>
       </motion.div>
@@ -146,14 +146,14 @@ const Leaderboard = () => {
     return (
       <div className="max-w-4xl mx-auto p-6">
         <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/3 mb-6"></div>
+          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-6"></div>
           <div className="flex space-x-4 mb-6">
             {[1, 2].map((i) => (
-              <div key={i} className="h-10 bg-gray-200 rounded flex-1"></div>
+              <div key={i} className="h-10 bg-gray-200 dark:bg-gray-700 rounded flex-1"></div>
             ))}
           </div>
           {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="h-16 bg-gray-200 rounded mb-4"></div>
+            <div key={i} className="h-16 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
           ))}
         </div>
       </div>
@@ -173,7 +173,7 @@ const Leaderboard = () => {
         <motion.h1
           initial={{ y: -20 }}
           animate={{ y: 0 }}
-          className="text-3xl font-bold text-gray-900 mb-2"
+          className="text-3xl font-bold text-gray-900 dark:text-white mb-2"
         >
           Campus Leaderboard
         </motion.h1>
@@ -181,7 +181,7 @@ const Leaderboard = () => {
           initial={{ y: -10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.1 }}
-          className="text-gray-600"
+          className="text-gray-600 dark:text-gray-400"
         >
           See who's leading the way in campus engagement and contributions
         </motion.p>
@@ -193,20 +193,20 @@ const Leaderboard = () => {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.2 }}
-          className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-6 mb-8"
+          className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-6 mb-8"
         >
           <div className="flex items-start space-x-4">
             <div className="flex-shrink-0">
-              <ExclamationTriangleIcon className="w-8 h-8 text-blue-600" />
+              <ExclamationTriangleIcon className="w-8 h-8 text-blue-600 dark:text-blue-400" />
             </div>
             <div className="flex-1">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                 Create Your Account to Join the Leaderboard!
               </h3>
-              <p className="text-gray-600 mb-4">
+              <p className="text-gray-600 dark:text-gray-300 mb-4">
                 You're currently using a demo account. Create a real account to:
               </p>
-              <ul className="text-sm text-gray-600 space-y-1 mb-4">
+              <ul className="text-sm text-gray-600 dark:text-gray-300 space-y-1 mb-4">
                 <li>• Earn reputation points for your posts and contributions</li>
                 <li>• Appear on the campus leaderboard rankings</li>
                 <li>• Track your activity and engagement over time</li>
@@ -215,13 +215,13 @@ const Leaderboard = () => {
               <div className="flex space-x-3">
                 <button
                   onClick={handleCreateAccount}
-                  className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                  className="inline-flex items-center px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors font-medium"
                 >
                   Create Account
                 </button>
                 <button
                   onClick={handleSignIn}
-                  className="inline-flex items-center px-4 py-2 bg-white text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors font-medium"
+                  className="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 border border-blue-600 dark:border-blue-500 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-600 transition-colors font-medium"
                 >
                   Sign In
                 </button>
@@ -232,7 +232,7 @@ const Leaderboard = () => {
       )}
 
       {/* Tabs */}
-      <div className="flex space-x-1 mb-6 bg-gray-100 p-1 rounded-lg">
+      <div className="flex space-x-1 mb-6 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
         {tabs.map((tab) => {
           const IconComponent = tab.icon;
           return (
@@ -241,8 +241,8 @@ const Leaderboard = () => {
               onClick={() => setActiveTab(tab.id)}
               className={`flex-1 flex items-center justify-center space-x-2 py-2 px-4 rounded-md transition-all duration-200 ${
                 activeTab === tab.id
-                  ? 'bg-white text-blue-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
               }`}
             >
               <IconComponent className="w-4 h-4" />
@@ -264,9 +264,9 @@ const Leaderboard = () => {
             animate={{ opacity: 1 }}
             className="text-center py-12"
           >
-            <UserIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No data available</h3>
-            <p className="text-gray-600">
+            <UserIcon className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No data available</h3>
+            <p className="text-gray-600 dark:text-gray-400">
               Be the first to contribute and appear on the leaderboard!
             </p>
           </motion.div>
@@ -284,7 +284,7 @@ const Leaderboard = () => {
           <button
             onClick={fetchLeaderboard}
             disabled={loading}
-            className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+            className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
           >
             <span>Refresh Leaderboard</span>
             <ChevronRightIcon className="w-4 h-4" />

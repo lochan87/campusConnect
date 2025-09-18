@@ -84,14 +84,14 @@ const EventCard = ({ event, currentUser, onEdit, onDelete, onLike }) => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-200 cursor-pointer"
+      className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md transition-all duration-200 cursor-pointer"
       onClick={handleCardClick}
     >
       {/* Event Poster */}
       {getImageSrc() && !imageError && (
-        <div className="h-48 bg-gray-100 overflow-hidden relative">
+        <div className="h-48 bg-gray-100 dark:bg-gray-700 overflow-hidden relative">
           {imageLoading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-700">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
             </div>
           )}
@@ -109,10 +109,10 @@ const EventCard = ({ event, currentUser, onEdit, onDelete, onLike }) => {
 
       {/* Fallback when no image or image failed to load */}
       {(!getImageSrc() || imageError) && (
-        <div className="h-48 bg-gradient-to-br from-purple-100 via-blue-100 to-indigo-100 flex items-center justify-center">
+        <div className="h-48 bg-gradient-to-br from-purple-100 via-blue-100 to-indigo-100 dark:from-purple-900/30 dark:via-blue-900/30 dark:to-indigo-900/30 flex items-center justify-center">
           <div className="text-center">
             <div className="text-4xl mb-2">📅</div>
-            <p className="text-gray-600 font-medium">Event Image</p>
+            <p className="text-gray-600 dark:text-gray-400 font-medium">Event Image</p>
           </div>
         </div>
       )}
@@ -121,22 +121,22 @@ const EventCard = ({ event, currentUser, onEdit, onDelete, onLike }) => {
       <div className="p-4">
         {/* Event Header with Title and Menu */}
         <div className="flex items-start justify-between mb-2">
-          <h3 className="font-semibold text-gray-900 text-lg line-clamp-2 flex-1 mr-2">
+          <h3 className="font-semibold text-gray-900 dark:text-white text-lg line-clamp-2 flex-1 mr-2">
             {event.title}
           </h3>
           <div className="relative" ref={menuRef}>
             <button 
               onClick={() => setShowMenu(!showMenu)}
-              className="p-1 hover:bg-gray-100 rounded"
+              className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
             >
-              <FiMoreHorizontal className="w-4 h-4 text-gray-400" />
+              <FiMoreHorizontal className="w-4 h-4 text-gray-400 dark:text-gray-500" />
             </button>
             
             {showMenu && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="absolute right-0 mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-10"
+                className="absolute right-0 mt-1 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 z-10"
               >
                 <div className="py-1">
                   {currentUser && (currentUser.uid === event.userId || currentUser.id === event.userId) && (
@@ -146,7 +146,7 @@ const EventCard = ({ event, currentUser, onEdit, onDelete, onLike }) => {
                           setShowMenu(false);
                           onEdit && onEdit(event);
                         }}
-                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                       >
                         <FiEdit2 className="w-4 h-4 mr-2" />
                         Edit Event
@@ -156,23 +156,25 @@ const EventCard = ({ event, currentUser, onEdit, onDelete, onLike }) => {
                           setShowMenu(false);
                           onDelete && onDelete(event.id);
                         }}
-                        className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                        className="flex items-center w-full px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
                       >
                         <FiTrash2 className="w-4 h-4 mr-2" />
                         Delete Event
                       </button>
                     </>
                   )}
-                  <button
-                    onClick={() => {
-                      setShowMenu(false);
-                      setReportModal({ isOpen: true });
-                    }}
-                    className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    <FiFlag className="w-4 h-4 mr-2" />
-                    Report Event
-                  </button>
+                  {currentUser && !(currentUser.uid === event.userId || currentUser.id === event.userId) && (
+                    <button
+                      onClick={() => {
+                        setShowMenu(false);
+                        setReportModal({ isOpen: true });
+                      }}
+                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    >
+                      <FiFlag className="w-4 h-4 mr-2" />
+                      Report Event
+                    </button>
+                  )}
                 </div>
               </motion.div>
             )}
@@ -181,7 +183,7 @@ const EventCard = ({ event, currentUser, onEdit, onDelete, onLike }) => {
 
         {/* Event Description */}
         {event.description && (
-          <p className="text-gray-600 text-sm mb-3 line-clamp-3">
+          <p className="text-gray-600 dark:text-gray-300 text-sm mb-3 line-clamp-3">
             {event.description}
           </p>
         )}
@@ -189,13 +191,13 @@ const EventCard = ({ event, currentUser, onEdit, onDelete, onLike }) => {
         {/* Event Details */}
         <div className="space-y-2 mb-4">
           {/* Date */}
-          <div className="flex items-center text-sm text-gray-600">
+          <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
             <FiCalendar className="w-4 h-4 mr-2 text-blue-500" />
             <span>{formatDate(event.date)}</span>
           </div>
 
           {/* Time */}
-          <div className="flex items-center text-sm text-gray-600">
+          <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
             <FiClock className="w-4 h-4 mr-2 text-green-500" />
             <span>
               {formatTime(event.startTime)} - {formatTime(event.endTime)}
@@ -203,20 +205,20 @@ const EventCard = ({ event, currentUser, onEdit, onDelete, onLike }) => {
           </div>
 
           {/* Location */}
-          <div className="flex items-center text-sm text-gray-600">
+          <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
             <FiMapPin className="w-4 h-4 mr-2 text-red-500" />
             <span className="capitalize">{event.location.replace('_', ' ')}</span>
           </div>
 
           {/* Created By */}
-          <div className="flex items-center text-sm text-gray-500">
+          <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
             <FiUser className="w-4 h-4 mr-2" />
             <span>Created by {event.creator?.name || 'Anonymous'}</span>
           </div>
         </div>
 
         {/* Event Footer */}
-        <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+        <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-700">
           <div className="flex items-center space-x-4">
             {/* Like Button */}
             <motion.button
@@ -225,7 +227,7 @@ const EventCard = ({ event, currentUser, onEdit, onDelete, onLike }) => {
               className={`flex items-center space-x-1 transition-colors ${
                 event.userHasLiked
                   ? 'text-red-500'
-                  : 'text-gray-500 hover:text-red-500'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-red-500'
               } ${isVoting ? 'opacity-50 cursor-not-allowed' : ''}`}
               whileHover={{ scale: event.userHasLiked ? 1 : 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -235,17 +237,17 @@ const EventCard = ({ event, currentUser, onEdit, onDelete, onLike }) => {
             </motion.button>
 
             {/* Comment Count */}
-            <div className="flex items-center space-x-1 text-gray-500">
+            <div className="flex items-center space-x-1 text-gray-500 dark:text-gray-400">
               <FiMessageCircle className="w-4 h-4" />
               <span className="text-sm">{event.commentCount || 0}</span>
             </div>
           </div>
           
           <div className="flex items-center space-x-2">
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-gray-500 dark:text-gray-400">
               {new Date(event.createdAt).toLocaleDateString()}
             </span>
-            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
               <FiCalendar className="w-3 h-3 mr-1" />
               Event
             </span>

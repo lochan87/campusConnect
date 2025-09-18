@@ -672,7 +672,7 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen flex relative">
+    <div className="min-h-screen flex relative bg-white dark:bg-gray-900">
       {/* Left side - Registration form */}
       <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-4">
         <motion.div
@@ -691,8 +691,8 @@ const Register = () => {
             >
               <span className="text-white font-bold text-xl">CC</span>
             </motion.div>
-            <h2 className="text-3xl font-bold text-gray-900">Join CampusConnect</h2>
-            <p className="mt-2 text-gray-600">
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Join CampusConnect</h2>
+            <p className="mt-2 text-gray-600 dark:text-gray-400">
               Create your account to get started
             </p>
           </div>
@@ -700,15 +700,15 @@ const Register = () => {
           {/* Progress indicator */}
           <div className="flex items-center justify-center space-x-4">
             <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-              step >= 1 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
+              step >= 1 ? 'bg-blue-600 dark:bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
             }`}>
               1
             </div>
             <div className={`w-16 h-1 ${
-              step >= 2 ? 'bg-blue-600' : 'bg-gray-200'
+              step >= 2 ? 'bg-blue-600 dark:bg-blue-500' : 'bg-gray-200 dark:bg-gray-700'
             }`}></div>
             <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-              step >= 2 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
+              step >= 2 ? 'bg-blue-600 dark:bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
             }`}>
               2
             </div>
@@ -719,9 +719,9 @@ const Register = () => {
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="bg-red-50 border border-red-200 rounded-lg p-3"
+              className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg p-3"
             >
-              <p className="text-sm text-red-600">{error}</p>
+              <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
             </motion.div>
           )}
 
@@ -742,7 +742,7 @@ const Register = () => {
                 {/* Name fields */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       First Name
                     </label>
                     <div className="relative">
@@ -754,13 +754,13 @@ const Register = () => {
                         required
                         value={formData.firstName}
                         onChange={handleChange}
-                        className="pl-10 w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                        className="pl-10 w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                         placeholder="First name"
                       />
                     </div>
                   </div>
                   <div>
-                    <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       Last Name
                     </label>
                     <input
@@ -770,7 +770,7 @@ const Register = () => {
                       required
                       value={formData.lastName}
                       onChange={handleChange}
-                      className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      className="w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                       placeholder="Last name"
                     />
                   </div>
@@ -778,11 +778,11 @@ const Register = () => {
 
                 {/* Username field */}
                 <div>
-                  <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Username
                   </label>
                   <div className="relative">
-                    <FiUser className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <FiUser className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
                     <input
                       id="username"
                       name="username"
@@ -790,12 +790,12 @@ const Register = () => {
                       required
                       value={formData.username}
                       onChange={handleChange}
-                      className={`pl-10 pr-10 w-full px-3 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition-colors ${
+                      className={`pl-10 pr-10 w-full px-3 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 ${
                         usernameError 
                           ? 'border-red-500 focus:border-red-500' 
                           : usernameAvailable === true 
                             ? 'border-green-500 focus:border-green-500'
-                            : 'border-gray-300 focus:border-blue-500'
+                            : 'border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400'
                       }`}
                       placeholder="Choose a unique username"
                     />
@@ -803,7 +803,7 @@ const Register = () => {
                     {/* Username status indicator */}
                     <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                       {usernameChecking && (
-                        <FiLoader className="w-5 h-5 text-gray-400 animate-spin" />
+                        <FiLoader className="w-5 h-5 text-gray-400 dark:text-gray-500 animate-spin" />
                       )}
                       {!usernameChecking && usernameAvailable === true && (
                         <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
@@ -824,23 +824,23 @@ const Register = () => {
                   
                   {/* Username feedback */}
                   {usernameError && (
-                    <p className="mt-1 text-sm text-red-600">{usernameError}</p>
+                    <p className="mt-1 text-sm text-red-600 dark:text-red-400">{usernameError}</p>
                   )}
                   {!usernameError && usernameAvailable === true && (
-                    <p className="mt-1 text-sm text-green-600">Username is available!</p>
+                    <p className="mt-1 text-sm text-green-600 dark:text-green-400">Username is available!</p>
                   )}
                   {formData.username.length > 0 && formData.username.length < 3 && (
-                    <p className="mt-1 text-sm text-gray-500">Username must be at least 3 characters</p>
+                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Username must be at least 3 characters</p>
                   )}
                 </div>
 
                 {/* Email field */}
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Email
                   </label>
                   <div className="relative">
-                    <FiMail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <FiMail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
                     <input
                       id="email"
                       name="email"
@@ -849,12 +849,12 @@ const Register = () => {
                       required
                       value={formData.email}
                       onChange={handleChange}
-                      className={`pl-10 pr-10 w-full px-3 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition-colors ${
+                      className={`pl-10 pr-10 w-full px-3 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 ${
                         emailError 
-                          ? 'border-red-500 focus:border-red-500' 
+                          ? 'border-red-500 focus:border-red-500 dark:border-red-400 dark:focus:border-red-400' 
                           : emailAvailable === true 
-                            ? 'border-green-500 focus:border-green-500'
-                            : 'border-gray-300 focus:border-blue-500'
+                            ? 'border-green-500 focus:border-green-500 dark:border-green-400 dark:focus:border-green-400'
+                            : 'border-gray-300 focus:border-blue-500 dark:border-gray-600 dark:focus:border-blue-400'
                       }`}
                       placeholder="Enter your email"
                     />
@@ -862,17 +862,17 @@ const Register = () => {
                     {/* Email status indicator */}
                     <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                       {emailChecking && (
-                        <FiLoader className="w-5 h-5 text-gray-400 animate-spin" />
+                        <FiLoader className="w-5 h-5 text-gray-400 dark:text-gray-500 animate-spin" />
                       )}
                       {!emailChecking && emailAvailable === true && (
-                        <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                        <div className="w-5 h-5 bg-green-500 dark:bg-green-600 rounded-full flex items-center justify-center">
                           <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                           </svg>
                         </div>
                       )}
                       {!emailChecking && emailAvailable === false && (
-                        <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+                        <div className="w-5 h-5 bg-red-500 dark:bg-red-600 rounded-full flex items-center justify-center">
                           <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
                           </svg>
@@ -883,25 +883,25 @@ const Register = () => {
                   
                   {/* Email feedback */}
                   {emailError && (
-                    <p className="mt-1 text-sm text-red-600">{emailError}</p>
+                    <p className="mt-1 text-sm text-red-600 dark:text-red-400">{emailError}</p>
                   )}
                   {!emailError && emailAvailable === true && (
-                    <p className="mt-1 text-sm text-green-600">Email is available!</p>
+                    <p className="mt-1 text-sm text-green-600 dark:text-green-400">Email is available!</p>
                   )}
                   {!emailError && emailAvailable === false && (
-                    <p className="mt-1 text-sm text-red-600">
-                      This email is already registered. <Link to="/login" className="underline hover:text-red-700">Try logging in instead</Link>.
+                    <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                      This email is already registered. <Link to="/login" className="underline hover:text-red-700 dark:hover:text-red-300">Try logging in instead</Link>.
                     </p>
                   )}
                 </div>
 
                 {/* Password fields */}
                 <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Password
                   </label>
                   <div className="relative">
-                    <FiLock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <FiLock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
                     <input
                       id="password"
                       name="password"
@@ -910,13 +910,13 @@ const Register = () => {
                       required
                       value={formData.password}
                       onChange={handleChange}
-                      className="pl-10 pr-10 w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      className="pl-10 pr-10 w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                       placeholder="Create a password"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
                     >
                       {showPassword ? <FiEyeOff className="w-5 h-5" /> : <FiEye className="w-5 h-5" />}
                     </button>
@@ -928,12 +928,12 @@ const Register = () => {
                       {/* Password strength bar */}
                       <div className="mb-2">
                         <div className="flex justify-between items-center mb-1">
-                          <span className="text-xs text-gray-600">Password Strength</span>
-                          <span className={`text-xs font-medium ${getPasswordStrength().label === 'Strong' ? 'text-green-600' : getPasswordStrength().label === 'Good' ? 'text-blue-600' : getPasswordStrength().label === 'Fair' ? 'text-yellow-600' : 'text-red-600'}`}>
+                          <span className="text-xs text-gray-600 dark:text-gray-400">Password Strength</span>
+                          <span className={`text-xs font-medium ${getPasswordStrength().label === 'Strong' ? 'text-green-600 dark:text-green-400' : getPasswordStrength().label === 'Good' ? 'text-blue-600 dark:text-blue-400' : getPasswordStrength().label === 'Fair' ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'}`}>
                             {getPasswordStrength().label}
                           </span>
                         </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
                           <div 
                             className={`h-2 rounded-full transition-all duration-300 ${getPasswordStrength().color}`}
                             style={{ width: `${getPasswordStrength().strength}%` }}
@@ -943,23 +943,23 @@ const Register = () => {
                       
                       {/* Validation checklist */}
                       <div className="space-y-1">
-                        <div className={`flex items-center space-x-2 text-xs ${passwordValidation.minLength ? 'text-green-600' : 'text-red-600'}`}>
+                        <div className={`flex items-center space-x-2 text-xs ${passwordValidation.minLength ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                           <span>{passwordValidation.minLength ? '✓' : '✗'}</span>
                           <span>At least 8 characters</span>
                         </div>
-                        <div className={`flex items-center space-x-2 text-xs ${passwordValidation.hasUpperCase ? 'text-green-600' : 'text-red-600'}`}>
+                        <div className={`flex items-center space-x-2 text-xs ${passwordValidation.hasUpperCase ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                           <span>{passwordValidation.hasUpperCase ? '✓' : '✗'}</span>
                           <span>One uppercase letter</span>
                         </div>
-                        <div className={`flex items-center space-x-2 text-xs ${passwordValidation.hasLowerCase ? 'text-green-600' : 'text-red-600'}`}>
+                        <div className={`flex items-center space-x-2 text-xs ${passwordValidation.hasLowerCase ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                           <span>{passwordValidation.hasLowerCase ? '✓' : '✗'}</span>
                           <span>One lowercase letter</span>
                         </div>
-                        <div className={`flex items-center space-x-2 text-xs ${passwordValidation.hasNumber ? 'text-green-600' : 'text-red-600'}`}>
+                        <div className={`flex items-center space-x-2 text-xs ${passwordValidation.hasNumber ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                           <span>{passwordValidation.hasNumber ? '✓' : '✗'}</span>
                           <span>One number</span>
                         </div>
-                        <div className={`flex items-center space-x-2 text-xs ${passwordValidation.hasSpecialChar ? 'text-green-600' : 'text-red-600'}`}>
+                        <div className={`flex items-center space-x-2 text-xs ${passwordValidation.hasSpecialChar ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                           <span>{passwordValidation.hasSpecialChar ? '✓' : '✗'}</span>
                           <span>One special character (!@#$%^&*)</span>
                         </div>
@@ -969,11 +969,11 @@ const Register = () => {
                 </div>
 
                 <div>
-                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Confirm Password
                   </label>
                   <div className="relative">
-                    <FiLock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <FiLock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
                     <input
                       id="confirmPassword"
                       name="confirmPassword"
@@ -982,13 +982,13 @@ const Register = () => {
                       required
                       value={formData.confirmPassword}
                       onChange={handleChange}
-                      className="pl-10 pr-10 w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      className="pl-10 pr-10 w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                       placeholder="Confirm your password"
                     />
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
                     >
                       {showConfirmPassword ? <FiEyeOff className="w-5 h-5" /> : <FiEye className="w-5 h-5" />}
                     </button>
@@ -1005,11 +1005,11 @@ const Register = () => {
               >
                 {/* Student ID */}
                 <div>
-                  <label htmlFor="studentId" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="studentId" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Student ID
                   </label>
                   <div className="relative">
-                    <FiBook className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <FiBook className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
                     <input
                       id="studentId"
                       name="studentId"
@@ -1017,38 +1017,41 @@ const Register = () => {
                       required
                       value={formData.studentId}
                       onChange={handleChange}
-                      className="pl-10 w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      className="pl-10 w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                       placeholder="YYCCCDDNNN (e.g., 22BEN01001)"
                     />
                   </div>
-                  <p className="text-xs text-blue-600 mt-1">
+                  <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
                     💡 Course and department will be auto-selected based on your Student ID
                   </p>
                 </div>
 
                 {/* Course */}
                 <div>
-                  <label htmlFor="course" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="course" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Course {formData.course && formData.studentId && formData.studentId.length === 10 && (
-                      <span className="text-green-600 text-xs">(Auto-selected)</span>
+                      <span className="text-green-600 dark:text-green-400 text-xs">(Auto-selected)</span>
                     )}
                   </label>
                   <div className={`w-full px-3 py-3 border rounded-lg transition-colors ${
                     formData.course && formData.studentId && formData.studentId.length === 10
-                      ? 'border-green-500 bg-green-50' 
-                      : 'border-gray-300 bg-gray-50'
+                      ? 'border-green-500 bg-green-50 dark:border-green-400 dark:bg-green-900/20' 
+                      : 'border-gray-300 bg-gray-50 dark:border-gray-600 dark:bg-gray-700'
                   }`}>
-                    {formData.course || (
-                      <span className="text-gray-500">
-                        {formData.studentId && formData.studentId.length === 10 
+                    <span className={
+                      formData.course 
+                        ? 'text-gray-900 dark:text-white' 
+                        : 'text-gray-500 dark:text-gray-400'
+                    }>
+                      {formData.course || (
+                        formData.studentId && formData.studentId.length === 10 
                           ? 'Course code not recognized' 
                           : 'Enter Student ID to auto-select course'
-                        }
-                      </span>
-                    )}
+                      )}
+                    </span>
                   </div>
                   {!formData.course && formData.studentId && formData.studentId.length === 10 && (
-                    <p className="mt-1 text-sm text-red-600">
+                    <p className="mt-1 text-sm text-red-600 dark:text-red-400">
                       ❌ Course code not recognized. Please check your Student ID.
                     </p>
                   )}
@@ -1056,31 +1059,34 @@ const Register = () => {
 
                 {/* Department */}
                 <div>
-                  <label htmlFor="department" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="department" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Department {formData.department && formData.studentId && formData.studentId.length === 10 && (
-                      <span className="text-green-600 text-xs">(Auto-selected)</span>
+                      <span className="text-green-600 dark:text-green-400 text-xs">(Auto-selected)</span>
                     )}
                   </label>
                   <div className={`w-full px-3 py-3 border rounded-lg transition-colors ${
                     formData.department && formData.studentId && formData.studentId.length === 10
-                      ? 'border-green-500 bg-green-50'
+                      ? 'border-green-500 bg-green-50 dark:border-green-400 dark:bg-green-900/20'
                       : formData.course && !formData.department && formData.studentId && formData.studentId.length === 10
-                        ? 'border-red-500 bg-red-50'
-                        : 'border-gray-300 bg-gray-50'
+                        ? 'border-red-500 bg-red-50 dark:border-red-400 dark:bg-red-900/20'
+                        : 'border-gray-300 bg-gray-50 dark:border-gray-600 dark:bg-gray-700'
                   }`}>
-                    {formData.department || (
-                      <span className="text-gray-500">
-                        {!formData.course 
+                    <span className={
+                      formData.department 
+                        ? 'text-gray-900 dark:text-white' 
+                        : 'text-gray-500 dark:text-gray-400'
+                    }>
+                      {formData.department || (
+                        !formData.course 
                           ? 'Enter Student ID to auto-select department'
                           : formData.studentId && formData.studentId.length === 10
                             ? 'Department code not recognized'
                             : 'Enter Student ID to auto-select department'
-                        }
-                      </span>
-                    )}
+                      )}
+                    </span>
                   </div>
                   {formData.course && !formData.department && formData.studentId && formData.studentId.length === 10 && (
-                    <p className="mt-1 text-sm text-red-600">
+                    <p className="mt-1 text-sm text-red-600 dark:text-red-400">
                       ❌ Department code not recognized for this course. Please check your Student ID.
                     </p>
                   )}
@@ -1092,7 +1098,7 @@ const Register = () => {
 
                 {/* Year */}
                 <div>
-                  <label htmlFor="year" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="year" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Year/Level
                   </label>
                   <select
@@ -1101,7 +1107,7 @@ const Register = () => {
                     required
                     value={formData.year}
                     onChange={handleChange}
-                    className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    className="w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   >
                     <option value="">Select your year</option>
                     {years.map((year) => (
@@ -1112,7 +1118,7 @@ const Register = () => {
 
                 {/* Bio */}
                 <div>
-                  <label htmlFor="bio" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="bio" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Bio (Optional)
                   </label>
                   <textarea
@@ -1121,10 +1127,10 @@ const Register = () => {
                     rows={3}
                     value={formData.bio}
                     onChange={handleChange}
-                    className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none"
+                    className="w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 transition-colors resize-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                     placeholder="Tell us about yourself..."
                   />
-                  <p className="mt-1 text-sm text-gray-500">
+                  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                     Write a brief introduction about yourself (optional)
                   </p>
                 </div>
@@ -1137,7 +1143,7 @@ const Register = () => {
                 <button
                   type="button"
                   onClick={handleBack}
-                  className="flex-1 bg-gray-200 text-gray-800 py-3 px-4 rounded-lg font-medium hover:bg-gray-300 transition-colors"
+                  className="flex-1 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 py-3 px-4 rounded-lg font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
                 >
                   Back
                 </button>
@@ -1145,7 +1151,7 @@ const Register = () => {
               <button
                 type="submit"
                 disabled={isSubmitting || loading}
-                className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                className="flex-1 bg-blue-600 dark:bg-blue-500 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 dark:hover:bg-blue-600 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
               >
                 {isSubmitting || loading ? (
                   <FiLoader className="w-5 h-5 animate-spin" />
@@ -1165,11 +1171,11 @@ const Register = () => {
             transition={{ delay: 0.5 }}
             className="text-center pb-8"
           >
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
               Already have an account?{' '}
               <Link
                 to="/login"
-                className="text-blue-600 hover:text-blue-500 font-medium"
+                className="text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 font-medium"
               >
                 Sign in
               </Link>

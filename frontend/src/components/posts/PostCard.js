@@ -123,12 +123,12 @@ const PostCard = ({ post, currentUser, onLike, onShare, onEdit, onDelete }) => {
 
   const getCategoryColor = (category) => {
     const colors = {
-      events: 'bg-blue-100 text-blue-800',
-      lost_found: 'bg-yellow-100 text-yellow-800',
-      food: 'bg-green-100 text-green-800',
-      memes: 'bg-purple-100 text-purple-800',
-      announcements: 'bg-red-100 text-red-800',
-      general: 'bg-gray-100 text-gray-800'
+      events: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300',
+      lost_found: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300',
+      food: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300',
+      memes: 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300',
+      announcements: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300',
+      general: 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
     };
     return colors[category?.toLowerCase()] || colors.general;
   };
@@ -155,34 +155,34 @@ const PostCard = ({ post, currentUser, onLike, onShare, onEdit, onDelete }) => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow duration-200 cursor-pointer"
+      className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow duration-200 cursor-pointer"
       onClick={handleCardClick}
     >
       {/* Header */}
       <div className="p-4 pb-2">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+            <div className="w-8 h-8 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
               {isAnonymous ? (
                 <span className="text-xs">👤</span>
               ) : (
-                <span className="text-xs font-medium text-gray-600">
+                <span className="text-xs font-medium text-gray-600 dark:text-gray-300">
                   {userName?.charAt(0) || 'U'}
                 </span>
               )}
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <p className="text-sm font-medium text-gray-900">
+                <p className="text-sm font-medium text-gray-900 dark:text-white">
                   {isAnonymous ? 'Anonymous' : userName || 'Unknown User'}
                 </p>
                 {isOwner && (
-                  <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                  <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 px-2 py-1 rounded-full">
                     Your Post
                   </span>
                 )}
               </div>
-              <div className="flex items-center space-x-2 text-xs text-gray-500">
+              <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
                 <span className="flex items-center">
                   <FiClock className="w-3 h-3 mr-1" />
                   {timeAgo(createdAt)}
@@ -205,16 +205,16 @@ const PostCard = ({ post, currentUser, onLike, onShare, onEdit, onDelete }) => {
             <div className="relative" ref={menuRef}>
               <button 
                 onClick={() => setShowMenu(!showMenu)}
-                className="p-1 hover:bg-gray-100 rounded"
+                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
               >
-                <FiMoreHorizontal className="w-4 h-4 text-gray-400" />
+                <FiMoreHorizontal className="w-4 h-4 text-gray-400 dark:text-gray-500" />
               </button>
               
               {showMenu && (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="absolute right-0 mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-10"
+                  className="absolute right-0 mt-1 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 z-10"
                 >
                   <div className="py-1">
                     {isOwner && (
@@ -224,7 +224,7 @@ const PostCard = ({ post, currentUser, onLike, onShare, onEdit, onDelete }) => {
                             setShowMenu(false);
                             onEdit && onEdit(post);
                           }}
-                          className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                         >
                           <FiEdit2 className="w-4 h-4 mr-2" />
                           Edit Post
@@ -234,23 +234,25 @@ const PostCard = ({ post, currentUser, onLike, onShare, onEdit, onDelete }) => {
                             setShowMenu(false);
                             onDelete && onDelete(id);
                           }}
-                          className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                          className="flex items-center w-full px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
                         >
                           <FiTrash2 className="w-4 h-4 mr-2" />
                           Delete Post
                         </button>
                       </>
                     )}
-                    <button
-                      onClick={() => {
-                        setShowMenu(false);
-                        setReportModal({ isOpen: true });
-                      }}
-                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      <FiFlag className="w-4 h-4 mr-2" />
-                      Report Post
-                    </button>
+                    {!isOwner && (
+                      <button
+                        onClick={() => {
+                          setShowMenu(false);
+                          setReportModal({ isOpen: true });
+                        }}
+                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      >
+                        <FiFlag className="w-4 h-4 mr-2" />
+                        Report Post
+                      </button>
+                    )}
                   </div>
                 </motion.div>
               )}
@@ -262,11 +264,11 @@ const PostCard = ({ post, currentUser, onLike, onShare, onEdit, onDelete }) => {
       {/* Content */}
       <div className="px-4 pb-4">
         <div className="flex-1 min-w-0">
-          <h3 className="text-lg font-semibold text-gray-900 break-words leading-tight">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white break-words leading-tight">
             {title}
           </h3>
           {content && (
-            <p className="text-gray-700 mt-2 break-words whitespace-pre-wrap leading-relaxed">
+            <p className="text-gray-700 dark:text-gray-300 mt-2 break-words whitespace-pre-wrap leading-relaxed">
               {content}
             </p>
           )}
@@ -284,7 +286,7 @@ const PostCard = ({ post, currentUser, onLike, onShare, onEdit, onDelete }) => {
               }}
             />
             {imageMetadata && (
-              <div className="text-xs text-gray-500 mt-1">
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 {imageMetadata.originalName} • {Math.round(imageMetadata.size / 1024)}KB
               </div>
             )}
@@ -293,7 +295,7 @@ const PostCard = ({ post, currentUser, onLike, onShare, onEdit, onDelete }) => {
       </div>
 
       {/* Actions */}
-      <div className="px-4 py-3 border-t border-gray-100">
+      <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-700">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <motion.button
@@ -305,7 +307,7 @@ const PostCard = ({ post, currentUser, onLike, onShare, onEdit, onDelete }) => {
                   ? 'text-red-500' 
                   : isLiking 
                     ? 'text-red-400' 
-                    : 'text-gray-500 hover:text-red-500'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-red-500'
               }`}
             >
               <motion.div
@@ -323,7 +325,7 @@ const PostCard = ({ post, currentUser, onLike, onShare, onEdit, onDelete }) => {
                 e.stopPropagation();
                 navigate(`/post/${id}`);
               }}
-              className="flex items-center space-x-1 text-gray-500 hover:text-blue-500 transition-colors"
+              className="flex items-center space-x-1 text-gray-500 dark:text-gray-400 hover:text-blue-500 transition-colors"
             >
               <FiMessageCircle className="w-4 h-4" />
               <span className="text-sm">{commentCount || 0}</span>
@@ -332,7 +334,7 @@ const PostCard = ({ post, currentUser, onLike, onShare, onEdit, onDelete }) => {
           
           <button
             onClick={() => onShare && onShare(id)}
-            className="flex items-center space-x-1 text-gray-500 hover:text-green-500 transition-colors"
+            className="flex items-center space-x-1 text-gray-500 dark:text-gray-400 hover:text-green-500 transition-colors"
           >
             <FiShare2 className="w-4 h-4" />
             <span className="text-sm">Share</span>

@@ -442,13 +442,13 @@ const Settings = () => {
         animate={{ y: 0, opacity: 1 }}
         className="mb-6 sm:mb-8"
       >
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Settings</h1>
-        <p className="text-gray-600">Manage your account settings and preferences</p>
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">Settings</h1>
+        <p className="text-gray-600 dark:text-gray-300">Manage your account settings and preferences</p>
       </motion.div>
 
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
         {/* Tab Navigation */}
-        <div className="border-b border-gray-200">
+        <div className="border-b border-gray-200 dark:border-gray-700">
           <nav className="flex">
             {tabs.map((tab) => {
               const Icon = tab.icon;
@@ -458,8 +458,8 @@ const Settings = () => {
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex-1 px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium border-b-2 transition-colors ${
                     activeTab === tab.id
-                      ? 'border-blue-500 text-blue-600 bg-blue-50'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                      ? 'border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                      : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
                   }`}
                 >
                   <div className="flex items-center justify-center space-x-1 sm:space-x-2">
@@ -490,45 +490,45 @@ const Settings = () => {
               >
                 <div className="space-y-4 sm:space-y-6">
                   <div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">Change Username</h3>
-                    <p className="text-sm text-gray-600 mb-4">
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Change Username</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
                       Your username is how other users will identify you on the platform.
                     </p>
                   </div>
 
                   <form onSubmit={handleUsernameSubmit} className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Current Username
                       </label>
                       <div className="relative">
-                        <FiUser className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <FiUser className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
                         <input
                           type="text"
                           value={usernameData.currentUsername}
                           disabled
-                          className="pl-10 w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed text-sm"
+                          className="pl-10 w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed text-sm"
                           placeholder="No username set"
                         />
                       </div>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         New Username
                       </label>
                       <div className="relative">
-                        <FiUser className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <FiUser className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
                         <input
                           type="text"
                           value={usernameData.newUsername}
                           onChange={handleUsernameChange}
-                          className={`pl-10 pr-10 w-full px-3 py-2.5 border rounded-lg transition-colors text-sm ${
+                          className={`pl-10 pr-10 w-full px-3 py-2.5 border rounded-lg transition-colors text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 ${
                             usernameError
                               ? 'border-red-500 focus:border-red-500'
                               : usernameAvailable === true
                               ? 'border-green-500 focus:border-green-500'
-                              : 'border-gray-300 focus:border-blue-500'
+                              : 'border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400'
                           }`}
                           placeholder="Enter new username"
                         />
@@ -536,26 +536,26 @@ const Settings = () => {
                         {/* Status indicator */}
                         <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                           {usernameChecking && (
-                            <FiLoader className="w-4 h-4 text-gray-400 animate-spin" />
+                            <FiLoader className="w-4 h-4 text-gray-400 dark:text-gray-500 animate-spin" />
                           )}
                           {!usernameChecking && usernameAvailable === true && (
-                            <FiCheck className="w-4 h-4 text-green-500" />
+                            <FiCheck className="w-4 h-4 text-green-500 dark:text-green-400" />
                           )}
                           {!usernameChecking && usernameAvailable === false && (
-                            <FiX className="w-4 h-4 text-red-500" />
+                            <FiX className="w-4 h-4 text-red-500 dark:text-red-400" />
                           )}
                         </div>
                       </div>
                       
                       {/* Feedback messages */}
                       {usernameError && (
-                        <p className="mt-1 text-sm text-red-600">{usernameError}</p>
+                        <p className="mt-1 text-sm text-red-600 dark:text-red-400">{usernameError}</p>
                       )}
                       {!usernameError && usernameAvailable === true && (
-                        <p className="mt-1 text-sm text-green-600">Username is available!</p>
+                        <p className="mt-1 text-sm text-green-600 dark:text-green-400">Username is available!</p>
                       )}
                       {usernameData.newUsername.length > 0 && usernameData.newUsername.length < 3 && (
-                        <p className="mt-1 text-sm text-gray-500">Username must be at least 3 characters</p>
+                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Username must be at least 3 characters</p>
                       )}
                     </div>
 
@@ -563,7 +563,7 @@ const Settings = () => {
                       <button
                         type="submit"
                         disabled={loading || usernameAvailable !== true || !usernameData.newUsername.trim()}
-                        className="w-full sm:w-auto px-4 sm:px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2 text-sm"
+                        className="w-full sm:w-auto px-4 sm:px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2 text-sm"
                       >
                         {loading ? (
                           <FiLoader className="w-4 h-4 animate-spin" />
@@ -588,30 +588,30 @@ const Settings = () => {
               >
                 <div className="space-y-4 sm:space-y-6">
                   <div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">Change Password</h3>
-                    <p className="text-sm text-gray-600 mb-4">
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Change Password</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
                       Choose a strong password to keep your account secure.
                     </p>
                   </div>
 
                   <form onSubmit={handlePasswordSubmit} className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Current Password
                       </label>
                       <div className="relative">
-                        <FiLock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <FiLock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
                         <input
                           type={showPasswords.current ? 'text' : 'password'}
                           value={passwordData.currentPassword}
                           onChange={(e) => handlePasswordChange('currentPassword', e.target.value)}
-                          className="pl-10 pr-10 w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                          className="pl-10 pr-10 w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                           placeholder="Enter current password"
                         />
                         <button
                           type="button"
                           onClick={() => togglePasswordVisibility('current')}
-                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
                         >
                           {showPasswords.current ? <FiEyeOff className="w-4 h-4" /> : <FiEye className="w-4 h-4" />}
                         </button>
@@ -619,54 +619,54 @@ const Settings = () => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         New Password
                       </label>
                       <div className="relative">
-                        <FiLock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <FiLock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
                         <input
                           type={showPasswords.new ? 'text' : 'password'}
                           value={passwordData.newPassword}
                           onChange={(e) => handlePasswordChange('newPassword', e.target.value)}
-                          className="pl-10 pr-10 w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                          className="pl-10 pr-10 w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                           placeholder="Enter new password"
                         />
                         <button
                           type="button"
                           onClick={() => togglePasswordVisibility('new')}
-                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
                         >
                           {showPasswords.new ? <FiEyeOff className="w-4 h-4" /> : <FiEye className="w-4 h-4" />}
                         </button>
                       </div>
                       {passwordData.newPassword && passwordData.newPassword.length < 6 && (
-                        <p className="mt-1 text-sm text-gray-500">Password must be at least 6 characters</p>
+                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Password must be at least 6 characters</p>
                       )}
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Confirm New Password
                       </label>
                       <div className="relative">
-                        <FiLock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <FiLock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
                         <input
                           type={showPasswords.confirm ? 'text' : 'password'}
                           value={passwordData.confirmPassword}
                           onChange={(e) => handlePasswordChange('confirmPassword', e.target.value)}
-                          className="pl-10 pr-10 w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                          className="pl-10 pr-10 w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                           placeholder="Confirm new password"
                         />
                         <button
                           type="button"
                           onClick={() => togglePasswordVisibility('confirm')}
-                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
                         >
                           {showPasswords.confirm ? <FiEyeOff className="w-4 h-4" /> : <FiEye className="w-4 h-4" />}
                         </button>
                       </div>
                       {passwordData.confirmPassword && passwordData.newPassword !== passwordData.confirmPassword && (
-                        <p className="mt-1 text-sm text-red-600">Passwords do not match</p>
+                        <p className="mt-1 text-sm text-red-600 dark:text-red-400">Passwords do not match</p>
                       )}
                     </div>
 
@@ -674,7 +674,7 @@ const Settings = () => {
                       <button
                         type="submit"
                         disabled={loading || !passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword || passwordData.newPassword !== passwordData.confirmPassword}
-                        className="w-full sm:w-auto px-4 sm:px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2 text-sm"
+                        className="w-full sm:w-auto px-4 sm:px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2 text-sm"
                       >
                         {loading ? (
                           <FiLoader className="w-4 h-4 animate-spin" />
@@ -699,27 +699,27 @@ const Settings = () => {
               >
                 <div className="space-y-4 sm:space-y-6">
                   <div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-2 sm:mb-4">Change Email Address</h3>
-                    <p className="text-sm text-gray-600 mb-4 sm:mb-6">
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2 sm:mb-4">Change Email Address</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-300 mb-4 sm:mb-6">
                       Update your email address. You'll need to enter your current password to verify this change.
                     </p>
                   </div>
 
                   <form onSubmit={handleEmailSubmit} className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Current Email
                       </label>
                       <input
                         type="email"
                         value={emailData.currentEmail}
                         disabled
-                        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed text-sm"
+                        className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed text-sm"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         New Email Address
                       </label>
                       <input
@@ -727,15 +727,15 @@ const Settings = () => {
                         value={emailData.newEmail}
                         onChange={(e) => handleEmailChange('newEmail', e.target.value)}
                         placeholder="Enter new email address"
-                        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                        className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                       />
                       {emailError && (
-                        <p className="mt-1 text-sm text-red-600">{emailError}</p>
+                        <p className="mt-1 text-sm text-red-600 dark:text-red-400">{emailError}</p>
                       )}
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Current Password
                       </label>
                       <div className="relative">
@@ -744,12 +744,12 @@ const Settings = () => {
                           value={emailData.password}
                           onChange={(e) => handleEmailChange('password', e.target.value)}
                           placeholder="Enter your current password"
-                          className="w-full px-3 py-2.5 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                          className="w-full px-3 py-2.5 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                         />
                         <button
                           type="button"
                           onClick={() => togglePasswordVisibility('current')}
-                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
                         >
                           {showPasswords.current ? <FiEyeOff className="w-4 h-4" /> : <FiEye className="w-4 h-4" />}
                         </button>
@@ -760,7 +760,7 @@ const Settings = () => {
                       <button
                         type="submit"
                         disabled={loading || !emailData.newEmail || !emailData.password || emailError}
-                        className="w-full sm:w-auto px-4 sm:px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2 text-sm"
+                        className="w-full sm:w-auto px-4 sm:px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2 text-sm"
                       >
                         {loading ? (
                           <FiLoader className="w-4 h-4 animate-spin" />
@@ -785,30 +785,30 @@ const Settings = () => {
               >
                 <div className="space-y-4 sm:space-y-6">
                   <div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-2 sm:mb-4">Change Student ID</h3>
-                    <p className="text-sm text-gray-600 mb-4 sm:mb-6">
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2 sm:mb-4">Change Student ID</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-300 mb-4 sm:mb-6">
                       Update your Student ID. You'll need to enter your current password to verify this change.
                       <br />
-                      <span className="text-blue-600 font-medium">Note: Course and department will be automatically updated based on your new Student ID.</span>
+                      <span className="text-blue-600 dark:text-blue-400 font-medium">Note: Course and department will be automatically updated based on your new Student ID.</span>
                     </p>
                   </div>
 
                   <form onSubmit={handleStudentIdSubmit} className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Current Student ID
                       </label>
                       <input
                         type="text"
                         value={studentIdData.currentStudentId || 'Not set'}
                         disabled
-                        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed text-sm"
+                        className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed text-sm"
                         placeholder="No Student ID currently set"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         New Student ID
                       </label>
                       <input
@@ -816,15 +816,15 @@ const Settings = () => {
                         value={studentIdData.newStudentId}
                         onChange={(e) => handleStudentIdChange('newStudentId', e.target.value)}
                         placeholder="Enter new Student ID"
-                        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                        className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                       />
                       {studentIdError && (
-                        <p className="mt-1 text-sm text-red-600">{studentIdError}</p>
+                        <p className="mt-1 text-sm text-red-600 dark:text-red-400">{studentIdError}</p>
                       )}
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Current Password
                       </label>
                       <div className="relative">
@@ -833,12 +833,12 @@ const Settings = () => {
                           value={studentIdData.password}
                           onChange={(e) => handleStudentIdChange('password', e.target.value)}
                           placeholder="Enter your current password"
-                          className="w-full px-3 py-2.5 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                          className="w-full px-3 py-2.5 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                         />
                         <button
                           type="button"
                           onClick={() => togglePasswordVisibility('current')}
-                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
                         >
                           {showPasswords.current ? <FiEyeOff className="w-4 h-4" /> : <FiEye className="w-4 h-4" />}
                         </button>
@@ -849,7 +849,7 @@ const Settings = () => {
                       <button
                         type="submit"
                         disabled={loading || !studentIdData.newStudentId || !studentIdData.password || studentIdError}
-                        className="w-full sm:w-auto px-4 sm:px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2 text-sm"
+                        className="w-full sm:w-auto px-4 sm:px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2 text-sm"
                       >
                         {loading ? (
                           <FiLoader className="w-4 h-4 animate-spin" />
@@ -872,29 +872,29 @@ const Settings = () => {
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.2 }}
-        className="mt-8 bg-white rounded-lg border border-red-200 overflow-hidden"
+        className="mt-8 bg-white dark:bg-gray-800 rounded-lg border border-red-200 dark:border-red-700 overflow-hidden"
       >
-        <div className="bg-red-50 px-6 py-4 border-b border-red-200">
+        <div className="bg-red-50 dark:bg-red-900/20 px-6 py-4 border-b border-red-200 dark:border-red-700">
           <div className="flex items-center space-x-2">
-            <FiAlertTriangle className="w-5 h-5 text-red-600" />
-            <h2 className="text-lg font-semibold text-red-900">Danger Zone</h2>
+            <FiAlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
+            <h2 className="text-lg font-semibold text-red-900 dark:text-red-300">Danger Zone</h2>
           </div>
-          <p className="text-sm text-red-700 mt-1">
+          <p className="text-sm text-red-700 dark:text-red-400 mt-1">
             Irreversible and destructive actions
           </p>
         </div>
         
         <div className="p-4 sm:p-6">
-          <div className="border border-red-300 rounded-lg p-4 bg-red-50">
+          <div className="border border-red-300 dark:border-red-700 rounded-lg p-4 bg-red-50 dark:bg-red-900/20">
             <div className="flex flex-col space-y-4 sm:flex-row sm:items-start sm:justify-between sm:space-y-0">
               <div className="flex-1">
-                <h3 className="text-lg font-semibold text-red-900 mb-2">Delete Account</h3>
-                <p className="text-red-800 text-sm mb-4">
+                <h3 className="text-lg font-semibold text-red-900 dark:text-red-300 mb-2">Delete Account</h3>
+                <p className="text-red-800 dark:text-red-400 text-sm mb-4">
                   Once you delete your account, there is no going back. Please be certain.
                 </p>
-                <div className="bg-red-100 rounded-lg p-3 mb-4 sm:mb-0">
-                  <h4 className="font-medium text-red-900 mb-2 text-sm">What will be permanently deleted:</h4>
-                  <ul className="text-xs text-red-800 space-y-1">
+                <div className="bg-red-100 dark:bg-red-900/30 rounded-lg p-3 mb-4 sm:mb-0">
+                  <h4 className="font-medium text-red-900 dark:text-red-300 mb-2 text-sm">What will be permanently deleted:</h4>
+                  <ul className="text-xs text-red-800 dark:text-red-400 space-y-1">
                     <li>• Your profile and personal information</li>
                     <li>• All your posts and comments</li>
                     <li>• All your polls and votes</li>
@@ -906,7 +906,7 @@ const Settings = () => {
               <div className="flex justify-center sm:justify-start sm:ml-6">
                 <button
                   onClick={() => setShowDeleteConfirm(true)}
-                  className="w-full sm:w-auto px-4 py-3 sm:py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors flex items-center justify-center space-x-2 font-medium text-sm"
+                  className="w-full sm:w-auto px-4 py-3 sm:py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-colors flex items-center justify-center space-x-2 font-medium text-sm"
                 >
                   <FiTrash2 className="w-4 h-4" />
                   <span>Delete Account</span>
@@ -924,23 +924,23 @@ const Settings = () => {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="bg-white rounded-lg p-6 max-w-md w-full"
+            className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full"
           >
             <div className="flex items-center space-x-3 mb-4">
               <div className="flex-shrink-0">
-                <FiAlertTriangle className="w-8 h-8 text-red-600" />
+                <FiAlertTriangle className="w-8 h-8 text-red-600 dark:text-red-400" />
               </div>
               <div>
-                <h3 className="text-lg font-medium text-gray-900">Delete Account</h3>
-                <p className="text-sm text-gray-500">This action cannot be undone</p>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white">Delete Account</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">This action cannot be undone</p>
               </div>
             </div>
             
             <div className="mb-6">
-              <p className="text-gray-700 mb-4">
+              <p className="text-gray-700 dark:text-gray-300 mb-4">
                 Are you absolutely sure you want to delete your account? This will permanently remove all your data.
               </p>
-              <p className="text-sm font-semibold text-red-600">
+              <p className="text-sm font-semibold text-red-600 dark:text-red-400">
                 This action is irreversible and cannot be undone.
               </p>
             </div>
@@ -949,14 +949,14 @@ const Settings = () => {
               <button
                 onClick={() => setShowDeleteConfirm(false)}
                 disabled={deleteLoading}
-                className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors disabled:opacity-50"
+                className="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDeleteAccount}
                 disabled={deleteLoading}
-                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2"
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2"
               >
                 {deleteLoading ? (
                   <>

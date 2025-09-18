@@ -1,13 +1,30 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
-import { FiTrash2, FiX, FiAlertTriangle } from 'react-icons/fi';
+import { FiTrash2, FiX, FiAlertTriangle, FiCalendar, FiMapPin, FiClock } from 'react-icons/fi';
 
-const DeletePostModal = ({ post, isOpen, onClose, onConfirm, isDeleting }) => {
-  if (!isOpen || !post) return null;
+const DeleteEventModal = ({ event, isOpen, onClose, onConfirm, isDeleting }) => {
+  if (!isOpen || !event) return null;
 
   const handleConfirm = () => {
     onConfirm();
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
+  const formatTime = (timeString) => {
+    return new Date(`2000-01-01T${timeString}`).toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
   };
 
   const modalContent = (
@@ -42,7 +59,7 @@ const DeletePostModal = ({ post, isOpen, onClose, onConfirm, isDeleting }) => {
                 <FiAlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Delete Post</h2>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Delete Event</h2>
                 <p className="text-sm text-gray-500 dark:text-gray-400">This action cannot be undone</p>
               </div>
             </div>
@@ -60,40 +77,65 @@ const DeletePostModal = ({ post, isOpen, onClose, onConfirm, isDeleting }) => {
         <div className="px-6 py-4">
           <div className="mb-4">
             <p className="text-gray-700 dark:text-gray-300 mb-3">
-              Are you sure you want to delete this post? This action cannot be undone and will permanently remove:
+              Are you sure you want to delete this event? This action cannot be undone and will permanently remove:
             </p>
             <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
               <li className="flex items-center space-x-2">
                 <div className="w-1.5 h-1.5 bg-red-400 dark:bg-red-500 rounded-full"></div>
-                <span>The post content and title</span>
+                <span>The event details and description</span>
               </li>
               <li className="flex items-center space-x-2">
                 <div className="w-1.5 h-1.5 bg-red-400 dark:bg-red-500 rounded-full"></div>
-                <span>All comments on this post</span>
+                <span>All comments on this event</span>
               </li>
               <li className="flex items-center space-x-2">
                 <div className="w-1.5 h-1.5 bg-red-400 dark:bg-red-500 rounded-full"></div>
-                <span>All votes and reactions</span>
+                <span>All likes and reactions</span>
               </li>
               <li className="flex items-center space-x-2">
                 <div className="w-1.5 h-1.5 bg-red-400 dark:bg-red-500 rounded-full"></div>
-                <span>Any attached images</span>
+                <span>Any event poster images</span>
               </li>
             </ul>
           </div>
 
-          {/* Post Preview */}
+          {/* Event Preview */}
           <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 border-l-4 border-red-400 dark:border-red-500">
-            <h4 className="font-medium text-gray-900 dark:text-white mb-1 truncate">
-              {post.title}
+            <h4 className="font-medium text-gray-900 dark:text-white mb-2 truncate">
+              {event.title}
             </h4>
-            <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2">
-              {post.content || 'No content'}
-            </p>
-            {post.commentCount > 0 && (
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                {post.commentCount} comment{post.commentCount !== 1 ? 's' : ''} will also be deleted
+            
+            {/* Event Details */}
+            <div className="space-y-1 mb-2">
+              <div className="flex items-center space-x-2 text-xs text-gray-600 dark:text-gray-300">
+                <FiCalendar className="w-3 h-3" />
+                <span>{formatDate(event.date)}</span>
+              </div>
+              <div className="flex items-center space-x-2 text-xs text-gray-600 dark:text-gray-300">
+                <FiClock className="w-3 h-3" />
+                <span>{formatTime(event.time || event.startTime)}</span>
+              </div>
+              <div className="flex items-center space-x-2 text-xs text-gray-600 dark:text-gray-300">
+                <FiMapPin className="w-3 h-3" />
+                <span>{event.location}</span>
+              </div>
+            </div>
+            
+            {event.description && (
+              <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 mb-2">
+                {event.description}
               </p>
+            )}
+            
+            {(event.commentsCount > 0 || event.likesCount > 0) && (
+              <div className="flex items-center space-x-4 text-xs text-gray-500 dark:text-gray-400">
+                {event.commentsCount > 0 && (
+                  <span>{event.commentsCount} comment{event.commentsCount !== 1 ? 's' : ''}</span>
+                )}
+                {event.likesCount > 0 && (
+                  <span>{event.likesCount} like{event.likesCount !== 1 ? 's' : ''}</span>
+                )}
+              </div>
             )}
           </div>
         </div>
@@ -123,7 +165,7 @@ const DeletePostModal = ({ post, isOpen, onClose, onConfirm, isDeleting }) => {
               ) : (
                 <>
                   <FiTrash2 className="w-4 h-4" />
-                  <span>Delete Post</span>
+                  <span>Delete Event</span>
                 </>
               )}
             </motion.button>
@@ -136,4 +178,4 @@ const DeletePostModal = ({ post, isOpen, onClose, onConfirm, isDeleting }) => {
   return createPortal(modalContent, document.body);
 };
 
-export default DeletePostModal;
+export default DeleteEventModal;

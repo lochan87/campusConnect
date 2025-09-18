@@ -29,7 +29,7 @@ const DeleteCommentModal = ({ comment, isOpen, onClose, onConfirm, isDeleting, u
     >
       {/* Backdrop */}
       <motion.div
-        className="absolute inset-0 bg-black bg-opacity-50"
+        className="absolute inset-0 bg-black bg-opacity-50 dark:bg-opacity-70"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -38,30 +38,30 @@ const DeleteCommentModal = ({ comment, isOpen, onClose, onConfirm, isDeleting, u
 
       {/* Modal */}
       <motion.div
-        className="relative bg-white rounded-2xl shadow-xl max-w-md w-full mx-4 overflow-hidden"
+        className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-md w-full mx-4 overflow-hidden"
         initial={{ opacity: 0, scale: 0.9, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.9, y: 20 }}
         transition={{ type: "spring", duration: 0.5 }}
       >
         {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-100">
+        <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-                <FiAlertTriangle className="w-5 h-5 text-red-600" />
+              <div className="w-10 h-10 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center">
+                <FiAlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">Delete Comment</h2>
-                <p className="text-sm text-gray-500">This action cannot be undone</p>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Delete Comment</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">This action cannot be undone</p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+              className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
               disabled={isDeleting}
             >
-              <FiX className="w-5 h-5 text-gray-400" />
+              <FiX className="w-5 h-5 text-gray-400 dark:text-gray-500" />
             </button>
           </div>
         </div>
@@ -69,21 +69,21 @@ const DeleteCommentModal = ({ comment, isOpen, onClose, onConfirm, isDeleting, u
         {/* Content */}
         <div className="px-6 py-4">
           <div className="space-y-4">
-            <p className="text-gray-700">
+            <p className="text-gray-700 dark:text-gray-300">
               {getRoleBasedMessage()}
             </p>
             
             {/* Comment Preview */}
-            <div className="bg-gray-50 rounded-lg p-3 border-l-4 border-gray-300">
+            <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 border-l-4 border-gray-300 dark:border-gray-600">
               <div className="flex items-center space-x-2 mb-2">
-                <div className="w-6 h-6 bg-gray-300 rounded-full flex items-center justify-center">
-                  <span className="text-xs font-medium text-gray-600">
+                <div className="w-6 h-6 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
+                  <span className="text-xs font-medium text-gray-600 dark:text-gray-300">
                     {comment.userName?.charAt(0) || 'U'}
                   </span>
                 </div>
-                <span className="text-sm font-medium text-gray-900">{comment.userName}</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-white">{comment.userName}</span>
               </div>
-              <p className="text-sm text-gray-700 line-clamp-3">
+              <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-3">
                 {comment.content}
               </p>
             </div>
@@ -91,10 +91,10 @@ const DeleteCommentModal = ({ comment, isOpen, onClose, onConfirm, isDeleting, u
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 bg-gray-50 flex justify-end space-x-3">
+        <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700 flex justify-end space-x-3">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-500 transition-colors"
             disabled={isDeleting}
           >
             Cancel

@@ -63,7 +63,7 @@ const PollCard = ({ poll, onVote, hasVoted = false }) => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow duration-200"
+      className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow duration-200"
     >
       {/* Header */}
       <div className="p-4 pb-2">
@@ -73,15 +73,15 @@ const PollCard = ({ poll, onVote, hasVoted = false }) => {
               <FiBarChart2 className="w-5 h-5 text-white" />
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-900">
+              <p className="text-sm font-medium text-gray-900 dark:text-white">
                 {isAnonymous ? 'Anonymous' : userName || 'Unknown User'}
               </p>
-              <div className="flex items-center space-x-3 text-xs text-gray-500">
+              <div className="flex items-center space-x-3 text-xs text-gray-500 dark:text-gray-400">
                 <span className="flex items-center">
                   <FiClock className="w-3 h-3 mr-1" />
                   {timeRemaining()}
                 </span>
-                <div className="flex items-center text-purple-600">
+                <div className="flex items-center text-purple-600 dark:text-purple-400">
                   <FiUsers className="w-3 h-3 mr-1" />
                   <span>{totalVotes || 0} votes</span>
                 </div>
@@ -93,9 +93,9 @@ const PollCard = ({ poll, onVote, hasVoted = false }) => {
 
       {/* Question */}
       <div className="px-4 pb-3">
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">{question}</h3>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">{question}</h3>
         {description && (
-          <p className="text-sm text-gray-600 mb-2">{description}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">{description}</p>
         )}
       </div>
 
@@ -114,22 +114,22 @@ const PollCard = ({ poll, onVote, hasVoted = false }) => {
                   disabled={!canVote}
                   className={`w-full text-left p-4 rounded-lg border-2 transition-all duration-200 ${
                     canVote
-                      ? 'hover:bg-purple-50 hover:border-purple-300 cursor-pointer hover:shadow-sm'
+                      ? 'hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:border-purple-300 dark:hover:border-purple-600 cursor-pointer hover:shadow-sm'
                       : 'cursor-default'
                   } ${
                     isSelected
-                      ? 'border-purple-500 bg-purple-50 shadow-sm'
+                      ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 shadow-sm'
                       : showResults
-                      ? 'border-gray-200 bg-gray-50'
-                      : 'border-gray-200 bg-white'
+                      ? 'border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700'
+                      : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800'
                   } ${isVoting ? 'opacity-50' : ''}`}
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-medium text-gray-900">
+                    <span className="text-sm font-medium text-gray-900 dark:text-white">
                       {option.text}
                     </span>
                     {showResults && (
-                      <span className="text-sm font-semibold text-purple-600">
+                      <span className="text-sm font-semibold text-purple-600 dark:text-purple-400">
                         {percentage}%
                       </span>
                     )}
@@ -137,7 +137,7 @@ const PollCard = ({ poll, onVote, hasVoted = false }) => {
                   
                   {showResults && (
                     <div className="mt-2">
-                      <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
+                      <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2.5 overflow-hidden">
                         <motion.div
                           initial={{ width: 0 }}
                           animate={{ width: `${percentage}%` }}
@@ -146,7 +146,7 @@ const PollCard = ({ poll, onVote, hasVoted = false }) => {
                         />
                       </div>
                       <div className="flex justify-between items-center mt-1">
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
                           {option.votes || 0} vote{(option.votes || 0) !== 1 ? 's' : ''}
                         </span>
                       </div>
@@ -159,16 +159,16 @@ const PollCard = ({ poll, onVote, hasVoted = false }) => {
         </div>
         
         {canVote && (
-          <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-            <p className="text-sm text-blue-700 text-center font-medium">
+          <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+            <p className="text-sm text-blue-700 dark:text-blue-300 text-center font-medium">
               👆 Click an option to vote
             </p>
           </div>
         )}
         
         {isExpired() && (
-          <div className="mt-4 p-3 bg-red-50 rounded-lg border border-red-200">
-            <p className="text-sm text-red-700 text-center font-medium">
+          <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+            <p className="text-sm text-red-700 dark:text-red-300 text-center font-medium">
               ⏰ This poll has expired
             </p>
           </div>

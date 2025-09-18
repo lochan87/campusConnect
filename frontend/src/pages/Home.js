@@ -10,6 +10,7 @@ import PollCard from '../components/polls/PollCard';
 import EventCard from '../components/events/EventCard';
 import EditPostModal from '../components/posts/EditPostModal';
 import DeletePostModal from '../components/posts/DeletePostModal';
+import DeleteEventModal from '../components/events/DeleteEventModal';
 import LoadingSkeleton from '../components/ui/LoadingSkeleton';
 import { apiService } from '../services/api';
 import toast from 'react-hot-toast';
@@ -20,7 +21,9 @@ const Home = () => {
   const navigate = useNavigate();
   const [editModal, setEditModal] = useState({ isOpen: false, post: null });
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, post: null });
+  const [deleteEventModal, setDeleteEventModal] = useState({ isOpen: false, event: null });
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isDeletingEvent, setIsDeletingEvent] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
   const [activeTab, setActiveTab] = useState('posts'); // Add active tab state
   const [quickStats, setQuickStats] = useState({ posts: 0, polls: 0, events: 0 });
@@ -60,7 +63,7 @@ const Home = () => {
       setTimeout(() => fetchEvents(), 300);
       setHasInitialized(true);
     }
-  }, [user?.uid, hasInitialized]); // Only run once when user is available
+  }, [user, hasInitialized, fetchPosts, fetchPolls, fetchEvents]); // Include all dependencies
 
   const handleRefresh = async () => {
     if (user) {
@@ -101,12 +104,25 @@ const Home = () => {
   };
 
   const handleDeleteEvent = async (eventId) => {
-    if (window.confirm('Are you sure you want to delete this event?')) {
-      try {
-        await deleteEvent(eventId);
-      } catch (error) {
-        console.error('Error deleting event:', error);
-      }
+    const event = events.find(e => e.id === eventId);
+    if (event) {
+      setDeleteEventModal({ isOpen: true, event });
+    }
+  };
+
+  const handleConfirmDeleteEvent = async () => {
+    if (!deleteEventModal.event) return;
+    
+    setIsDeletingEvent(true);
+    try {
+      await deleteEvent(deleteEventModal.event.id);
+      toast.success('Event deleted successfully');
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      toast.error('Failed to delete event');
+    } finally {
+      setIsDeletingEvent(false);
+      setDeleteEventModal({ isOpen: false, event: null });
     }
   };
 
@@ -147,14 +163,10 @@ const Home = () => {
     }
   };
 
-  // Filter out expired polls and upcoming events
+  // Filter out expired polls
   const activePolls = polls.filter(poll => {
     if (!poll.expiresAt) return true; // No expiration date means active
     return new Date() <= new Date(poll.expiresAt);
-  });
-
-  const upcomingEvents = events.filter(event => {
-    return new Date(event.date) >= new Date(); // Future events
   });
 
   return (
@@ -199,7 +211,7 @@ const Home = () => {
             
             <Link
               to="/create-post"
-              className="flex items-center justify-center space-x-2 px-4 py-2 bg-white text-blue-600 hover:bg-blue-50 rounded-lg transition-all font-medium"
+              className="flex items-center justify-center space-x-2 px-4 py-2 bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-600 rounded-lg transition-all font-medium"
             >
               <FiPlus className="w-4 h-4" />
               <span>New Post</span>
@@ -247,7 +259,7 @@ const Home = () => {
         ].map((stat, index) => (
           <motion.div
             key={index}
-            className="bg-white rounded-lg shadow-sm border p-4 hover:shadow-md transition-shadow"
+            className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-shadow"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: index * 0.1 }}
@@ -257,10 +269,10 @@ const Home = () => {
                 <stat.icon className="w-5 h-5 text-white" />
               </div>
               <div>
-                <p className={`text-2xl font-bold text-gray-900 ${stat.isLoading ? 'animate-pulse' : ''}`}>
+                <p className={`text-2xl font-bold text-gray-900 dark:text-white ${stat.isLoading ? 'animate-pulse' : ''}`}>
                   {stat.value}
                 </p>
-                <p className="text-sm text-gray-600">{stat.label}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">{stat.label}</p>
               </div>
             </div>
           </motion.div>
@@ -269,7 +281,7 @@ const Home = () => {
 
       {/* Navigation Tabs */}
       <motion.div 
-        className="bg-white rounded-lg shadow-sm border p-1"
+        className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-1"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
@@ -279,8 +291,8 @@ const Home = () => {
             onClick={() => setActiveTab('posts')}
             className={`flex-1 px-4 py-2 rounded-md font-medium transition-all ${
               activeTab === 'posts' 
-                ? 'bg-blue-100 text-blue-700' 
-                : 'text-gray-600 hover:bg-gray-100'
+                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' 
+                : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
             }`}
           >
             📝 Posts
@@ -289,8 +301,8 @@ const Home = () => {
             onClick={() => setActiveTab('polls')}
             className={`flex-1 px-4 py-2 rounded-md font-medium transition-all ${
               activeTab === 'polls' 
-                ? 'bg-blue-100 text-blue-700' 
-                : 'text-gray-600 hover:bg-gray-100'
+                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' 
+                : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
             }`}
           >
             📊 Polls
@@ -299,8 +311,8 @@ const Home = () => {
             onClick={() => setActiveTab('events')}
             className={`flex-1 px-4 py-2 rounded-md font-medium transition-all ${
               activeTab === 'events' 
-                ? 'bg-blue-100 text-blue-700' 
-                : 'text-gray-600 hover:bg-gray-100'
+                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' 
+                : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
             }`}
           >
             📅 Events
@@ -317,14 +329,14 @@ const Home = () => {
       >
         {/* Main Content - Dynamic based on active tab */}
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-lg shadow-sm border">
-            <div className="p-6 border-b">
-              <h2 className="text-xl font-bold text-gray-900 flex items-center space-x-2">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center space-x-2">
                 {activeTab === 'posts' && (
                   <>
                     <span>📝</span>
                     <span>Posts</span>
-                    <span className="ml-auto bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded-full">
+                    <span className="ml-auto bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400 text-xs font-medium px-2 py-1 rounded-full">
                       {posts.length}
                     </span>
                   </>
@@ -333,7 +345,7 @@ const Home = () => {
                   <>
                     <span>📊</span>
                     <span>Polls</span>
-                    <span className="ml-auto bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded-full">
+                    <span className="ml-auto bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 text-xs font-medium px-2 py-1 rounded-full">
                       {polls.length}
                     </span>
                   </>
@@ -342,7 +354,7 @@ const Home = () => {
                   <>
                     <span>📅</span>
                     <span>Events</span>
-                    <span className="ml-auto bg-purple-100 text-purple-800 text-xs font-medium px-2 py-1 rounded-full">
+                    <span className="ml-auto bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400 text-xs font-medium px-2 py-1 rounded-full">
                       {events.length}
                     </span>
                   </>
@@ -357,11 +369,11 @@ const Home = () => {
                     <LoadingSkeleton type="post" count={3} />
                   ) : posts.length === 0 ? (
                     <div className="text-center py-12">
-                      <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
                         <span className="text-2xl">📝</span>
                       </div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">No posts yet</h3>
-                      <p className="text-gray-600 mb-4">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No posts yet</h3>
+                      <p className="text-gray-600 dark:text-gray-400 mb-4">
                         Be the first to share something with your campus community!
                       </p>
                       <Link
@@ -403,11 +415,11 @@ const Home = () => {
                     <LoadingSkeleton type="poll" count={3} />
                   ) : polls.length === 0 ? (
                     <div className="text-center py-12">
-                      <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
                         <span className="text-2xl">📊</span>
                       </div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">No polls yet</h3>
-                      <p className="text-gray-600 mb-4">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No polls yet</h3>
+                      <p className="text-gray-600 dark:text-gray-400 mb-4">
                         Create a poll to gather opinions from your campus community!
                       </p>
                       <Link
@@ -446,11 +458,11 @@ const Home = () => {
                     <LoadingSkeleton type="event" count={3} />
                   ) : events.length === 0 ? (
                     <div className="text-center py-12">
-                      <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
                         <span className="text-2xl">📅</span>
                       </div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">No events yet</h3>
-                      <p className="text-gray-600 mb-4">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No events yet</h3>
+                      <p className="text-gray-600 dark:text-gray-400 mb-4">
                         Create an event to bring your campus community together!
                       </p>
                       <Link
@@ -490,9 +502,9 @@ const Home = () => {
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Quick Actions */}
-          <div className="bg-white rounded-lg shadow-sm border">
-            <div className="p-4 border-b">
-              <h3 className="font-semibold text-gray-900 flex items-center space-x-2">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="font-semibold text-gray-900 dark:text-white flex items-center space-x-2">
                 <span>⚡</span>
                 <span>Quick Actions</span>
               </h3>
@@ -506,7 +518,7 @@ const Home = () => {
                 <Link
                   key={index}
                   to={action.to}
-                  className="flex items-center space-x-3 p-3 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                  className="flex items-center space-x-3 p-3 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
                 >
                   <span className="text-lg">{action.icon}</span>
                   <span className="font-medium">{action.label}</span>
@@ -514,80 +526,6 @@ const Home = () => {
               ))}
             </div>
           </div>
-
-          {/* Active Polls */}
-          {activePolls.length > 0 && (
-            <div className="bg-white rounded-lg shadow-sm border">
-              <div className="p-4 border-b">
-                <h3 className="font-semibold text-gray-900 flex items-center space-x-2">
-                  <span>📊</span>
-                  <span>Active Polls</span>
-                  <span className="ml-auto bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded-full">
-                    {activePolls.length}
-                  </span>
-                </h3>
-              </div>
-              <div className="p-4 space-y-4">
-                {activePolls.slice(0, 2).map((poll, index) => (
-                  <motion.div
-                    key={poll.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.4, delay: index * 0.1 }}
-                  >
-                    <PollCard
-                      poll={poll}
-                      onVote={handlePollVote}
-                      hasVoted={poll.hasVoted}
-                    />
-                  </motion.div>
-                ))}
-                {activePolls.length > 2 && (
-                  <button className="w-full text-center text-blue-600 hover:text-blue-700 font-medium py-2">
-                    View All Polls ({activePolls.length})
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Upcoming Events */}
-          {upcomingEvents.length > 0 && (
-            <div className="bg-white rounded-lg shadow-sm border">
-              <div className="p-4 border-b">
-                <h3 className="font-semibold text-gray-900 flex items-center space-x-2">
-                  <span>📅</span>
-                  <span>Upcoming Events</span>
-                  <span className="ml-auto bg-purple-100 text-purple-800 text-xs font-medium px-2 py-1 rounded-full">
-                    {upcomingEvents.length}
-                  </span>
-                </h3>
-              </div>
-              <div className="p-4 space-y-4">
-                {upcomingEvents.slice(0, 2).map((event, index) => (
-                  <motion.div
-                    key={event.id}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.4, delay: index * 0.1 }}
-                  >
-                    <EventCard
-                      event={event}
-                      currentUser={user}
-                      onEdit={handleEditEvent}
-                      onDelete={handleDeleteEvent}
-                      onLike={handleLikeEvent}
-                    />
-                  </motion.div>
-                ))}
-                {upcomingEvents.length > 2 && (
-                  <button className="w-full text-center text-blue-600 hover:text-blue-700 font-medium py-2">
-                    View All Events ({upcomingEvents.length})
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
         </div>
       </motion.div>
 
@@ -605,6 +543,15 @@ const Home = () => {
         onClose={() => setDeleteModal({ isOpen: false, post: null })}
         onConfirm={handleConfirmDelete}
         isDeleting={isDeleting}
+      />
+
+      {/* Delete Event Modal */}
+      <DeleteEventModal
+        event={deleteEventModal.event}
+        isOpen={deleteEventModal.isOpen}
+        onClose={() => setDeleteEventModal({ isOpen: false, event: null })}
+        onConfirm={handleConfirmDeleteEvent}
+        isDeleting={isDeletingEvent}
       />
 
       {/* Floating Action Button for Mobile */}
