@@ -41,9 +41,11 @@ class AuthService {
       const response = await apiService.register(userData);
       
       if (response.data.success) {
-        const { user } = response.data;
-        // Note: In a real app, you'd get a token from the response
-        const token = 'demo-token-' + user.uid; // Mock token for demo
+        const { user, token } = response.data;
+        // Use the signed token returned by the backend
+        if (!token) {
+          throw new Error('No token received from server');
+        }
         
         this.saveUserToStorage(user, token);
         return { success: true, user };
@@ -62,9 +64,11 @@ class AuthService {
       const response = await apiService.login(loginData);
       
       if (response.data.success) {
-        const { user } = response.data;
-        // Note: In a real app, you'd get a token from the response
-        const token = 'demo-token-' + user.uid; // Mock token for demo
+        const { user, token } = response.data;
+        // Use the signed token returned by the backend
+        if (!token) {
+          throw new Error('No token received from server');
+        }
         
         this.saveUserToStorage(user, token);
         return { success: true, user };

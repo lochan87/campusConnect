@@ -2,7 +2,7 @@ const express = require('express');
 const { getFirestore, getAuth } = require('../config/firebase');
 const admin = require('firebase-admin');
 const geminiService = require('../services/geminiService');
-const { requireAuth } = require('../middleware/auth');
+const { requireAuth, generateToken } = require('../middleware/auth');
 const router = express.Router();
 
 // Auto-selection logic for course and department based on Student ID
@@ -586,9 +586,13 @@ router.post('/register', async (req, res) => {
     // Remove sensitive data from response
     const { password: _, ...userResponse } = userData;
 
+    // Generate a signed session token for the new user
+    const token = generateToken(userRecord.uid);
+
     res.status(201).json({
       success: true,
       user: userResponse,
+      token,
       message: 'User registered successfully'
     });
 
@@ -652,9 +656,13 @@ router.post('/login', async (req, res) => {
     // Remove sensitive data from response
     const { password: _, ...userResponse } = userData;
 
+    // Generate a signed session token for this user
+    const token = generateToken(userDoc.id);
+
     res.json({
       success: true,
       user: userResponse,
+      token,
       message: 'Login successful'
     });
 
