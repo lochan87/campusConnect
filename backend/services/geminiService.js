@@ -153,37 +153,41 @@ Comments: ${meme.commentCount || 0}
         4. Contains misinformation that could be harmful
         5. Is appropriate for a college campus community
 
-        Respond with JSON format:
+        Respond with ONLY a raw JSON object — no markdown, no code fences, no explanation:
         {
-          "isAppropriate": true/false,
-          "concerns": ["list", "of", "issues"],
-          "severity": "low/medium/high",
-          "recommendation": "approve/review/reject"
+          "isAppropriate": true,
+          "concerns": [],
+          "severity": "low",
+          "recommendation": "approve"
         }
       `;
 
       const result = await this.model.generateContent(prompt);
       const response = await result.response;
-      
+
       try {
-        return JSON.parse(response.text());
+        const raw = response.text().trim();
+        // Strip ```json ... ``` or ``` ... ``` wrappers if Gemini adds them despite instructions
+        const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+        return JSON.parse(cleaned);
       } catch (parseError) {
-        // Fallback if JSON parsing fails
+        // Fail CLOSED: route to human review rather than silently approving
+        console.warn('Gemini moderation JSON parse failed, defaulting to review:', parseError.message);
         return {
-          isAppropriate: true,
-          concerns: [],
-          severity: "low",
-          recommendation: "approve"
+          isAppropriate: false,
+          concerns: ['Moderation response could not be parsed — needs manual review'],
+          severity: 'low',
+          recommendation: 'review'
         };
       }
 
     } catch (error) {
       console.error('Error moderating content:', error);
       return {
-        isAppropriate: true,
-        concerns: [],
-        severity: "low",
-        recommendation: "approve"
+        isAppropriate: false,
+        concerns: ['Moderation service unavailable'],
+        severity: 'low',
+        recommendation: 'review'
       };
     }
   }

@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationContext';
 import ThemeToggle from '../ui/ThemeToggle';
+import { formatTimeAgo } from '../../utils/formatTimeAgo';
 import { 
   FiBell, 
   FiMenu, 
@@ -18,11 +19,28 @@ import {
 
 const Navbar = ({ onToggleSidebar, sidebarOpen }) => {
   const { user, logout } = useAuth();
-  const { unreadCount, isConnected } = useNotifications();
+  const {
+    unreadCount,
+    isConnected,
+    notifications,
+    markAsRead,
+    markAllAsRead,
+    clearAllNotifications
+  } = useNotifications();
   const navigate = useNavigate();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Map notification type to an emoji icon
+  const getNotificationIcon = (type) => {
+    const icons = {
+      post: '📝', poll: '📊', event: '🎉', event_update: '🔔',
+      vote: '👍', announcement: '📢', lost_found: '🔍',
+      food: '🍔', meme: '😂', system: '🔔'
+    };
+    return icons[type] || '🔔';
+  };
 
   const handleLogout = () => {
     logout();
@@ -32,8 +50,10 @@ const Navbar = ({ onToggleSidebar, sidebarOpen }) => {
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      // Implement search functionality
-      console.log('Searching for:', searchQuery);
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchQuery('');
+      setShowNotifications(false);
+      setShowUserMenu(false);
     }
   };
 
@@ -130,23 +150,70 @@ const Navbar = ({ onToggleSidebar, sidebarOpen }) => {
                   exit={{ opacity: 0, y: -10 }}
                   className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50"
                 >
+                  {/* Header */}
                   <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700">
-                    <h3 className="font-semibold text-gray-900 dark:text-white">Notifications</h3>
+                    <div className="flex justify-between items-center">
+                      <h3 className="font-semibold text-gray-900 dark:text-white">Notifications</h3>
+                      {unreadCount > 0 && (
+                        <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full">
+                          {unreadCount} new
+                        </span>
+                      )}
+                    </div>
                   </div>
+
+                  {/* Action bar (only when there are notifications) */}
+                  {notifications.length > 0 && (
+                    <div className="flex justify-between items-center px-4 py-1.5 border-b border-gray-50 dark:border-gray-700/50">
+                      <button
+                        onClick={markAllAsRead}
+                        className="text-xs text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+                      >
+                        Mark all read
+                      </button>
+                      <button
+                        onClick={clearAllNotifications}
+                        className="text-xs text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                      >
+                        Clear all
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Notification list */}
                   <div className="max-h-96 overflow-y-auto">
-                    {unreadCount === 0 ? (
+                    {notifications.length === 0 ? (
                       <div className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
                         <FiBell className="w-8 h-8 mx-auto mb-2 text-gray-400 dark:text-gray-500" />
-                        <p>No new notifications</p>
+                        <p className="text-sm">No notifications yet</p>
                       </div>
                     ) : (
-                      <div className="py-2">
-                        {/* Notification items would be rendered here */}
-                        <div className="px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
-                          <p className="text-sm text-gray-800 dark:text-gray-200">Sample notification</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">2 minutes ago</p>
+                      notifications.slice(0, 20).map(notification => (
+                        <div
+                          key={notification.id}
+                          onClick={() => markAsRead(notification.id)}
+                          className={`px-4 py-3 border-b border-gray-50 dark:border-gray-700/50 cursor-pointer
+                            hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors last:border-b-0
+                            ${!notification.isRead ? 'bg-blue-50 dark:bg-blue-900/10' : ''}`}
+                        >
+                          <div className="flex items-start gap-2">
+                            <span className="text-base mt-0.5 flex-shrink-0">
+                              {getNotificationIcon(notification.type)}
+                            </span>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm text-gray-800 dark:text-gray-200 leading-snug">
+                                {notification.message}
+                              </p>
+                              <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                                {formatTimeAgo(notification.timestamp)}
+                              </p>
+                            </div>
+                            {!notification.isRead && (
+                              <span className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1.5" />
+                            )}
+                          </div>
                         </div>
-                      </div>
+                      ))
                     )}
                   </div>
                 </motion.div>

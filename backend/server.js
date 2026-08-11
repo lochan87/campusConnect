@@ -12,6 +12,7 @@ const pollRoutes = require('./routes/polls');
 const eventRoutes = require('./routes/events');
 const statsRoutes = require('./routes/stats');
 const leaderboardRoutes = require('./routes/leaderboard');
+const searchRoutes = require('./routes/search');
 const { initializeFirebase } = require('./config/firebase');
 const { setupWebSocket } = require('./services/websocket');
 const { cleanupService } = require('./services/cleanupService');
@@ -72,6 +73,7 @@ app.use('/api/polls', pollRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
+app.use('/api/search', searchRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

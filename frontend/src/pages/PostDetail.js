@@ -21,23 +21,10 @@ import DeletePostModal from '../components/posts/DeletePostModal';
 import DeleteCommentModal from '../components/posts/DeleteCommentModal';
 import LoadingSkeleton from '../components/ui/LoadingSkeleton';
 import { getPost, deletePost, likePost, getComments, createComment, deleteComment } from '../services/api';
+import { formatTimeAgo } from '../utils/formatTimeAgo';
 import toast from 'react-hot-toast';
 
-// Utility functions
-const timeAgo = (timestamp) => {
-  if (!timestamp) return 'Unknown time';
-  
-  const now = new Date();
-  const time = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-  const diffInSeconds = Math.floor((now - time) / 1000);
-  
-  if (diffInSeconds < 60) return 'Just now';
-  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
-  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
-  if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
-  
-  return time.toLocaleDateString();
-};
+// timeAgo is imported from utils/formatTimeAgo
 
 const formatLocation = (location) => {
   if (!location) return '';
@@ -413,17 +400,6 @@ const PostDetail = () => {
     };
   }, [showImageModal]);
 
-  const timeAgo = (timestamp) => {
-    const now = new Date();
-    const postTime = new Date(timestamp);
-    const diffMs = now - postTime;
-    const diffMins = Math.floor(diffMs / 60000);
-    
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffMins < 1440) return `${Math.floor(diffMins / 60)}h ago`;
-    return `${Math.floor(diffMins / 1440)}d ago`;
-  };
 
   const getCategoryColor = (category) => {
     const colors = {
@@ -583,7 +559,7 @@ const PostDetail = () => {
                     <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
                       <span className="flex items-center">
                         <FiClock className="w-3 h-3 mr-1" />
-                        {timeAgo(post.createdAt)}
+                        {formatTimeAgo(post.createdAt)}
                       </span>
                       {post.location && (
                         <span className="flex items-center">
@@ -700,7 +676,7 @@ const PostDetail = () => {
                   <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
                     <span className="flex items-center">
                       <FiClock className="w-3 h-3 mr-1" />
-                      {timeAgo(post.createdAt)}
+                      {formatTimeAgo(post.createdAt)}
                     </span>
                     {post.location && (
                       <span className="flex items-center">
@@ -919,8 +895,8 @@ const PostDetail = () => {
                           
                           {/* Timestamp */}
                           <div className="flex items-center space-x-1 text-xs text-gray-500 dark:text-gray-400">
-                            <FiClock className="w-3 h-3" />
-                            <span>{timeAgo(comment.createdAt)}</span>
+                            {/* Use shared formatTimeAgo for consistency */}
+                            <span>{formatTimeAgo(comment.createdAt)}</span>
                           </div>
                         </div>
                         

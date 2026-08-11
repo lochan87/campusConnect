@@ -17,6 +17,7 @@ import PostDetail from './pages/PostDetail';
 import EventDetail from './pages/EventDetail';
 import Leaderboard from './pages/Leaderboard';
 import Settings from './pages/Settings';
+import Search from './pages/Search';
 
 // Services
 import { socketService } from './services/socket';
@@ -165,6 +166,7 @@ const AppContent = () => {
                 <Route path="/post/:postId" element={<PostDetail />} />
                 <Route path="/leaderboard" element={<Leaderboard />} />
                 <Route path="/settings" element={<Settings />} />
+                <Route path="/search" element={<Search />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </AnimatePresence>

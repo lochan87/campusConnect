@@ -196,6 +196,9 @@ export const apiService = {
   
   // Stats
   getStats: (params = {}) => api.get('/stats', { params }),
+
+  // Search
+  search: (params = {}) => api.get('/search', { params }),
   
   // Comments (if implemented)
   getComments: (postId) => api.get(`/posts/${postId}/comments`),
