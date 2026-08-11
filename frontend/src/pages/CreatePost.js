@@ -46,12 +46,13 @@ const CreatePost = () => {
   const [imagePreview, setImagePreview] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Category value/label pairs — values must match backend Joi schema exactly
   const categories = [
-    'Lost & Found', 
-    'Food',
-    'Memes',
-    'Announcements',
-    'General'
+    { value: 'lost_found',     label: 'Lost & Found' },
+    { value: 'food',           label: 'Food' },
+    { value: 'memes',          label: 'Memes' },
+    { value: 'announcements',  label: 'Announcements' },
+    { value: 'general',        label: 'General' }
   ];
 
   const handleInputChange = (e) => {
@@ -111,7 +112,7 @@ const CreatePost = () => {
       const postData = new FormData();
       postData.append('title', formData.title.trim());
       postData.append('content', formData.content.trim());
-      postData.append('category', formData.category.toLowerCase().replace(' & ', '_').replace(' ', '_'));
+      postData.append('category', formData.category); // value is already the correct backend key
       postData.append('location', formData.location.trim());
       postData.append('isAnonymous', formData.isAnonymous ? 'true' : 'false');
       postData.append('campusId', user?.campusId || 'demo-campus'); // Use user's campus ID
@@ -132,7 +133,7 @@ const CreatePost = () => {
       console.log('Submitting post data:', {
         title: formData.title,
         content: formData.content,
-        category: formData.category.toLowerCase().replace(' & ', '_').replace(' ', '_'),
+        category: formData.category,
         location: formData.location,
         isAnonymous: formData.isAnonymous,
         isAnonymousString: formData.isAnonymous ? 'true' : 'false',
@@ -283,7 +284,7 @@ const CreatePost = () => {
             >
               <option value="">Select a category</option>
               {categories.map(category => (
-                <option key={category} value={category}>{category}</option>
+                <option key={category.value} value={category.value}>{category.label}</option>
               ))}
             </select>
           </div>

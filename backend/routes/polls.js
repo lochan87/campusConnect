@@ -72,8 +72,10 @@ router.get('/', async (req, res) => {
       polls = polls.filter(poll => poll.location === location);
     }
 
+    // isActive from query params is a string — use strict comparison, not Boolean()
     if (isActive !== 'all') {
-      polls = polls.filter(poll => poll.isActive === Boolean(isActive));
+      const isActiveBool = isActive === 'true';
+      polls = polls.filter(poll => poll.isActive === isActiveBool);
     }
 
     // Apply final limit

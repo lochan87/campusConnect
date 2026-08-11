@@ -81,7 +81,7 @@ const emitToAll = (io, event, data) => {
 
 module.exports = {
   setupWebSocket,
-  emitToCanvas: emitToLocation,
+  emitToCampus,
   emitToLocation,
   emitToAll
 };

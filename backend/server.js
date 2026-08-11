@@ -26,6 +26,9 @@ const io = socketIo(server, {
   }
 });
 
+// Attach io to app so route handlers can emit real-time events via req.app.get('io')
+app.set('io', io);
+
 // Initialize Firebase
 initializeFirebase();
 

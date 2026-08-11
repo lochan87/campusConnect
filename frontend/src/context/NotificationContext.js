@@ -173,22 +173,17 @@ export const NotificationProvider = ({ children }) => {
     };
 
     const handlePostVoted = (voteData) => {
-      // Notify if it's user's post being voted on
-      const userPost = state.posts?.find(post => 
-        post.id === voteData.postId && post.userId === user.uid
-      );
-      
-      if (userPost) {
-        dispatch({
-          type: NOTIFICATION_ACTIONS.ADD_NOTIFICATION,
-          payload: {
-            type: 'vote',
-            message: `👍 Your post received a vote!`,
-            data: { postId: voteData.postId },
-            priority: 'low'
-          }
-        });
-      }
+      // Note: We cannot cross-reference PostContext here (different context boundary).
+      // Dispatch a vote notification — the UI can filter/dismiss as needed.
+      dispatch({
+        type: NOTIFICATION_ACTIONS.ADD_NOTIFICATION,
+        payload: {
+          type: 'vote',
+          message: `👍 A post received a new vote!`,
+          data: { postId: voteData.postId },
+          priority: 'low'
+        }
+      });
     };
 
     // Event notifications

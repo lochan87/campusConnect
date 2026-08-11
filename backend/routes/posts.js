@@ -39,20 +39,10 @@ router.get('/', async (req, res) => {
 
     let query = db.collection('posts');
 
-    // For development: Use only simple queries to avoid index requirements
-    // Apply sorting only (no where + orderBy combination)
-    query = query.orderBy(sortBy, order);
-
-    // Apply pagination
-    if (offset > 0) {
-      const offsetSnapshot = await query.limit(parseInt(offset)).get();
-      if (!offsetSnapshot.empty) {
-        const lastDoc = offsetSnapshot.docs[offsetSnapshot.docs.length - 1];
-        query = query.startAfter(lastDoc);
-      }
-    }
-
-    query = query.limit(parseInt(limit));
+    // For development: Use simple orderBy only (no where + orderBy to avoid index requirements).
+    // Fetch a generous batch so client-side filtering has enough records to paginate from.
+    const fetchLimit = Math.max(parseInt(limit) * 10, 200);
+    query = query.orderBy(sortBy, order).limit(fetchLimit);
 
     const snapshot = await query.get();
     
@@ -77,11 +67,11 @@ router.get('/', async (req, res) => {
         id: doc.id,
         ...postData,
         createdAt: postData.createdAt?.toDate?.() || postData.createdAt,
-        userHasLiked: userId ? userLikes[doc.id] || false : false // true or false
+        userHasLiked: userId ? userLikes[doc.id] || false : false
       });
     });
 
-    // Apply ALL filtering client-side for development
+    // Apply client-side filters
     if (campusId) {
       posts = posts.filter(post => post.campusId === campusId);
     }
@@ -94,7 +84,7 @@ router.get('/', async (req, res) => {
       posts = posts.filter(post => post.location === location);
     }
 
-    // Apply pagination after filtering
+    // Apply pagination AFTER filtering (avoids double-skip bug)
     const startIndex = parseInt(offset) || 0;
     const endIndex = startIndex + parseInt(limit);
     const paginatedPosts = posts.slice(startIndex, endIndex);
@@ -306,9 +296,9 @@ router.get('/:id', async (req, res) => {
     const postData = doc.data();
     let userHasLiked = false;
 
-    // Check if user has liked this post
+    // Check if user has liked this post (uses same collection as the like/unlike route)
     if (userId) {
-      const likeDoc = await db.collection('likes').doc(`${id}_${userId}`).get();
+      const likeDoc = await db.collection('like_post').doc(`${id}_${userId}`).get();
       userHasLiked = likeDoc.exists;
     }
 
