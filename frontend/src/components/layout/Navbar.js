@@ -78,11 +78,16 @@ const Navbar = ({ onToggleSidebar, sidebarOpen }) => {
             </button>
 
             {/* Logo */}
-            <Link to="/" className="flex items-center space-x-3">
-              <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">CC</span>
-              </div>
-              <span className="hidden sm:block text-xl font-bold text-gray-900 dark:text-white">
+            <Link to="/" className="flex items-center space-x-2.5 group">
+              <img
+                src="/icon.png"
+                alt="CC"
+                className="h-9 w-9 rounded-xl object-cover flex-shrink-0 shadow-sm group-hover:shadow-md transition-shadow"
+              />
+              <span
+                className="hidden sm:block text-lg font-bold tracking-tight"
+                style={{ background: 'linear-gradient(135deg, #2563EB, #7C3AED)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}
+              >
                 CampusConnect
               </span>
             </Link>

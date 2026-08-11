@@ -71,32 +71,29 @@ const Sidebar = ({ onClose }) => {
 
   return (
     <div className="h-full bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
-      {/* Header - Fixed at top of sidebar, below navbar with proper mobile spacing */}
-      <div className="flex-shrink-0 flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm mt-16 lg:mt-0">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Menu</h2>
+      {/* Header — exactly h-16, matches Navbar height, fills the top area cleanly */}
+      <div className="flex-shrink-0 h-16 flex items-center justify-between px-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+        <div className="flex items-center gap-2.5">
+          <img src="/icon.png" alt="CC" className="h-8 w-8 rounded-xl" />
+          <span
+            className="text-base font-bold tracking-tight"
+            style={{ background: 'linear-gradient(135deg,#2563EB,#7C3AED)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}
+          >
+            CampusConnect
+          </span>
+        </div>
         <button
           onClick={onClose}
-          className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
           aria-label="Close sidebar"
         >
-          <FiX className="w-5 h-5 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100" />
+          <FiX className="w-5 h-5 text-gray-500 dark:text-gray-400" />
         </button>
       </div>
 
-      {/* Scrollable content - independent of header with mobile navbar spacing */}
-      <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-800 lg:pt-0">
-        <div className="p-4 space-y-6 pb-6">
-          {/* Mobile Search Bar - only visible on mobile */}
-          <div className="md:hidden">
-            <div className="relative">
-              <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
-              <input
-                type="text"
-                placeholder="Search posts, polls, events..."
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 dark:bg-gray-700 dark:text-white focus:bg-white dark:focus:bg-gray-600 transition-colors text-sm placeholder-gray-500 dark:placeholder-gray-400"
-              />
-            </div>
-          </div>
+      {/* Scrollable content */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-4 space-y-4 pb-6">
 
           {/* User info */}
           <div className="flex items-center space-x-3 bg-gray-50 dark:bg-gray-700 rounded-lg p-3">

@@ -70,12 +70,22 @@ const Login = () => {
           {/* Header */}
           <div className="text-center pt-2">
             <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-              className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl mx-auto flex items-center justify-center mb-4"
+              className="flex items-center justify-center gap-3 mb-4"
             >
-              <span className="text-white font-bold text-xl">CC</span>
+              <img
+                src="/icon.png"
+                alt="CampusConnect"
+                className="h-12 w-12 rounded-2xl shadow-lg"
+              />
+              <span
+                className="text-2xl font-bold tracking-tight"
+                style={{ background: 'linear-gradient(135deg, #2563EB, #7C3AED)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}
+              >
+                CampusConnect
+              </span>
             </motion.div>
             <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Welcome back</h2>
             <p className="mt-2 text-gray-600 dark:text-gray-400">
@@ -253,6 +263,11 @@ const Login = () => {
               transition={{ delay: 0.3, duration: 0.8 }}
               className="text-center text-white"
             >
+              <img
+                src="/icon.png"
+                alt="CampusConnect"
+                className="h-20 w-20 rounded-3xl shadow-2xl mx-auto mb-6"
+              />
               <h1 className="text-4xl font-bold mb-6">
                 Stay Connected with Your Campus
               </h1>

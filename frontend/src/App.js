@@ -135,7 +135,7 @@ const AppContent = () => {
               animate={{ x: 0 }}
               exit={{ x: -300 }}
               transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              className="fixed inset-y-0 left-0 z-40 w-64 bg-white dark:bg-gray-800 shadow-lg lg:relative lg:inset-y-0 lg:z-auto lg:shadow-none lg:border-r dark:border-gray-700"
+              className="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 shadow-xl lg:relative lg:inset-y-0 lg:z-auto lg:shadow-none lg:border-r dark:border-gray-700"
             >
               <Sidebar onClose={() => setSidebarOpen(false)} />
             </motion.div>
@@ -145,7 +145,7 @@ const AppContent = () => {
         {/* Overlay - only show on mobile when sidebar is open */}
         {sidebarOpen && (
           <div 
-            className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
+            className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
             onClick={() => setSidebarOpen(false)}
           />
         )}
