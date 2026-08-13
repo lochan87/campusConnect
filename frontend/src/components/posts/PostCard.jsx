@@ -1,10 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { FiHeart, FiMessageCircle, FiShare2, FiMapPin, FiClock, FiMoreHorizontal, FiEdit2, FiTrash2, FiFlag } from 'react-icons/fi';
 import confetti from 'canvas-confetti';
 import ReportPostModal from './ReportPostModal';
 import { formatTimeAgo } from '../../utils/formatTimeAgo';
+
+const REACTIONS = [
+  { emoji: '❤️', label: 'Like' },
+  { emoji: '🔥', label: 'Fire' },
+  { emoji: '😂', label: 'Funny' },
+  { emoji: '👀', label: 'Interesting' },
+  { emoji: '💡', label: 'Helpful' },
+  { emoji: '😲', label: 'Wow' },
+];
 
 const PostCard = ({ post, currentUser, onLike, onShare, onEdit, onDelete }) => {
   const navigate = useNavigate();
@@ -15,6 +24,9 @@ const PostCard = ({ post, currentUser, onLike, onShare, onEdit, onDelete }) => {
   const [reportModal, setReportModal] = useState({ isOpen: false });
   const menuRef = useRef(null);
   const likeButtonRef = useRef(null);
+  const [selectedReaction, setSelectedReaction] = useState('❤️');
+  const [showReactions, setShowReactions] = useState(false);
+  const reactionHideTimer = useRef(null);
 
   const fireConfetti = () => {
     if (!likeButtonRef.current) return;
@@ -32,6 +44,7 @@ const PostCard = ({ post, currentUser, onLike, onShare, onEdit, onDelete }) => {
       scalar: 0.75,
     });
   };
+
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -106,6 +119,17 @@ const PostCard = ({ post, currentUser, onLike, onShare, onEdit, onDelete }) => {
       } finally {
         setTimeout(() => setIsLiking(false), 300);
       }
+    }
+  };
+
+  // Feature #9 — Reaction picker: selects emoji and calls like if not yet liked
+  const handleReactionSelect = async (reaction) => {
+    clearTimeout(reactionHideTimer.current);
+    setShowReactions(false);
+    setSelectedReaction(reaction.emoji);
+    // Only trigger the like API if the post isn't already liked
+    if (!optimisticLiked) {
+      await handleLike();
     }
   };
 
@@ -291,30 +315,75 @@ const PostCard = ({ post, currentUser, onLike, onShare, onEdit, onDelete }) => {
       <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-700">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <motion.button
-              ref={likeButtonRef}
-              whileTap={{ scale: 0.85 }}
-              onClick={handleLike}
-              disabled={isLiking || !currentUser}
-              className={`flex items-center space-x-1 transition-colors ${
-                optimisticLiked
-                  ? 'text-red-500' 
-                  : isLiking 
-                    ? 'text-red-400' 
-                    : 'text-gray-500 dark:text-gray-400 hover:text-red-500'
-              }`}
+            {/* Reaction Picker Wrapper */}
+            <div
+              className="relative"
+              onMouseEnter={() => {
+                clearTimeout(reactionHideTimer.current);
+                setShowReactions(true);
+              }}
+              onMouseLeave={() => {
+                reactionHideTimer.current = setTimeout(() => setShowReactions(false), 250);
+              }}
             >
-              <motion.div
-                animate={optimisticLiked
-                  ? { scale: [1, 1.4, 0.9, 1.15, 1], rotate: [0, -15, 10, -5, 0] }
-                  : { scale: 1, rotate: 0 }
-                }
-                transition={{ duration: 0.4, ease: 'easeInOut' }}
+              {/* Reaction emoji row — springs in above the button on hover */}
+              <AnimatePresence>
+                {showReactions && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8, scale: 0.9 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 8, scale: 0.9 }}
+                    transition={{ type: 'spring', damping: 20, stiffness: 350 }}
+                    className="absolute bottom-full left-0 mb-2 flex items-center gap-0.5 bg-white dark:bg-gray-800 rounded-full shadow-xl border border-gray-200 dark:border-gray-700 px-2 py-1.5 z-20"
+                  >
+                    {REACTIONS.map((reaction, i) => (
+                      <motion.button
+                        key={reaction.emoji}
+                        initial={{ scale: 0, y: 10 }}
+                        animate={{ scale: 1, y: 0 }}
+                        transition={{ type: 'spring', delay: i * 0.04, stiffness: 400, damping: 14 }}
+                        whileHover={{ scale: 1.45, y: -5 }}
+                        onClick={(e) => { e.stopPropagation(); handleReactionSelect(reaction); }}
+                        title={reaction.label}
+                        className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-xl leading-none transition-colors"
+                      >
+                        {reaction.emoji}
+                      </motion.button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Like / reaction button */}
+              <motion.button
+                ref={likeButtonRef}
+                whileTap={{ scale: 0.85 }}
+                onClick={handleLike}
+                disabled={isLiking || !currentUser}
+                className={`flex items-center space-x-1 transition-colors ${
+                  optimisticLiked
+                    ? 'text-red-500'
+                    : isLiking
+                      ? 'text-red-400'
+                      : 'text-gray-500 dark:text-gray-400 hover:text-red-500'
+                }`}
               >
-                <FiHeart className={`w-4 h-4 ${optimisticLiked ? 'fill-current' : ''}`} />
-              </motion.div>
-              <span className="text-sm font-medium">{optimisticLikes}</span>
-            </motion.button>
+                <motion.div
+                  animate={optimisticLiked
+                    ? { scale: [1, 1.4, 0.9, 1.15, 1], rotate: [0, -15, 10, -5, 0] }
+                    : { scale: 1, rotate: 0 }
+                  }
+                  transition={{ duration: 0.4, ease: 'easeInOut' }}
+                >
+                  {optimisticLiked ? (
+                    <span className="text-base leading-none select-none">{selectedReaction}</span>
+                  ) : (
+                    <FiHeart className="w-4 h-4" />
+                  )}
+                </motion.div>
+                <span className="text-sm font-medium">{optimisticLikes}</span>
+              </motion.button>
+            </div>
             
             <motion.button
               whileTap={{ scale: 0.95 }}

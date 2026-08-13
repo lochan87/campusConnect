@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
@@ -34,6 +34,73 @@ const SearchBar = ({ searchQuery, onChange, onSubmit }) => (
   </form>
 );
 
+/**
+ * Feature #10 — Swipe-to-dismiss notification item (mobile-first).
+ * Drag left ≥ 80px to dismiss. Red reveal underneath. Uses native Pointer Events.
+ */
+const SwipeableNotification = ({ notification, onRead, onDismiss, icon }) => {
+  const [translateX, setTranslateX] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const startX = useRef(0);
+
+  const handlePointerDown = (e) => {
+    startX.current = e.clientX;
+    setDragging(true);
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+
+  const handlePointerMove = (e) => {
+    if (!dragging) return;
+    const delta = e.clientX - startX.current;
+    // Only allow left swipe
+    if (delta < 0) setTranslateX(delta);
+  };
+
+  const handlePointerUp = () => {
+    setDragging(false);
+    if (translateX < -80) {
+      // Fly out
+      setTranslateX(-500);
+      setTimeout(() => onDismiss(notification.id), 280);
+    } else {
+      // Snap back
+      setTranslateX(0);
+    }
+  };
+
+  return (
+    <div className="relative overflow-hidden">
+      {/* Red dismiss layer underneath */}
+      <div className="absolute inset-0 bg-red-500 flex items-center justify-end pr-4">
+        <span className="text-white text-xs font-semibold">Dismiss</span>
+      </div>
+      {/* Swipeable content */}
+      <div
+        style={{
+          transform: `translateX(${translateX}px)`,
+          transition: dragging ? 'none' : 'transform 0.28s cubic-bezier(0.25,0.46,0.45,0.94)',
+        }}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onClick={() => onRead(notification.id)}
+        className={`relative px-4 py-3 border-b border-gray-50 dark:border-gray-700/50 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors last:border-b-0 touch-pan-y ${
+          !notification.isRead ? 'bg-blue-50 dark:bg-blue-900/10' : 'bg-white dark:bg-gray-800'
+        }`}
+      >
+        <div className="flex items-start gap-2 pointer-events-none">
+          <span className="text-base mt-0.5 flex-shrink-0">{icon}</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm text-gray-800 dark:text-gray-200 leading-snug">{notification.message}</p>
+            <p className="text-xs text-gray-400 mt-0.5">{formatTimeAgo(notification.timestamp)}</p>
+          </div>
+          {!notification.isRead && <span className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1.5" />}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const Navbar = ({ onToggleSidebar }) => {
   const { user, logout } = useAuth();
   const {
@@ -42,7 +109,8 @@ const Navbar = ({ onToggleSidebar }) => {
     notifications,
     markAsRead,
     markAllAsRead,
-    clearAllNotifications
+    clearAllNotifications,
+    removeNotification
   } = useNotifications();
   const navigate = useNavigate();
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -175,20 +243,13 @@ const Navbar = ({ onToggleSidebar }) => {
                     </div>
                   ) : (
                     notifications.slice(0, 20).map(notification => (
-                      <div
+                      <SwipeableNotification
                         key={notification.id}
-                        onClick={() => markAsRead(notification.id)}
-                        className={`px-4 py-3 border-b border-gray-50 dark:border-gray-700/50 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors last:border-b-0 ${!notification.isRead ? 'bg-blue-50 dark:bg-blue-900/10' : ''}`}
-                      >
-                        <div className="flex items-start gap-2">
-                          <span className="text-base mt-0.5 flex-shrink-0">{getNotificationIcon(notification.type)}</span>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm text-gray-800 dark:text-gray-200 leading-snug">{notification.message}</p>
-                            <p className="text-xs text-gray-400 mt-0.5">{formatTimeAgo(notification.timestamp)}</p>
-                          </div>
-                          {!notification.isRead && <span className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1.5" />}
-                        </div>
-                      </div>
+                        notification={notification}
+                        onRead={markAsRead}
+                        onDismiss={removeNotification}
+                        icon={getNotificationIcon(notification.type)}
+                      />
                     ))
                   )}
                 </div>

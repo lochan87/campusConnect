@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { usePosts } from '../context/PostContext';
@@ -16,7 +16,7 @@ import { apiService } from '../services/api';
 import toast from 'react-hot-toast';
 
 const Home = () => {
-  const { posts, polls, events, loading, fetchPosts, fetchPolls, fetchEvents, refreshPosts, likePost, likeEvent, voteOnPoll, deletePost, deleteEvent } = usePosts();
+  const { posts, polls, events, loading, fetchPosts, fetchPolls, fetchEvents, refreshPosts, likePost, likeEvent, voteOnPoll, deletePost, deleteEvent, hasMore, loadMorePosts } = usePosts();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [editModal, setEditModal] = useState({ isOpen: false, post: null });
@@ -25,9 +25,11 @@ const Home = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDeletingEvent, setIsDeletingEvent] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
-  const [activeTab, setActiveTab] = useState('posts'); // Add active tab state
+  const [activeTab, setActiveTab] = useState('posts');
   const [quickStats, setQuickStats] = useState({ posts: 0, polls: 0, events: 0 });
   const [statsLoading, setStatsLoading] = useState(true);
+  // Feature #11 — Infinite scroll sentinel ref
+  const sentinelRef = useRef(null);
 
   // Fetch quick stats first for immediate display
   useEffect(() => {
@@ -53,6 +55,25 @@ const Home = () => {
 
     fetchQuickStats();
   }, [user?.campusId, user?.uid]);
+
+  // Feature #11 — Wire IntersectionObserver to the sentinel div for infinite scroll
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loading && activeTab === 'posts') {
+          loadMorePosts();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasMore, loading, activeTab]); // loadMorePosts intentionally omitted — it's not stable (no useCallback)
 
   useEffect(() => {
     if (user && !hasInitialized) {
@@ -389,7 +410,7 @@ const Home = () => {
                           key={post.id}
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.4, delay: index * 0.1 }}
+                          transition={{ duration: 0.4, delay: Math.min(index, 5) * 0.08 }}
                         >
                           <PostCard
                             post={post}
@@ -401,6 +422,28 @@ const Home = () => {
                           />
                         </motion.div>
                       ))}
+
+                      {/* Infinite scroll sentinel */}
+                      <div ref={sentinelRef} className="h-4" />
+
+                      {/* Loading more spinner */}
+                      {loading && posts.length > 0 && (
+                        <div className="flex justify-center py-4">
+                          <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                            <motion.div
+                              animate={{ rotate: 360 }}
+                              transition={{ duration: 0.9, repeat: Infinity, ease: 'linear' }}
+                              className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full"
+                            />
+                            Loading more posts…
+                          </div>
+                        </div>
+                      )}
+
+                      {/* End of feed message */}
+                      {!hasMore && posts.length > 0 && !loading && (
+                        <p className="text-center text-xs text-gray-400 dark:text-gray-500 py-2">You\'ve seen all posts ✓</p>
+                      )}
                     </div>
                   )}
                 </>

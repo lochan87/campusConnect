@@ -67,6 +67,8 @@ const PostDetail = () => {
   const [loadingComments, setLoadingComments] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
   const hasFetchedComments = useRef(false);
+  // Feature #12 — Reading progress bar
+  const [readProgress, setReadProgress] = useState(0);
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -370,6 +372,26 @@ const PostDetail = () => {
     }
   };
 
+  // Feature #12 — Track scroll progress on the main scroll container
+  useEffect(() => {
+    const container = document.getElementById('main-scroll-container');
+    if (!container) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      const maxScroll = scrollHeight - clientHeight;
+      const progress = maxScroll > 0 ? (scrollTop / maxScroll) * 100 : 0;
+      setReadProgress(Math.min(100, Math.max(0, progress)));
+    };
+
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    // Reset on unmount
+    return () => {
+      container.removeEventListener('scroll', handleScroll);
+      setReadProgress(0);
+    };
+  }, []);
+
   // Image modal handlers
   const handleImageClick = () => {
     setShowImageModal(true);
@@ -461,6 +483,17 @@ const PostDetail = () => {
       exit={{ opacity: 0, y: -20 }}
       className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6"
     >
+      {/* Feature #12 — Reading Progress Bar */}
+      <div
+        className="fixed top-0 left-0 right-0 z-[9999] h-[3px] bg-transparent pointer-events-none"
+        aria-hidden="true"
+      >
+        <motion.div
+          className="h-full bg-gradient-to-r from-blue-500 via-violet-500 to-purple-600"
+          style={{ width: `${readProgress}%` }}
+          transition={{ duration: 0.08 }}
+        />
+      </div>
       {/* Header */}
       <div className="flex items-center space-x-3 mb-6">
         <motion.button

@@ -18,6 +18,8 @@ import EventDetail from './pages/EventDetail';
 import Leaderboard from './pages/Leaderboard';
 import Settings from './pages/Settings';
 import Search from './pages/Search';
+import BackToTop from './components/ui/BackToTop';
+import CommandPalette from './components/ui/CommandPalette';
 
 // Services
 import { socketService } from './services/socket';
@@ -142,6 +144,7 @@ const AppContent = () => {
 
         {/* Main content - independent scroll area with navbar spacing */}
         <main
+          id="main-scroll-container"
           className="flex-1 overflow-y-auto pt-28 md:pt-16 bg-gray-50 dark:bg-gray-900"
           onScroll={() => sidebarOpen && setSidebarOpen(false)}
         >
@@ -166,6 +169,12 @@ const AppContent = () => {
           </div>
         </main>
       </div>
+
+      {/* Feature #7 — Back to Top + new-post badge */}
+      <BackToTop />
+
+      {/* Feature #8 — Command Palette (Ctrl+K) */}
+      <CommandPalette />
     </div>
   );
 };
