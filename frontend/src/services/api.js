@@ -6,7 +6,7 @@ let pendingRequests = 0;
 
 // Create axios instance with default config
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
   timeout: 30000, // Increased to 30 seconds
   headers: {
     'Content-Type': 'application/json',
@@ -208,7 +208,7 @@ export const apiService = {
   // Notifications
 
   // Health check
-  healthCheck: () => api.get('/health', { baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000' })
+  healthCheck: () => api.get('/health', { baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000' })
 };
 
 // Convenient export functions for easy access
