@@ -14,6 +14,9 @@ import DeleteEventModal from '../components/events/DeleteEventModal';
 import LoadingSkeleton from '../components/ui/LoadingSkeleton';
 import { apiService } from '../services/api';
 import toast from 'react-hot-toast';
+import AnimatedCounter from '../components/ui/AnimatedCounter';
+import TickerTape from '../components/ui/TickerTape';
+import EventStories from '../components/events/EventStories';
 
 const Home = () => {
   const { posts, polls, events, loading, fetchPosts, fetchPolls, fetchEvents, refreshPosts, likePost, likeEvent, voteOnPoll, deletePost, deleteEvent, hasMore, loadMorePosts } = usePosts();
@@ -239,6 +242,19 @@ const Home = () => {
         </div>
       </motion.div>
 
+      {/* Feature #19 — Story-Style Event Banners */}
+      {events.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm px-4 py-3"
+        >
+          <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">Upcoming Events</p>
+          <EventStories events={events} />
+        </motion.div>
+      )}
+
       {/* Quick Stats */}
       <motion.div 
         className="grid grid-cols-2 lg:grid-cols-4 gap-4"
@@ -289,13 +305,32 @@ const Home = () => {
               </div>
               <div>
                 <p className={`text-2xl font-bold text-gray-900 dark:text-white ${stat.isLoading ? 'animate-pulse' : ''}`}>
-                  {stat.value}
+                  {typeof stat.value === 'number'
+                    ? <AnimatedCounter end={stat.value} duration={1.4} />
+                    : stat.value
+                  }
                 </p>
                 <p className="text-sm text-gray-600 dark:text-gray-400">{stat.label}</p>
               </div>
             </div>
           </motion.div>
         ))}
+      </motion.div>
+
+      {/* Feature #17 — Trending Now Ticker */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.15 }}
+        className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden"
+      >
+        <div className="flex items-stretch">
+          {/* Coloured left accent */}
+          <div className="w-1 flex-shrink-0 bg-gradient-to-b from-indigo-500 to-purple-600" />
+          <div className="flex-1 px-4 py-3 min-w-0">
+            <TickerTape />
+          </div>
+        </div>
       </motion.div>
 
       {/* Navigation Tabs */}
@@ -442,7 +477,7 @@ const Home = () => {
 
                       {/* End of feed message */}
                       {!hasMore && posts.length > 0 && !loading && (
-                        <p className="text-center text-xs text-gray-400 dark:text-gray-500 py-2">You\'ve seen all posts ✓</p>
+                        <p className="text-center text-xs text-gray-400 dark:text-gray-500 py-2">You've seen all posts ✓</p>
                       )}
                     </div>
                   )}

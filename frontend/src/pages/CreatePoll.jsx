@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { usePosts } from '../context/PostContext';
 import { apiService } from '../services/api';
+import useDraft from '../hooks/useDraft';
 import { toast } from 'react-hot-toast';
 import { 
   FiBarChart2, 
@@ -27,6 +28,31 @@ const CreatePoll = () => {
   
   const [options, setOptions] = useState(['', '']);
   const [loading, setLoading] = useState(false);
+
+  // Feature #20 — Draft auto-save
+  const { hasDraft, draftAge, resumeDraft, discardDraft } = useDraft(
+    'draft_poll',
+    formData,
+    setFormData
+  );
+
+  useEffect(() => {
+    if (hasDraft) {
+      toast(
+        (t) => (
+          <div className="flex items-center gap-3">
+            <span className="text-sm">📊 Resume poll draft from {draftAge < 1 ? 'just now' : `${draftAge}m ago`}?</span>
+            <button onClick={() => { resumeDraft(); toast.dismiss(t.id); }}
+              className="px-3 py-1 bg-indigo-600 text-white text-xs rounded-lg font-semibold hover:bg-indigo-700">Resume</button>
+            <button onClick={() => { discardDraft(); toast.dismiss(t.id); }}
+              className="px-3 py-1 bg-gray-200 text-gray-700 text-xs rounded-lg font-semibold hover:bg-gray-300">Discard</button>
+          </div>
+        ),
+        { duration: 8000, id: 'draft-poll' }
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const expirationOptions = [
     { value: '1', label: '1 Hour' },
@@ -102,6 +128,7 @@ const CreatePoll = () => {
       
       if (response.data.success) {
         toast.success('Poll created successfully!');
+        discardDraft(); // Feature #20 — clear draft on success
         
         // Refresh user data to get updated reputation and postCount
         if (refreshUserData) {

@@ -14,6 +14,8 @@ import {
 import { apiService } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
+import AnimatedCounter from '../components/ui/AnimatedCounter';
+import ActivityGraph from '../components/profile/ActivityGraph';
 
 const Profile = () => {
   const { userId } = useParams();
@@ -363,24 +365,40 @@ const Profile = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="text-center p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
             <TrophyIcon className="w-6 h-6 text-yellow-600 dark:text-yellow-400 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-gray-900 dark:text-white">{profile.reputation || 0}</div>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">
+              <AnimatedCounter end={profile.reputation || 0} />
+            </div>
             <div className="text-sm text-gray-600 dark:text-gray-300">Reputation</div>
           </div>
           <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
             <DocumentTextIcon className="w-6 h-6 text-blue-600 dark:text-blue-400 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-gray-900 dark:text-white">{profile.stats?.totalPosts || 0}</div>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">
+              <AnimatedCounter end={profile.stats?.totalPosts || 0} />
+            </div>
             <div className="text-sm text-gray-600 dark:text-gray-300">Posts</div>
           </div>
           <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
             <ChatBubbleLeftRightIcon className="w-6 h-6 text-green-600 dark:text-green-400 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-gray-900 dark:text-white">{profile.stats?.totalPolls || 0}</div>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">
+              <AnimatedCounter end={profile.stats?.totalPolls || 0} />
+            </div>
             <div className="text-sm text-gray-600 dark:text-gray-300">Polls</div>
           </div>
           <div className="text-center p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
             <FireIcon className="w-6 h-6 text-red-600 dark:text-red-400 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-gray-900 dark:text-white">{profile.stats?.recentActivity || 0}</div>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">
+              <AnimatedCounter end={profile.stats?.recentActivity || 0} />
+            </div>
             <div className="text-sm text-gray-600 dark:text-gray-300">Recent Activity</div>
           </div>
+        </div>
+
+        {/* Feature #15 — Activity Graph */}
+        <div className="mt-6 border-t border-gray-200 dark:border-gray-700 pt-5">
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+            <span>📅</span> Post Activity
+          </h3>
+          <ActivityGraph posts={profile.recentPosts || []} />
         </div>
       </motion.div>
 

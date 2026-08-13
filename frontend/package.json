@@ -14,6 +14,8 @@
     "emoji-picker-react": "^4.4.9",
     "framer-motion": "^10.12.18",
     "react": "^18.2.0",
+    "react-activity-calendar": "^3.2.1",
+    "react-countup": "^6.5.3",
     "react-dom": "^18.2.0",
     "react-hot-toast": "^2.5.2",
     "react-icons": "^4.10.1",

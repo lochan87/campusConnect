@@ -197,3 +197,17 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ─── Activity Calendar dark-mode label fix ─────────────────────────────── */
+/* react-activity-calendar renders month + weekday labels as SVG <text>.     */
+/* In dark mode they inherit a near-black fill and become invisible.          */
+.dark .react-activity-calendar text,
+.dark .react-activity-calendar tspan {
+  fill: #94a3b8 !important; /* slate-400 — readable on dark backgrounds */
+}
+
+/* Also fix the "N posts in the last year" footer and legend text */
+.dark .react-activity-calendar footer,
+.dark .react-activity-calendar p {
+  color: #94a3b8 !important;
+}

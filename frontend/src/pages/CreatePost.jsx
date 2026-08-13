@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { usePosts } from '../context/PostContext';
 import { apiService } from '../services/api';
+import useDraft from '../hooks/useDraft';
 import { 
   PencilIcon, 
   PhotoIcon, 
@@ -46,6 +47,40 @@ const CreatePost = () => {
   const [imagePreview, setImagePreview] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Feature #20 — Draft auto-save
+  const { hasDraft, draftAge, resumeDraft, discardDraft } = useDraft(
+    'draft_post',
+    formData,
+    setFormData
+  );
+
+  useEffect(() => {
+    if (hasDraft) {
+      toast(
+        (t) => (
+          <div className="flex items-center gap-3">
+            <span className="text-sm">📝 Resume draft from {draftAge < 1 ? 'just now' : `${draftAge}m ago`}?</span>
+            <button
+              onClick={() => { resumeDraft(); toast.dismiss(t.id); }}
+              className="px-3 py-1 bg-indigo-600 text-white text-xs rounded-lg font-semibold hover:bg-indigo-700"
+            >
+              Resume
+            </button>
+            <button
+              onClick={() => { discardDraft(); toast.dismiss(t.id); }}
+              className="px-3 py-1 bg-gray-200 text-gray-700 text-xs rounded-lg font-semibold hover:bg-gray-300"
+            >
+              Discard
+            </button>
+          </div>
+        ),
+        { duration: 8000, id: 'draft-post' }
+      );
+    }
+    // Only run on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Category value/label pairs — values must match backend Joi schema exactly
   const categories = [
     { value: 'lost_found',     label: 'Lost & Found' },
@@ -54,6 +89,79 @@ const CreatePost = () => {
     { value: 'announcements',  label: 'Announcements' },
     { value: 'general',        label: 'General' }
   ];
+
+  // Feature #18 — AI-Powered Post Categoriser (frontend keyword classifier)
+  const [aiClassifying, setAiClassifying] = useState(false);
+
+  const CATEGORY_KEYWORDS = {
+    lost_found:    ['lost', 'found', 'missing', 'wallet', 'keys', 'bag', 'phone', 'id card', 'bottle', 'earphone', 'charger', 'return', 'belong'],
+    food:          ['food', 'eat', 'lunch', 'dinner', 'breakfast', 'canteen', 'mess', 'snack', 'hungry', 'pizza', 'biryani', 'cafe', 'restaurant', 'menu', 'coupon', 'meal'],
+    memes:         ['meme', 'funny', 'lol', 'hilarious', 'joke', 'laugh', 'roast', 'shitpost', 'relatable', 'mood', 'literally me', 'cope'],
+    announcements: ['announce', 'notice', 'important', 'deadline', 'exam', 'result', 'holiday', 'seminar', 'workshop', 'fest', 'event', 'register', 'date', 'schedule', 'update'],
+    general:       []
+  };
+
+  const LOCATION_KEYWORDS = {
+    canteen:          ['canteen', 'food', 'eat', 'lunch', 'snack', 'hungry', 'mess', 'meal', 'dinner'],
+    library:          ['library', 'book', 'study', 'read', 'borrow', 'return book', 'reference'],
+    auditorium:       ['auditorium', 'seminar', 'event', 'fest', 'cultural', 'performance', 'stage'],
+    grounds:          ['ground', 'field', 'sports', 'cricket', 'football', 'match', 'play', 'practice'],
+    heritage_building:['heritage', 'admin', 'office', 'principal', 'dean'],
+    parking:          ['parking', 'bike', 'car', 'vehicle', 'scooter', 'two-wheeler'],
+    amphitheater:     ['amphitheater', 'open air', 'outdoor', 'concert'],
+    bb_block:         ['bb block', 'bb', 'classroom'],
+    iem_block:        ['iem', 'iem block'],
+    rock_garden:      ['rock garden', 'garden', 'park', 'sitting'],
+    conveno:          ['conveno', 'shop', 'store', 'stationery']
+  };
+
+  const handleAiClassify = () => {
+    const text = `${formData.title} ${formData.content}`.toLowerCase();
+    if (!text.trim()) {
+      toast.error('Write a title or content first so I can classify it!');
+      return;
+    }
+
+    setAiClassifying(true);
+
+    setTimeout(() => {
+      // Score each category
+      const categoryScores = Object.entries(CATEGORY_KEYWORDS).map(([cat, keywords]) => ({
+        cat,
+        score: keywords.filter(kw => text.includes(kw)).length
+      }));
+
+      const best = categoryScores.reduce((a, b) => b.score > a.score ? b : a);
+      const pickedCategory = best.score > 0 ? best.cat : 'general';
+
+      // Score each location
+      const locationScores = Object.entries(LOCATION_KEYWORDS).map(([loc, keywords]) => ({
+        loc,
+        score: keywords.filter(kw => text.includes(kw)).length
+      }));
+
+      const bestLoc = locationScores.reduce((a, b) => b.score > a.score ? b : a);
+      const pickedLocation = bestLoc.score > 0 ? bestLoc.loc : '';
+
+      setFormData(prev => ({
+        ...prev,
+        category: pickedCategory,
+        ...(pickedLocation && { location: pickedLocation })
+      }));
+
+      const catLabel = categories.find(c => c.value === pickedCategory)?.label || pickedCategory;
+      const locLabel = pickedLocation
+        ? locationOptions.find(l => l.value === pickedLocation)?.label || pickedLocation
+        : null;
+
+      toast.success(
+        `🤖 Classified as "${catLabel}"${locLabel ? ` · ${locLabel}` : ''}`,
+        { duration: 3000 }
+      );
+
+      setAiClassifying(false);
+    }, 600); // brief artificial delay for feedback
+  };
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -150,7 +258,7 @@ const CreatePost = () => {
       
       if (response.data && response.data.success) {
         toast.success('Post created successfully!');
-        
+        discardDraft(); // Feature #20 — clear saved draft on success
         // Refresh user data to get updated reputation and postCount
         if (refreshUserData) {
           await refreshUserData();
@@ -269,11 +377,34 @@ const CreatePost = () => {
             </div>
           </div>
 
-          {/* Category */}
+          {/* Category + AI Classify button */}
           <div>
-            <label htmlFor="category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Category <span className="text-red-500 dark:text-red-400">*</span>
-            </label>
+            <div className="flex items-center justify-between mb-2">
+              <label htmlFor="category" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Category <span className="text-red-500 dark:text-red-400">*</span>
+              </label>
+              <button
+                type="button"
+                id="ai-classify-btn"
+                onClick={handleAiClassify}
+                disabled={aiClassifying}
+                title="Auto-detect category & location from your title and content"
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold
+                  bg-gradient-to-r from-violet-500 to-indigo-500 text-white
+                  hover:from-violet-600 hover:to-indigo-600 active:scale-95
+                  transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
+              >
+                {aiClassifying ? (
+                  <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                  </svg>
+                ) : (
+                  <span>🤖</span>
+                )}
+                <span>{aiClassifying ? 'Classifying…' : 'Auto-detect'}</span>
+              </button>
+            </div>
             <select
               id="category"
               name="category"
