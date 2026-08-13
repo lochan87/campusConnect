@@ -13,7 +13,7 @@ class SocketService {
       return;
     }
 
-    const serverUrl = process.env.REACT_APP_SOCKET_URL || 'http://localhost:5000';
+    const serverUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
     
     this.socket = io(serverUrl, {
       transports: ['websocket', 'polling'],
