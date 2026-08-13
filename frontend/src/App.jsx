@@ -47,19 +47,8 @@ const AppContent = () => {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [sidebarOpen]);
 
-  // Prevent body scroll when sidebar is open on mobile
-  useEffect(() => {
-    if (sidebarOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
 
-    // Cleanup on unmount
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [sidebarOpen]);
+
 
   useEffect(() => {
     if (user) {
@@ -134,18 +123,20 @@ const AppContent = () => {
               animate={{ x: 0 }}
               exit={{ x: -300 }}
               transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              className="fixed top-28 md:top-16 bottom-0 left-0 z-40 w-64 bg-white dark:bg-gray-800 shadow-xl"
+              className="fixed top-28 md:top-16 bottom-0 left-0 z-40 w-64 backdrop-blur-xl bg-white/75 dark:bg-gray-900/80 shadow-[4px_0_30px_rgba(99,102,241,0.12)] border-r border-indigo-100/60 dark:border-white/10"
             >
               <Sidebar onClose={() => setSidebarOpen(false)} />
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Overlay — closes sidebar on click-outside on all screen sizes */}
+        {/* Overlay — closes sidebar on click-outside OR any scroll attempt */}
         {sidebarOpen && (
           <div 
             className="fixed top-28 md:top-16 inset-x-0 bottom-0 bg-black bg-opacity-50 z-30"
             onClick={() => setSidebarOpen(false)}
+            onWheel={() => setSidebarOpen(false)}
+            onTouchMove={() => setSidebarOpen(false)}
           />
         )}
 

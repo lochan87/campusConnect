@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { FiHeart, FiMessageCircle, FiShare2, FiMapPin, FiClock, FiMoreHorizontal, FiEdit2, FiTrash2, FiFlag } from 'react-icons/fi';
+import confetti from 'canvas-confetti';
 import ReportPostModal from './ReportPostModal';
 import { formatTimeAgo } from '../../utils/formatTimeAgo';
 
@@ -13,6 +14,24 @@ const PostCard = ({ post, currentUser, onLike, onShare, onEdit, onDelete }) => {
   const [optimisticLikes, setOptimisticLikes] = useState(post.likes || 0);
   const [reportModal, setReportModal] = useState({ isOpen: false });
   const menuRef = useRef(null);
+  const likeButtonRef = useRef(null);
+
+  const fireConfetti = () => {
+    if (!likeButtonRef.current) return;
+    const rect = likeButtonRef.current.getBoundingClientRect();
+    const x = (rect.left + rect.width / 2) / window.innerWidth;
+    const y = (rect.top + rect.height / 2) / window.innerHeight;
+    confetti({
+      particleCount: 25,
+      spread: 55,
+      origin: { x, y },
+      colors: ['#ef4444', '#f97316', '#ec4899', '#a855f7'],
+      startVelocity: 20,
+      gravity: 0.8,
+      ticks: 80,
+      scalar: 0.75,
+    });
+  };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -67,6 +86,9 @@ const PostCard = ({ post, currentUser, onLike, onShare, onEdit, onDelete }) => {
 
       setOptimisticLiked(newLiked);
       setOptimisticLikes(newLikes);
+
+      // Fire confetti only when liking (not unliking)
+      if (newLiked) fireConfetti();
 
       try {
         const result = await onLike(id);
@@ -123,7 +145,10 @@ const PostCard = ({ post, currentUser, onLike, onShare, onEdit, onDelete }) => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow duration-200 cursor-pointer"
+      whileHover={{ rotateY: 2, rotateX: -1, scale: 1.01, boxShadow: '0 20px 40px rgba(0,0,0,0.12)' }}
+      transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+      style={{ transformStyle: 'preserve-3d', perspective: 1000 }}
+      className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 transition-shadow duration-200 cursor-pointer will-change-transform"
       onClick={handleCardClick}
     >
       {/* Header */}
@@ -267,7 +292,8 @@ const PostCard = ({ post, currentUser, onLike, onShare, onEdit, onDelete }) => {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <motion.button
-              whileTap={{ scale: 0.9 }}
+              ref={likeButtonRef}
+              whileTap={{ scale: 0.85 }}
               onClick={handleLike}
               disabled={isLiking || !currentUser}
               className={`flex items-center space-x-1 transition-colors ${
@@ -279,8 +305,11 @@ const PostCard = ({ post, currentUser, onLike, onShare, onEdit, onDelete }) => {
               }`}
             >
               <motion.div
-                animate={isLiking ? { scale: [1, 1.2, 1] } : {}}
-                transition={{ duration: 0.3 }}
+                animate={optimisticLiked
+                  ? { scale: [1, 1.4, 0.9, 1.15, 1], rotate: [0, -15, 10, -5, 0] }
+                  : { scale: 1, rotate: 0 }
+                }
+                transition={{ duration: 0.4, ease: 'easeInOut' }}
               >
                 <FiHeart className={`w-4 h-4 ${optimisticLiked ? 'fill-current' : ''}`} />
               </motion.div>

@@ -1,5 +1,46 @@
 /* Custom app styles */
 
+/* ─── Animated gradient hero ─── */
+@keyframes gradient-spin {
+  0%   { background-position: 0%   50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0%   50%; }
+}
+
+.hero-bg {
+  background: linear-gradient(-45deg, #2563eb, #7c3aed, #db2777, #0ea5e9, #2563eb);
+  background-size: 400% 400%;
+  animation: gradient-spin 8s ease infinite;
+}
+
+/* ─── Shimmer wave skeleton ─── */
+@keyframes shimmer-wave {
+  0%   { background-position: -800px 0; }
+  100% { background-position:  800px 0; }
+}
+
+.shimmer-wave {
+  background: linear-gradient(
+    90deg,
+    #e5e7eb 25%,
+    #f3f4f6 50%,
+    #e5e7eb 75%
+  );
+  background-size: 800px 100%;
+  animation: shimmer-wave 1.4s ease-in-out infinite;
+}
+
+.dark .shimmer-wave {
+  background: linear-gradient(
+    90deg,
+    #374151 25%,
+    #4b5563 50%,
+    #374151 75%
+  );
+  background-size: 800px 100%;
+  animation: shimmer-wave 1.4s ease-in-out infinite;
+}
+
 /* Loading animations */
 @keyframes shimmer {
   0% {

@@ -70,7 +70,7 @@ const Sidebar = ({ onClose }) => {
   };
 
   return (
-    <div className="h-full bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col relative">
+    <div className="h-full bg-transparent flex flex-col relative">
 
 
       <div className="flex-1 overflow-y-auto">

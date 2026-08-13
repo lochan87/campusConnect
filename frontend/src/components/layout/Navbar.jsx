@@ -74,7 +74,7 @@ const Navbar = ({ onToggleSidebar }) => {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 z-50">
+    <nav className="fixed top-0 left-0 right-0 backdrop-blur-xl bg-white/70 dark:bg-gray-900/70 shadow-[0_2px_20px_rgba(99,102,241,0.15)] border-b border-indigo-100/60 dark:border-white/10 z-50">
 
       {/* ── Row 1: always visible on all screens ── */}
       <div className="grid grid-cols-[auto_1fr_auto] items-center h-16 px-3 sm:px-4 gap-3">

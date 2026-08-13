@@ -176,7 +176,7 @@ const Home = () => {
     >
       {/* Header */}
       <motion.div 
-        className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-6 text-white shadow-lg"
+        className="hero-bg rounded-xl p-6 text-white shadow-lg relative overflow-hidden"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
