@@ -27,19 +27,14 @@ const PostCard = ({ post, currentUser, onLike, onShare, onEdit, onDelete }) => {
     };
   }, []);
 
-  // Sync optimistic state with actual post data
+  // Sync optimistic state with actual post data when server updates arrive
+  // Note: intentionally excludes optimisticLiked/optimisticLikes to avoid self-triggering loop
   useEffect(() => {
     if (!isLiking) {
-      console.log('PostCard syncing state for post', post.id, ':', {
-        userHasLiked: post.userHasLiked,
-        likes: post.likes,
-        optimisticLiked,
-        optimisticLikes
-      });
       setOptimisticLiked(post.userHasLiked || false);
       setOptimisticLikes(post.likes || 0);
     }
-  }, [post.userHasLiked, post.likes, isLiking, post.id, optimisticLiked, optimisticLikes]);
+  }, [post.userHasLiked, post.likes, isLiking, post.id]);
 
   const {
     id,
@@ -61,47 +56,29 @@ const PostCard = ({ post, currentUser, onLike, onShare, onEdit, onDelete }) => {
   const handleLike = async () => {
     if (onLike && !isLiking && currentUser) {
       setIsLiking(true);
-      
-      console.log('PostCard handleLike - Before:', {
-        postId: id,
-        currentLiked: optimisticLiked,
-        currentLikes: optimisticLikes
-      });
-      
+
       // Store original values for rollback
       const previousLiked = optimisticLiked;
       const previousLikes = optimisticLikes;
-      
+
       // Optimistic update
-      let newLikes = optimisticLiked ? Math.max(0, optimisticLikes - 1) : optimisticLikes + 1;
-      let newLiked = !optimisticLiked;
-      
+      const newLikes = optimisticLiked ? Math.max(0, optimisticLikes - 1) : optimisticLikes + 1;
+      const newLiked = !optimisticLiked;
+
       setOptimisticLiked(newLiked);
       setOptimisticLikes(newLikes);
-      
-      console.log('PostCard handleLike - Optimistic update:', {
-        newLiked,
-        newLikes
-      });
-      
+
       try {
         const result = await onLike(id);
-        
-        console.log('PostCard handleLike - Server result:', result);
-        
+
         // Update with actual server response if available
         if (result && result.success) {
-          console.log('PostCard handleLike - Updating with server data:', {
-            userHasLiked: result.userHasLiked,
-            likes: result.likes
-          });
           setOptimisticLiked(result.userHasLiked);
           setOptimisticLikes(result.likes);
         }
       } catch (error) {
         console.error('Error liking post:', error);
         // Revert optimistic update on error
-        console.log('PostCard handleLike - Reverting due to error');
         setOptimisticLiked(previousLiked);
         setOptimisticLikes(previousLikes);
       } finally {

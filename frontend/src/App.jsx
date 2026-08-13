@@ -141,16 +141,19 @@ const AppContent = () => {
           )}
         </AnimatePresence>
 
-        {/* Overlay - only show on mobile when sidebar is open */}
+        {/* Overlay — closes sidebar on click-outside on all screen sizes */}
         {sidebarOpen && (
           <div 
-            className="fixed top-28 md:top-16 inset-x-0 bottom-0 bg-black bg-opacity-50 z-30 lg:hidden"
+            className="fixed top-28 md:top-16 inset-x-0 bottom-0 bg-black bg-opacity-50 z-30"
             onClick={() => setSidebarOpen(false)}
           />
         )}
 
         {/* Main content - independent scroll area with navbar spacing */}
-        <main className="flex-1 overflow-y-auto pt-28 md:pt-16 bg-gray-50 dark:bg-gray-900">
+        <main
+          className="flex-1 overflow-y-auto pt-28 md:pt-16 bg-gray-50 dark:bg-gray-900"
+          onScroll={() => sidebarOpen && setSidebarOpen(false)}
+        >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <AnimatePresence mode="wait">
               <Routes>

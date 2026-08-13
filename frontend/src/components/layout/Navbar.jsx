@@ -17,6 +17,23 @@ import {
   FiWifiOff
 } from 'react-icons/fi';
 
+/* Extracted outside Navbar so React doesn't treat it as a new component type
+   on every render — prevents the input from unmounting/remounting and losing focus */
+const SearchBar = ({ searchQuery, onChange, onSubmit }) => (
+  <form onSubmit={onSubmit} className="w-full">
+    <div className="relative">
+      <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
+      <input
+        type="text"
+        placeholder="Search posts, polls, events..."
+        value={searchQuery}
+        onChange={onChange}
+        className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 dark:bg-gray-700 dark:text-white focus:bg-white dark:focus:bg-gray-600 transition-colors placeholder-gray-500 dark:placeholder-gray-400 text-sm"
+      />
+    </div>
+  </form>
+);
+
 const Navbar = ({ onToggleSidebar }) => {
   const { user, logout } = useAuth();
   const {
@@ -56,22 +73,6 @@ const Navbar = ({ onToggleSidebar }) => {
     }
   };
 
-  /* Reusable search bar — rendered in both rows */
-  const SearchBar = () => (
-    <form onSubmit={handleSearch} className="w-full">
-      <div className="relative">
-        <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
-        <input
-          type="text"
-          placeholder="Search posts, polls, events..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 dark:bg-gray-700 dark:text-white focus:bg-white dark:focus:bg-gray-600 transition-colors placeholder-gray-500 dark:placeholder-gray-400 text-sm"
-        />
-      </div>
-    </form>
-  );
-
   return (
     <nav className="fixed top-0 left-0 right-0 bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 z-50">
 
@@ -108,7 +109,11 @@ const Navbar = ({ onToggleSidebar }) => {
 
         {/* Center: search bar — desktop only (md+) */}
         <div className="hidden md:flex">
-          <SearchBar />
+          <SearchBar
+            searchQuery={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onSubmit={handleSearch}
+          />
         </div>
 
         {/* Right: trending + notifications + user */}
@@ -141,6 +146,7 @@ const Navbar = ({ onToggleSidebar }) => {
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
+                onClick={(e) => e.stopPropagation()}
                 className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50"
               >
                 <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700">
@@ -208,6 +214,7 @@ const Navbar = ({ onToggleSidebar }) => {
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
+                onClick={(e) => e.stopPropagation()}
                 className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50"
               >
                 <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700">
@@ -236,7 +243,11 @@ const Navbar = ({ onToggleSidebar }) => {
 
       {/* ── Row 2: mobile-only full-width search bar ── */}
       <div className="md:hidden h-12 flex items-center px-3">
-        <SearchBar />
+        <SearchBar
+          searchQuery={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          onSubmit={handleSearch}
+        />
       </div>
 
       {/* Click-outside handler */}

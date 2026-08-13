@@ -78,7 +78,11 @@ const Sidebar = ({ onClose }) => {
 
           {/* User card + close button in same row */}
           <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
-            <div className="flex items-center space-x-3 flex-1 min-w-0">
+            <Link
+              to="/profile"
+              onClick={onClose}
+              className="flex items-center space-x-3 flex-1 min-w-0 hover:opacity-80 transition-opacity"
+            >
               <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
                 <span className="text-white font-medium">
                   {user?.firstName?.charAt(0) || 'U'}
@@ -92,7 +96,7 @@ const Sidebar = ({ onClose }) => {
                   {user?.department || 'Student'}
                 </p>
               </div>
-            </div>
+            </Link>
             <button
               onClick={onClose}
               className="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex-shrink-0 ml-2"
@@ -130,138 +134,138 @@ const Sidebar = ({ onClose }) => {
           </nav>
 
           {/* Current Filters Status */}
-        {(filters.category !== 'all' || filters.location !== 'all') && (
-          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 border border-blue-200 dark:border-blue-800">
-            <h4 className="text-xs font-semibold text-blue-800 dark:text-blue-300 mb-2">Active Filters</h4>
-            <div className="space-y-1">
-              {filters.category !== 'all' && (
-                <div className="text-xs text-blue-700 dark:text-blue-400 flex items-center">
-                  <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
-                  Category: {categories.find(c => c.id === filters.category)?.name}
-                </div>
-              )}
-              {filters.location !== 'all' && (
-                <div className="text-xs text-blue-700 dark:text-blue-400 flex items-center">
-                  <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
-                  Location: {locations.find(l => l.id === filters.location)?.name}
-                </div>
-              )}
-            </div>
-            <button
-              onClick={() => updateFilters({ category: 'all', location: 'all' })}
-              className="mt-2 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
-            >
-              Clear all filters
-            </button>
-          </div>
-        )}
-
-        {/* Categories Filter */}
-        <div className="space-y-2">
-          <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-            Categories
-          </h3>
-          {categories.map((category) => {
-            const Icon = category.icon;
-            const isActive = filters.category === category.id;
-            
-            return (
-              <button
-                key={category.id}
-                onClick={() => handleCategoryChange(category.id)}
-                className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors text-left ${
-                  isActive
-                    ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
-                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100'
-                }`}
-              >
-                <Icon className={`w-4 h-4 ${isActive ? 'text-blue-700 dark:text-blue-400' : category.color}`} />
-                <span className="text-sm">{category.name}</span>
-                {isActive && (
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="ml-auto w-2 h-2 bg-blue-700 dark:bg-blue-400 rounded-full"
-                  />
+          {(filters.category !== 'all' || filters.location !== 'all') && (
+            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 border border-blue-200 dark:border-blue-800">
+              <h4 className="text-xs font-semibold text-blue-800 dark:text-blue-300 mb-2">Active Filters</h4>
+              <div className="space-y-1">
+                {filters.category !== 'all' && (
+                  <div className="text-xs text-blue-700 dark:text-blue-400 flex items-center">
+                    <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+                    Category: {categories.find(c => c.id === filters.category)?.name}
+                  </div>
                 )}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Location Filter */}
-        <div className="space-y-2">
-          <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-            Locations
-          </h3>
-          {locations.map((location) => {
-            const Icon = location.icon;
-            const isActive = filters.location === location.id;
-            
-            return (
-              <button
-                key={location.id}
-                onClick={() => handleLocationChange(location.id)}
-                className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors text-left ${
-                  isActive
-                    ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100'
-                }`}
-              >
-                <Icon className={`w-4 h-4 ${isActive ? 'text-green-700 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}`} />
-                <span className="text-sm">{location.name}</span>
-                {isActive && (
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="ml-auto w-2 h-2 bg-green-700 dark:bg-green-400 rounded-full"
-                  />
+                {filters.location !== 'all' && (
+                  <div className="text-xs text-blue-700 dark:text-blue-400 flex items-center">
+                    <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+                    Location: {locations.find(l => l.id === filters.location)?.name}
+                  </div>
                 )}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Quick Stats */}
-        <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-          <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
-            Your Stats
-          </h3>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="text-center p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
-              <p className="text-lg font-semibold text-blue-700 dark:text-blue-400">
-                {user?.postCount || 0}
-              </p>
-              <p className="text-xs text-blue-600 dark:text-blue-500">Posts</p>
-            </div>
-            <div className="text-center p-3 bg-purple-50 dark:bg-purple-900/30 rounded-lg">
-              <p className="text-lg font-semibold text-purple-700 dark:text-purple-400">
-                {user?.reputation || 0}
-              </p>
-              <p className="text-xs text-purple-600 dark:text-purple-500">Reputation</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Campus Info */}
-        <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-          <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg p-4 text-white">
-            <h4 className="font-semibold text-sm mb-1">Campus Community</h4>
-            <p className="text-xs opacity-90">
-              Stay connected with your campus community in real-time
-            </p>
-            <div className="flex items-center space-x-4 mt-3 text-xs">
-              <div className="flex items-center space-x-1">
-                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                <span>Live Updates</span>
               </div>
-              <div className="flex items-center space-x-1">
-                <FiUsers className="w-3 h-3" />
-                <span>Connected</span>
+              <button
+                onClick={() => updateFilters({ category: 'all', location: 'all' })}
+                className="mt-2 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
+              >
+                Clear all filters
+              </button>
+            </div>
+          )}
+
+          {/* Categories Filter */}
+          <div className="space-y-2">
+            <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+              Categories
+            </h3>
+            {categories.map((category) => {
+              const Icon = category.icon;
+              const isActive = filters.category === category.id;
+              
+              return (
+                <button
+                  key={category.id}
+                  onClick={() => handleCategoryChange(category.id)}
+                  className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors text-left ${
+                    isActive
+                      ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
+                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100'
+                  }`}
+                >
+                  <Icon className={`w-4 h-4 ${isActive ? 'text-blue-700 dark:text-blue-400' : category.color}`} />
+                  <span className="text-sm">{category.name}</span>
+                  {isActive && (
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="ml-auto w-2 h-2 bg-blue-700 dark:bg-blue-400 rounded-full"
+                    />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Location Filter */}
+          <div className="space-y-2">
+            <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+              Locations
+            </h3>
+            {locations.map((location) => {
+              const Icon = location.icon;
+              const isActive = filters.location === location.id;
+              
+              return (
+                <button
+                  key={location.id}
+                  onClick={() => handleLocationChange(location.id)}
+                  className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors text-left ${
+                    isActive
+                      ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100'
+                  }`}
+                >
+                  <Icon className={`w-4 h-4 ${isActive ? 'text-green-700 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}`} />
+                  <span className="text-sm">{location.name}</span>
+                  {isActive && (
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="ml-auto w-2 h-2 bg-green-700 dark:bg-green-400 rounded-full"
+                    />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Quick Stats */}
+          <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+            <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
+              Your Stats
+            </h3>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="text-center p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+                <p className="text-lg font-semibold text-blue-700 dark:text-blue-400">
+                  {user?.postCount || 0}
+                </p>
+                <p className="text-xs text-blue-600 dark:text-blue-500">Posts</p>
+              </div>
+              <div className="text-center p-3 bg-purple-50 dark:bg-purple-900/30 rounded-lg">
+                <p className="text-lg font-semibold text-purple-700 dark:text-purple-400">
+                  {user?.reputation || 0}
+                </p>
+                <p className="text-xs text-purple-600 dark:text-purple-500">Reputation</p>
               </div>
             </div>
           </div>
-        </div>
+
+          {/* Campus Info */}
+          <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg p-4 text-white">
+              <h4 className="font-semibold text-sm mb-1">Campus Community</h4>
+              <p className="text-xs opacity-90">
+                Stay connected with your campus community in real-time
+              </p>
+              <div className="flex items-center space-x-4 mt-3 text-xs">
+                <div className="flex items-center space-x-1">
+                  <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                  <span>Live Updates</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <FiUsers className="w-3 h-3" />
+                  <span>Connected</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

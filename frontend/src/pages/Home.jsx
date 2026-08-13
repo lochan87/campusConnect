@@ -116,7 +116,6 @@ const Home = () => {
     setIsDeletingEvent(true);
     try {
       await deleteEvent(deleteEventModal.event.id);
-      toast.success('Event deleted successfully');
     } catch (error) {
       console.error('Error deleting event:', error);
       toast.error('Failed to delete event');
@@ -128,7 +127,7 @@ const Home = () => {
 
   const handleShare = (postId) => {
     // Copy link to clipboard
-    const postUrl = `${window.location.origin}/posts/${postId}`;
+    const postUrl = `${window.location.origin}/post/${postId}`;
     navigator.clipboard.writeText(postUrl).then(() => {
       toast.success('Post link copied to clipboard!');
     }).catch(() => {
@@ -153,7 +152,6 @@ const Home = () => {
     setIsDeleting(true);
     try {
       await deletePost(deleteModal.post.id);
-      toast.success('Post deleted successfully');
     } catch (error) {
       console.error('Error deleting post:', error);
       toast.error('Failed to delete post');

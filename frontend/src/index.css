@@ -22,7 +22,7 @@
     transition: background-color 0.3s ease;
   }
 
-  .dark body {
+  html.dark body {
     background-color: #111827;
   }
 

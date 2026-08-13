@@ -385,7 +385,7 @@ const Profile = () => {
       </motion.div>
 
       {/* Recent Posts */}
-      {profile.recentPosts.length > 0 && (
+      {profile.recentPosts?.length > 0 && (
         <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}

@@ -318,7 +318,7 @@ export const PostProvider = ({ children }) => {
         payload: error.response?.data?.error || 'Failed to fetch posts' 
       });
     }
-  }, [state.filters, state.pagination.limit, state.pagination.offset, state.loading, user]);
+  }, [state.filters, state.pagination.limit, user?.campusId, user?.uid]);
 
   // Fetch polls
   const fetchPolls = useCallback(async () => {
@@ -422,24 +422,18 @@ export const PostProvider = ({ children }) => {
   // Like/unlike post
   const likePost = async (postId) => {
     try {
-      console.log('Attempting to like/unlike post:', postId);
       const response = await apiService.likePost(postId, user.uid);
       
-      console.log('Like post response:', response.data);
-      
       if (response.data.success) {
-        // Update the post using the reducer's UPDATE_POST action
         dispatch({
           type: POST_ACTIONS.UPDATE_POST,
           payload: {
             id: postId,
             likes: response.data.likes,
             userHasLiked: response.data.userHasLiked,
-            likesCount: response.data.likes // For consistency
+            likesCount: response.data.likes
           }
         });
-        
-        console.log('Updated post state with likes:', response.data.likes, 'userHasLiked:', response.data.userHasLiked);
         
         return { 
           success: true, 
@@ -458,24 +452,18 @@ export const PostProvider = ({ children }) => {
   // Like/unlike event
   const likeEvent = async (eventId) => {
     try {
-      console.log('Attempting to like/unlike event:', eventId);
       const response = await apiService.likeEvent(eventId, user.uid);
       
-      console.log('Like event response:', response.data);
-      
       if (response.data.success) {
-        // Update the event using the reducer's UPDATE_EVENT action
         dispatch({
           type: POST_ACTIONS.UPDATE_EVENT,
           payload: {
             id: eventId,
             likes: response.data.likes,
             userHasLiked: response.data.isLiked,
-            likesCount: response.data.likes // For consistency
+            likesCount: response.data.likes
           }
         });
-        
-        console.log('Updated event state with likes:', response.data.likes, 'userHasLiked:', response.data.isLiked);
         
         return { 
           success: true, 
@@ -518,7 +506,7 @@ export const PostProvider = ({ children }) => {
       
       if (response.data.success) {
         // Post will be removed via socket event
-        toast.success('Post deleted successfully!');
+        // (toast shown by the calling page to avoid duplicates)
         return { success: true };
       }
     } catch (error) {
@@ -567,7 +555,7 @@ export const PostProvider = ({ children }) => {
       
       if (response.data.success) {
         // Event will be removed via socket event or refresh
-        toast.success('Event deleted successfully!');
+        // (toast shown by the calling page to avoid duplicates)
         // Manually remove from state for immediate UI update
         dispatch({ type: POST_ACTIONS.DELETE_EVENT, payload: eventId });
         return { success: true };
@@ -620,12 +608,13 @@ export const PostProvider = ({ children }) => {
     dispatch({ type: POST_ACTIONS.SET_FILTERS, payload: newFilters });
   };
 
-  // Effect to refetch posts when filters change (commented out to prevent too many requests)
-  // useEffect(() => {
-  //   if (user) {
-  //     fetchPosts();
-  //   }
-  // }, [state.filters, user]);
+  // Re-fetch posts when filters change (skip the initial mount by tracking previous filters)
+  useEffect(() => {
+    if (!user) return;
+    // fetchPosts resets pagination and loads fresh results with current filters
+    fetchPosts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.filters, user?.campusId]);
 
   // Clear error
   const clearError = () => {
