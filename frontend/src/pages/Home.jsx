@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useLayoutEffect, useState, useRef } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { usePosts } from '../context/PostContext';
@@ -31,8 +32,37 @@ const Home = () => {
   const [activeTab, setActiveTab] = useState('posts');
   const [quickStats, setQuickStats] = useState({ posts: 0, polls: 0, events: 0 });
   const [statsLoading, setStatsLoading] = useState(true);
-  // Feature #11 — Infinite scroll sentinel ref
+  // Feature #11 — Infinite scroll sentinel ref (now lives inside the virtual loader row)
   const sentinelRef = useRef(null);
+
+  // Feature #22 — Virtualized post list
+  // scrollContainerRef: the main <main> scroll element in App.jsx
+  // listContainerRef:   the posts virtual list wrapper div
+  // scrollMargin:       distance from scroll container top to list top (accounts for hero/stats/tabs)
+  const scrollContainerRef = useRef(null);
+  const listContainerRef = useRef(null);
+  const [scrollMargin, setScrollMargin] = useState(0);
+
+  // Grab the shared scroll container once on mount
+  useEffect(() => {
+    scrollContainerRef.current = document.getElementById('main-scroll-container');
+  }, []);
+
+  // Measure the list container's top offset from the scroll container.
+  // This is recalculated on resize so responsive breakpoints stay correct.
+  useLayoutEffect(() => {
+    const measure = () => {
+      if (!listContainerRef.current || !scrollContainerRef.current) return;
+      const listRect = listContainerRef.current.getBoundingClientRect();
+      const scrollRect = scrollContainerRef.current.getBoundingClientRect();
+      setScrollMargin(
+        Math.round(listRect.top - scrollRect.top + scrollContainerRef.current.scrollTop)
+      );
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }); // runs after every render so it stays accurate as content above changes
 
   // Fetch quick stats first for immediate display
   useEffect(() => {
@@ -60,6 +90,7 @@ const Home = () => {
   }, [user?.campusId, user?.uid]);
 
   // Feature #11 — Wire IntersectionObserver to the sentinel div for infinite scroll
+  // The sentinel div is now rendered inside the virtual loader row at the bottom of the list.
   useEffect(() => {
     const sentinel = sentinelRef.current;
     if (!sentinel) return;
@@ -70,13 +101,23 @@ const Home = () => {
           loadMorePosts();
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.1, root: scrollContainerRef.current }
     );
 
     observer.observe(sentinel);
     return () => observer.disconnect();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasMore, loading, activeTab]); // loadMorePosts intentionally omitted — it's not stable (no useCallback)
+  }, [hasMore, loading, activeTab, scrollMargin]); // scrollMargin added so observer re-wires when container settles
+
+  // Virtual list: one extra row at the end acts as loader/sentinel when hasMore=true
+  const virtualRowCount = hasMore ? posts.length + 1 : posts.length;
+  const rowVirtualizer = useVirtualizer({
+    count: virtualRowCount,
+    getScrollElement: () => scrollContainerRef.current,
+    estimateSize: () => 340,   // rough PostCard height — measured dynamically
+    overscan: 3,               // render 3 extra rows above/below viewport
+    scrollMargin,              // offset of list from top of scroll container
+  });
 
   useEffect(() => {
     if (user && !hasInitialized) {
@@ -439,46 +480,75 @@ const Home = () => {
                       </Link>
                     </div>
                   ) : (
-                    <div className="space-y-6">
-                      {posts.map((post, index) => (
-                        <motion.div
-                          key={post.id}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.4, delay: Math.min(index, 5) * 0.08 }}
-                        >
-                          <PostCard
-                            post={post}
-                            currentUser={user}
-                            onLike={handleLike}
-                            onShare={handleShare}
-                            onEdit={handleEdit}
-                            onDelete={handleDelete}
-                          />
-                        </motion.div>
-                      ))}
+                    /* Feature #22 — Virtualized list container.
+                       position:relative + height:totalSize create the scrollable "phantom" space.
+                       Each row is absolutely positioned via transform:translateY. */
+                    <div
+                      ref={listContainerRef}
+                      style={{
+                        position: 'relative',
+                        height: rowVirtualizer.getTotalSize(),
+                        width: '100%',
+                      }}
+                    >
+                      {rowVirtualizer.getVirtualItems().map((vItem) => {
+                        const isLoaderRow = vItem.index >= posts.length;
+                        const post = posts[vItem.index];
 
-                      {/* Infinite scroll sentinel */}
-                      <div ref={sentinelRef} className="h-4" />
-
-                      {/* Loading more spinner */}
-                      {loading && posts.length > 0 && (
-                        <div className="flex justify-center py-4">
-                          <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                            <motion.div
-                              animate={{ rotate: 360 }}
-                              transition={{ duration: 0.9, repeat: Infinity, ease: 'linear' }}
-                              className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full"
-                            />
-                            Loading more posts…
+                        return (
+                          <div
+                            key={vItem.key}
+                            data-index={vItem.index}
+                            ref={rowVirtualizer.measureElement}
+                            style={{
+                              position: 'absolute',
+                              top: 0,
+                              left: 0,
+                              width: '100%',
+                              // translateY positions each row relative to the container top.
+                              // We subtract scrollMargin because vItem.start is in scroll-space,
+                              // not container-space (container starts at scrollMargin from top).
+                              transform: `translateY(${vItem.start - scrollMargin}px)`,
+                            }}
+                          >
+                            {isLoaderRow ? (
+                              /* Loader / end-of-feed row — also holds the IntersectionObserver sentinel */
+                              <div className="pb-4">
+                                <div ref={sentinelRef} />
+                                {loading && hasMore && (
+                                  <div className="flex justify-center py-4">
+                                    <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                                      <motion.div
+                                        animate={{ rotate: 360 }}
+                                        transition={{ duration: 0.9, repeat: Infinity, ease: 'linear' }}
+                                        className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full"
+                                      />
+                                      Loading more posts…
+                                    </div>
+                                  </div>
+                                )}
+                                {!hasMore && posts.length > 0 && !loading && (
+                                  <p className="text-center text-xs text-gray-400 dark:text-gray-500 py-2">
+                                    You've seen all posts ✓
+                                  </p>
+                                )}
+                              </div>
+                            ) : (
+                              /* Regular post row — 24 px gap between cards */
+                              <div className="pb-6">
+                                <PostCard
+                                  post={post}
+                                  currentUser={user}
+                                  onLike={handleLike}
+                                  onShare={handleShare}
+                                  onEdit={handleEdit}
+                                  onDelete={handleDelete}
+                                />
+                              </div>
+                            )}
                           </div>
-                        </div>
-                      )}
-
-                      {/* End of feed message */}
-                      {!hasMore && posts.length > 0 && !loading && (
-                        <p className="text-center text-xs text-gray-400 dark:text-gray-500 py-2">You've seen all posts ✓</p>
-                      )}
+                        );
+                      })}
                     </div>
                   )}
                 </>
