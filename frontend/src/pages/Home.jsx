@@ -1,10 +1,9 @@
-import React, { useEffect, useLayoutEffect, useState, useRef } from 'react';
-import { useVirtualizer } from '@tanstack/react-virtual';
+import React, { useEffect, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { usePosts } from '../context/PostContext';
 import { useAuth } from '../context/AuthContext';
-import { FiPlus, FiRefreshCw, FiBarChart2, FiCalendar, FiStar } from 'react-icons/fi';
+import { FiPlus, FiRefreshCw, FiBarChart2, FiCalendar, FiStar, FiSpeaker, FiX } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import PostCard from '../components/posts/PostCard';
 import PollCard from '../components/polls/PollCard';
@@ -19,10 +18,56 @@ import AnimatedCounter from '../components/ui/AnimatedCounter';
 import TickerTape from '../components/ui/TickerTape';
 import EventStories from '../components/events/EventStories';
 
+const getEmptyStateDetails = (category) => {
+  switch (category) {
+    case 'lost_found':
+      return {
+        icon: '🔍',
+        title: 'No Lost & Found reports right now',
+        description: 'Did you lose or find something on campus? Post an alert for your peers!',
+        ctaText: 'Report Lost / Found Item',
+        ctaLink: '/create-post'
+      };
+    case 'food':
+      return {
+        icon: '🍔',
+        title: 'No food & canteen updates right now',
+        description: 'Have a food recommendation, canteen review, or menu update to share?',
+        ctaText: 'Post Food Alert',
+        ctaLink: '/create-post'
+      };
+    case 'memes':
+      return {
+        icon: '😂',
+        title: 'No campus memes yet',
+        description: 'Got a funny campus moment or exam meme to share with everyone?',
+        ctaText: 'Share Campus Meme',
+        ctaLink: '/create-post'
+      };
+    case 'announcements':
+      return {
+        icon: '📢',
+        title: 'No announcements right now',
+        description: 'Have an official department update or campus notice to post?',
+        ctaText: 'Post Announcement',
+        ctaLink: '/create-post'
+      };
+    default:
+      return {
+        icon: '📝',
+        title: 'No posts yet',
+        description: 'Be the first to share something with your campus community!',
+        ctaText: 'Create First Post',
+        ctaLink: '/create-post'
+      };
+  }
+};
+
 const Home = () => {
-  const { posts, polls, events, loading, fetchPosts, fetchPolls, fetchEvents, refreshPosts, likePost, likeEvent, voteOnPoll, deletePost, deleteEvent, hasMore, loadMorePosts } = usePosts();
+  const { posts, polls, events, loading, fetchPosts, fetchPolls, fetchEvents, refreshPosts, likePost, likeEvent, voteOnPoll, deletePost, deleteEvent, hasMore, loadMorePosts, filters } = usePosts();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [showNotice, setShowNotice] = useState(true);
   const [editModal, setEditModal] = useState({ isOpen: false, post: null });
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, post: null });
   const [deleteEventModal, setDeleteEventModal] = useState({ isOpen: false, event: null });
@@ -32,37 +77,8 @@ const Home = () => {
   const [activeTab, setActiveTab] = useState('posts');
   const [quickStats, setQuickStats] = useState({ posts: 0, polls: 0, events: 0 });
   const [statsLoading, setStatsLoading] = useState(true);
-  // Feature #11 — Infinite scroll sentinel ref (now lives inside the virtual loader row)
+  // Feature #11 — Infinite scroll sentinel ref
   const sentinelRef = useRef(null);
-
-  // Feature #22 — Virtualized post list
-  // scrollContainerRef: the main <main> scroll element in App.jsx
-  // listContainerRef:   the posts virtual list wrapper div
-  // scrollMargin:       distance from scroll container top to list top (accounts for hero/stats/tabs)
-  const scrollContainerRef = useRef(null);
-  const listContainerRef = useRef(null);
-  const [scrollMargin, setScrollMargin] = useState(0);
-
-  // Grab the shared scroll container once on mount
-  useEffect(() => {
-    scrollContainerRef.current = document.getElementById('main-scroll-container');
-  }, []);
-
-  // Measure the list container's top offset from the scroll container.
-  // This is recalculated on resize so responsive breakpoints stay correct.
-  useLayoutEffect(() => {
-    const measure = () => {
-      if (!listContainerRef.current || !scrollContainerRef.current) return;
-      const listRect = listContainerRef.current.getBoundingClientRect();
-      const scrollRect = scrollContainerRef.current.getBoundingClientRect();
-      setScrollMargin(
-        Math.round(listRect.top - scrollRect.top + scrollContainerRef.current.scrollTop)
-      );
-    };
-    measure();
-    window.addEventListener('resize', measure);
-    return () => window.removeEventListener('resize', measure);
-  }); // runs after every render so it stays accurate as content above changes
 
   // Fetch quick stats first for immediate display
   useEffect(() => {
@@ -90,7 +106,6 @@ const Home = () => {
   }, [user?.campusId, user?.uid]);
 
   // Feature #11 — Wire IntersectionObserver to the sentinel div for infinite scroll
-  // The sentinel div is now rendered inside the virtual loader row at the bottom of the list.
   useEffect(() => {
     const sentinel = sentinelRef.current;
     if (!sentinel) return;
@@ -101,23 +116,13 @@ const Home = () => {
           loadMorePosts();
         }
       },
-      { threshold: 0.1, root: scrollContainerRef.current }
+      { threshold: 0.1 }
     );
 
     observer.observe(sentinel);
     return () => observer.disconnect();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasMore, loading, activeTab, scrollMargin]); // scrollMargin added so observer re-wires when container settles
-
-  // Virtual list: one extra row at the end acts as loader/sentinel when hasMore=true
-  const virtualRowCount = hasMore ? posts.length + 1 : posts.length;
-  const rowVirtualizer = useVirtualizer({
-    count: virtualRowCount,
-    getScrollElement: () => scrollContainerRef.current,
-    estimateSize: () => 340,   // rough PostCard height — measured dynamically
-    overscan: 3,               // render 3 extra rows above/below viewport
-    scrollMargin,              // offset of list from top of scroll container
-  });
+  }, [hasMore, loading, activeTab]); // loadMorePosts intentionally omitted — it's not stable (no useCallback)
 
   useEffect(() => {
     if (user && !hasInitialized) {
@@ -239,29 +244,42 @@ const Home = () => {
       exit={{ opacity: 0 }}
       className="max-w-6xl mx-auto space-y-6 px-4 sm:px-6 lg:px-8 py-6"
     >
-      {/* Header */}
+      {/* Unified Hero Header & Campus Announcement */}
       <motion.div 
-        className="hero-bg rounded-xl p-6 text-white shadow-lg relative overflow-hidden"
+        className="hero-bg rounded-2xl p-6 sm:p-7 text-white shadow-xl relative overflow-hidden"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold mb-2">
-              Campus Feed 🎓
-            </h1>
-            <p className="text-blue-100">
-              Stay connected with your campus community
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+          <div className="space-y-2 max-w-2xl">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+                Campus Feed 🎓
+              </h1>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-xs font-semibold text-white border border-white/20 shadow-sm">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
+                </span>
+                Live Campus Community
+              </span>
+            </div>
+
+            <p className="text-sm sm:text-base font-semibold text-blue-50 leading-snug">
+              Welcome to CampusConnect! Share updates, polls & campus events.
+            </p>
+            <p className="text-xs text-blue-100/80 leading-relaxed">
+              Stay connected with live student discussions, Lost & Found alerts, campus polls and upcoming events.
             </p>
           </div>
           
-          <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex items-center gap-3 flex-shrink-0">
             <motion.button
               onClick={handleRefresh}
-              className="flex items-center justify-center space-x-2 px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition-all font-medium"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              className="flex items-center justify-center space-x-2 px-4 py-2.5 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-xl transition-all font-medium backdrop-blur-sm text-sm"
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.96 }}
             >
               <motion.div
                 animate={loading ? { rotate: 360 } : {}}
@@ -274,7 +292,7 @@ const Home = () => {
             
             <Link
               to="/create-post"
-              className="flex items-center justify-center space-x-2 px-4 py-2 bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-600 rounded-lg transition-all font-medium"
+              className="flex items-center justify-center space-x-2 px-5 py-2.5 bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-700 rounded-xl transition-all font-semibold shadow-md text-sm"
             >
               <FiPlus className="w-4 h-4" />
               <span>New Post</span>
@@ -376,23 +394,23 @@ const Home = () => {
 
       {/* Navigation Tabs */}
       <motion.div 
-        className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-1"
+        className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-1.5"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
       >
-        <div className="relative flex space-x-1">
+        <div className="flex space-x-1 relative">
           {[
             { id: 'posts', label: '📝 Posts' },
             { id: 'polls', label: '📊 Polls' },
-            { id: 'events', label: '📅 Events' },
+            { id: 'events', label: '📅 Events' }
           ].map((tab) => {
             const isActive = activeTab === tab.id;
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`relative flex-1 px-4 py-2 rounded-md font-medium transition-colors select-none ${
+                className={`relative flex-1 px-4 py-2.5 rounded-lg font-semibold text-sm transition-colors z-10 ${
                   isActive
                     ? 'text-blue-700 dark:text-blue-400'
                     : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
@@ -401,11 +419,11 @@ const Home = () => {
                 {isActive && (
                   <motion.div
                     layoutId="activeTabIndicator"
-                    className="absolute inset-0 bg-blue-100 dark:bg-blue-900/40 rounded-md z-0"
+                    className="absolute inset-0 bg-blue-100 dark:bg-blue-900/40 rounded-lg -z-10 shadow-sm border border-blue-200/50 dark:border-blue-700/30"
                     transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                   />
                 )}
-                <span className="relative z-10">{tab.label}</span>
+                <span>{tab.label}</span>
               </button>
             );
           })}
@@ -460,92 +478,68 @@ const Home = () => {
                   {loading ? (
                     <LoadingSkeleton type="post" count={3} />
                   ) : posts.length === 0 ? (
-                    <div className="text-center py-12">
-                      <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span className="text-2xl">📝</span>
-                      </div>
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No posts yet</h3>
-                      <p className="text-gray-600 dark:text-gray-400 mb-4">
-                        Be the first to share something with your campus community!
-                      </p>
-                      <Link
-                        to="/create-post"
-                        className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-                      >
-                        <FiPlus className="w-4 h-4" />
-                        <span>Create First Post</span>
-                      </Link>
-                    </div>
-                  ) : (
-                    /* Feature #22 — Virtualized list container.
-                       position:relative + height:totalSize create the scrollable "phantom" space.
-                       Each row is absolutely positioned via transform:translateY. */
-                    <div
-                      ref={listContainerRef}
-                      style={{
-                        position: 'relative',
-                        height: rowVirtualizer.getTotalSize(),
-                        width: '100%',
-                      }}
-                    >
-                      {rowVirtualizer.getVirtualItems().map((vItem) => {
-                        const isLoaderRow = vItem.index >= posts.length;
-                        const post = posts[vItem.index];
-
-                        return (
-                          <div
-                            key={vItem.key}
-                            data-index={vItem.index}
-                            ref={rowVirtualizer.measureElement}
-                            style={{
-                              position: 'absolute',
-                              top: 0,
-                              left: 0,
-                              width: '100%',
-                              // translateY positions each row relative to the container top.
-                              // We subtract scrollMargin because vItem.start is in scroll-space,
-                              // not container-space (container starts at scrollMargin from top).
-                              transform: `translateY(${vItem.start - scrollMargin}px)`,
-                            }}
-                          >
-                            {isLoaderRow ? (
-                              /* Loader / end-of-feed row — also holds the IntersectionObserver sentinel */
-                              <div className="pb-4">
-                                <div ref={sentinelRef} />
-                                {loading && hasMore && (
-                                  <div className="flex justify-center py-4">
-                                    <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                                      <motion.div
-                                        animate={{ rotate: 360 }}
-                                        transition={{ duration: 0.9, repeat: Infinity, ease: 'linear' }}
-                                        className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full"
-                                      />
-                                      Loading more posts…
-                                    </div>
-                                  </div>
-                                )}
-                                {!hasMore && posts.length > 0 && !loading && (
-                                  <p className="text-center text-xs text-gray-400 dark:text-gray-500 py-2">
-                                    You've seen all posts ✓
-                                  </p>
-                                )}
-                              </div>
-                            ) : (
-                              /* Regular post row — 24 px gap between cards */
-                              <div className="pb-6">
-                                <PostCard
-                                  post={post}
-                                  currentUser={user}
-                                  onLike={handleLike}
-                                  onShare={handleShare}
-                                  onEdit={handleEdit}
-                                  onDelete={handleDelete}
-                                />
-                              </div>
-                            )}
+                    (() => {
+                      const emptyState = getEmptyStateDetails(filters?.category);
+                      return (
+                        <div className="text-center py-12">
+                          <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
+                            <span className="text-3xl">{emptyState.icon}</span>
                           </div>
-                        );
-                      })}
+                          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">{emptyState.title}</h3>
+                          <p className="text-gray-600 dark:text-gray-400 mb-5 max-w-md mx-auto text-sm leading-relaxed">
+                            {emptyState.description}
+                          </p>
+                          <Link
+                            to={emptyState.ctaLink}
+                            className="inline-flex items-center space-x-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-all shadow-md font-semibold text-sm"
+                          >
+                            <FiPlus className="w-4 h-4" />
+                            <span>{emptyState.ctaText}</span>
+                          </Link>
+                        </div>
+                      );
+                    })()
+                  ) : (
+                    <div className="space-y-6">
+                      {posts.map((post, index) => (
+                        <motion.div
+                          key={post.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.4, delay: Math.min(index, 5) * 0.08 }}
+                        >
+                          <PostCard
+                            post={post}
+                            currentUser={user}
+                            onLike={handleLike}
+                            onShare={handleShare}
+                            onEdit={handleEdit}
+                            onDelete={handleDelete}
+                          />
+                        </motion.div>
+                      ))}
+
+                      {/* Infinite scroll sentinel */}
+                      <div ref={sentinelRef} className="h-4" />
+
+                      {/* Loading more spinner */}
+                      {loading && posts.length > 0 && (
+                        <div className="flex justify-center py-4">
+                          <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                            <motion.div
+                              animate={{ rotate: 360 }}
+                              transition={{ duration: 0.9, repeat: Infinity, ease: 'linear' }}
+                              className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full"
+                            />
+                            Loading more posts…
+                          </div>
+                        </div>
+                      )}
+
+                      {/* End of feed message */}
+                      {!hasMore && posts.length > 0 && !loading && (
+                        <p className="text-center text-xs text-gray-400 dark:text-gray-500 py-2">You've seen all posts ✓</p>
+                      )}
                     </div>
                   )}
                 </>

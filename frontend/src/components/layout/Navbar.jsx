@@ -12,6 +12,7 @@ import {
   FiUser,
   FiLogOut,
   FiSettings,
+  FiAward,
   FiTrendingUp,
   FiWifi,
   FiWifiOff
@@ -145,7 +146,7 @@ const Navbar = ({ onToggleSidebar }) => {
     <nav className="fixed top-0 left-0 right-0 backdrop-blur-xl bg-white/70 dark:bg-gray-900/70 shadow-[0_2px_20px_rgba(99,102,241,0.15)] border-b border-indigo-100/60 dark:border-white/10 z-50">
 
       {/* ── Row 1: always visible on all screens ── */}
-      <div className="grid grid-cols-[auto_1fr_auto] items-center h-16 px-3 sm:px-4 gap-3">
+      <div className="flex items-center justify-between h-16 px-3 sm:px-6 max-w-7xl mx-auto gap-2 sm:gap-4">
 
         {/* Left: hamburger + logo + wifi */}
         <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
@@ -169,14 +170,14 @@ const Navbar = ({ onToggleSidebar }) => {
 
           <div className="hidden sm:flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
             {isConnected
-              ? <><FiWifi className="w-3.5 h-3.5 text-green-500" /><span>Live</span></>
+              ? <><FiWifi className="w-3.5 h-3.5 text-green-500" /><span className="font-medium text-green-600 dark:text-green-400">Live</span></>
               : <><FiWifiOff className="w-3.5 h-3.5 text-red-500" /><span>Offline</span></>
             }
           </div>
         </div>
 
         {/* Center: search bar — desktop only (md+) */}
-        <div className="hidden md:flex">
+        <div className="hidden md:flex flex-1 max-w-md mx-2">
           <SearchBar
             searchQuery={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -184,14 +185,14 @@ const Navbar = ({ onToggleSidebar }) => {
           />
         </div>
 
-        {/* Right: trending + notifications + user */}
+        {/* Right: champions + notifications + user */}
         <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
           <Link
             to="/leaderboard"
-            className="hidden sm:flex items-center gap-1 px-2 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-sm text-gray-600 dark:text-gray-300"
+            className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-sm font-medium text-amber-600 dark:text-amber-400"
           >
-            <FiTrendingUp className="w-4 h-4" />
-            <span className="hidden lg:inline">Trending</span>
+            <FiAward className="w-4 h-4 text-amber-500" />
+            <span className="hidden lg:inline">Champions</span>
           </Link>
 
           {/* Notifications */}
