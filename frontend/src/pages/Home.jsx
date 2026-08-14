@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { motion } from 'framer-motion';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { usePosts } from '../context/PostContext';
 import { useAuth } from '../context/AuthContext';
@@ -77,6 +77,9 @@ const Home = () => {
   const [activeTab, setActiveTab] = useState('posts');
   const [quickStats, setQuickStats] = useState({ posts: 0, polls: 0, events: 0 });
   const [statsLoading, setStatsLoading] = useState(true);
+  // FAB visibility — hides while scrolling, reappears when scroll stops
+  const [showFab, setShowFab] = useState(true);
+  const fabScrollTimer = useRef(null);
   // Feature #11 — Infinite scroll sentinel ref
   const sentinelRef = useRef(null);
 
@@ -104,6 +107,23 @@ const Home = () => {
 
     fetchQuickStats();
   }, [user?.campusId, user?.uid]);
+
+  // FAB scroll-hide — mirrors sidebar close-on-scroll behaviour
+  const handleFabScroll = useCallback(() => {
+    setShowFab(false);
+    clearTimeout(fabScrollTimer.current);
+    fabScrollTimer.current = setTimeout(() => setShowFab(true), 400);
+  }, []);
+
+  useEffect(() => {
+    const container = document.getElementById('main-scroll-container');
+    if (!container) return;
+    container.addEventListener('scroll', handleFabScroll, { passive: true });
+    return () => {
+      container.removeEventListener('scroll', handleFabScroll);
+      clearTimeout(fabScrollTimer.current);
+    };
+  }, [handleFabScroll]);
 
   // Feature #11 — Wire IntersectionObserver to the sentinel div for infinite scroll
   useEffect(() => {
@@ -324,24 +344,24 @@ const Home = () => {
         {[
           { 
             icon: FiBarChart2, 
-            value: statsLoading ? '...' : (posts.length > 0 ? posts.length : quickStats.posts || 0), 
+            value: statsLoading ? '...' : (quickStats.posts || posts.length || 0), 
             label: "Posts", 
             color: "from-blue-500 to-blue-600",
-            isLoading: statsLoading && posts.length === 0
+            isLoading: statsLoading
           },
           { 
             icon: FiBarChart2, 
-            value: statsLoading ? '...' : (activePolls.length > 0 ? activePolls.length : quickStats.polls || 0), 
+            value: statsLoading ? '...' : (quickStats.polls || activePolls.length || 0), 
             label: "Active Polls", 
             color: "from-green-500 to-green-600",
-            isLoading: statsLoading && activePolls.length === 0
+            isLoading: statsLoading
           },
           { 
             icon: FiCalendar, 
-            value: statsLoading ? '...' : (events.length > 0 ? events.length : quickStats.events || 0), 
+            value: statsLoading ? '...' : (quickStats.events || events.length || 0), 
             label: "Events", 
             color: "from-purple-500 to-purple-600",
-            isLoading: statsLoading && events.length === 0
+            isLoading: statsLoading
           },
           { 
             icon: FiStar, 
@@ -365,7 +385,7 @@ const Home = () => {
               <div>
                 <p className={`text-2xl font-bold text-gray-900 dark:text-white ${stat.isLoading ? 'animate-pulse' : ''}`}>
                   {typeof stat.value === 'number'
-                    ? <AnimatedCounter end={stat.value} duration={1.4} />
+                    ? <AnimatedCounter key={stat.value} end={stat.value} duration={1.4} />
                     : stat.value
                   }
                 </p>
@@ -691,25 +711,31 @@ const Home = () => {
         isDeleting={isDeletingEvent}
       />
 
-      {/* Floating Action Button for Mobile */}
-      <motion.div
-        className="fixed bottom-6 right-6 xl:hidden z-50"
-        initial={{ scale: 0, rotate: -180 }}
-        animate={{ scale: 1, rotate: 0 }}
-        transition={{ duration: 0.5, delay: 1 }}
-      >
-        <Link
-          to="/create-post"
-          className="w-14 h-14 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-full shadow-lg hover:shadow-xl flex items-center justify-center transition-all duration-300 group"
-        >
+      {/* Floating Action Button for Mobile — hides on scroll, reappears when stopped */}
+      <AnimatePresence>
+        {showFab && (
           <motion.div
-            whileHover={{ rotate: 180 }}
-            transition={{ duration: 0.3 }}
+            key="fab"
+            className="fixed bottom-6 right-6 xl:hidden z-50"
+            initial={{ scale: 0, rotate: -180, opacity: 0 }}
+            animate={{ scale: 1, rotate: 0, opacity: 1 }}
+            exit={{ scale: 0, opacity: 0 }}
+            transition={{ duration: 0.25 }}
           >
-            <FiPlus className="w-6 h-6" />
+            <Link
+              to="/create-post"
+              className="w-14 h-14 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-full shadow-lg hover:shadow-xl flex items-center justify-center transition-all duration-300 group"
+            >
+              <motion.div
+                whileHover={{ rotate: 180 }}
+                transition={{ duration: 0.3 }}
+              >
+                <FiPlus className="w-6 h-6" />
+              </motion.div>
+            </Link>
           </motion.div>
-        </Link>
-      </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };

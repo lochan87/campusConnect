@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
@@ -117,6 +117,18 @@ const Navbar = ({ onToggleSidebar }) => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Close popups when main content is scrolled — same UX as sidebar
+  useEffect(() => {
+    const container = document.getElementById('main-scroll-container');
+    if (!container) return;
+    const handleScroll = () => {
+      if (showUserMenu) setShowUserMenu(false);
+      if (showNotifications) setShowNotifications(false);
+    };
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [showUserMenu, showNotifications]);
 
   const getNotificationIcon = (type) => {
     const icons = {
