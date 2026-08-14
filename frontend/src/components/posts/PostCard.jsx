@@ -147,6 +147,10 @@ const PostCard = ({ post, currentUser, onLike, onShare, onEdit, onDelete }) => {
     return colors[category?.toLowerCase()] || colors.general;
   };
 
+  const [showDoubleTapHeart, setShowDoubleTapHeart] = useState(false);
+  const clickTimeoutRef = useRef(null);
+  const lastClickTimeRef = useRef(0);
+
   const formatLocation = (loc) => {
     if (!loc) return '';
     return loc.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
@@ -159,9 +163,27 @@ const PostCard = ({ post, currentUser, onLike, onShare, onEdit, onDelete }) => {
     const clickableElements = ['button', 'a', 'input', 'textarea'];
     const isClickableElement = clickableElements.includes(e.target.tagName.toLowerCase());
     const isInsideClickable = e.target.closest('button, a, input, textarea');
-    
-    if (!isClickableElement && !isInsideClickable) {
-      navigate(`/post/${id}`);
+    if (isClickableElement || isInsideClickable) return;
+
+    const now = Date.now();
+    const timeDiff = now - lastClickTimeRef.current;
+    lastClickTimeRef.current = now;
+
+    if (timeDiff < 280) {
+      // Double click detected — cancel navigation timer & trigger heart animation + like!
+      if (clickTimeoutRef.current) clearTimeout(clickTimeoutRef.current);
+      setShowDoubleTapHeart(true);
+      if (!optimisticLiked) {
+        handleLike();
+      } else {
+        fireConfetti();
+      }
+      setTimeout(() => setShowDoubleTapHeart(false), 900);
+    } else {
+      // Single click — set timer for page navigation
+      clickTimeoutRef.current = setTimeout(() => {
+        navigate(`/post/${id}`);
+      }, 280);
     }
   };
 
@@ -172,9 +194,25 @@ const PostCard = ({ post, currentUser, onLike, onShare, onEdit, onDelete }) => {
       whileHover={{ rotateY: 2, rotateX: -1, scale: 1.01, boxShadow: '0 20px 40px rgba(0,0,0,0.12)' }}
       transition={{ type: 'spring', stiffness: 300, damping: 25 }}
       style={{ transformStyle: 'preserve-3d', perspective: 1000 }}
-      className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 transition-shadow duration-200 cursor-pointer will-change-transform"
+      className="relative bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 transition-shadow duration-200 cursor-pointer will-change-transform overflow-hidden"
       onClick={handleCardClick}
     >
+      {/* Floating double-tap heart overlay animation */}
+      <AnimatePresence>
+        {showDoubleTapHeart && (
+          <motion.div
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: [0, 1.4, 1.1, 1.2, 0], opacity: [0, 1, 1, 1, 0] }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.8, ease: 'easeOut' }}
+            className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none drop-shadow-2xl"
+          >
+            <div className="w-24 h-24 bg-red-500/90 rounded-full flex items-center justify-center shadow-2xl backdrop-blur-sm border-4 border-white/40">
+              <span className="text-5xl leading-none select-none animate-pulse">❤️</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       {/* Header */}
       <div className="p-4 pb-2">
         <div className="flex items-center justify-between mb-2">

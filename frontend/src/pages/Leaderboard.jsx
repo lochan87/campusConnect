@@ -252,26 +252,124 @@ const Leaderboard = () => {
         })}
       </div>
 
-      {/* Leaderboard List */}
-      <div className="space-y-3">
-        {currentData.length > 0 ? (
-          currentData.map((userData, index) => 
-            renderLeaderboardItem(userData, index, activeTab)
-          )
-        ) : (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-center py-12"
-          >
-            <UserIcon className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No data available</h3>
-            <p className="text-gray-600 dark:text-gray-400">
-              Be the first to contribute and appear on the leaderboard!
-            </p>
-          </motion.div>
-        )}
-      </div>
+      {/* Leaderboard Podium & List */}
+      {currentData.length > 0 ? (
+        <div className="space-y-8">
+          {/* Top 3 Winners Podium Block */}
+          <div className="bg-gradient-to-b from-indigo-50/50 via-white to-gray-50 dark:from-indigo-950/30 dark:via-gray-800 dark:to-gray-900 rounded-2xl p-6 border border-indigo-100/70 dark:border-gray-700/60 shadow-sm">
+            <h2 className="text-center text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-6">
+              🏆 Top Champions
+            </h2>
+            <div className="flex items-end justify-center gap-3 sm:gap-6 pt-4">
+              {/* 2nd Place (Left) */}
+              {currentData[1] && (
+                <motion.div
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="flex-1 max-w-[170px] flex flex-col items-center text-center"
+                >
+                  <div className="relative mb-2">
+                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-2xl z-10">🥈</span>
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full p-1 bg-gradient-to-br from-slate-300 via-gray-400 to-slate-500 shadow-md">
+                      <div className="w-full h-full rounded-full bg-white dark:bg-gray-800 flex items-center justify-center font-bold text-gray-700 dark:text-gray-200 text-lg">
+                        {currentData[1].displayName?.charAt(0) || 'U'}
+                      </div>
+                    </div>
+                  </div>
+                  <p className="font-bold text-xs sm:text-sm text-gray-900 dark:text-white truncate max-w-full">
+                    {currentData[1].displayName}
+                  </p>
+                  <p className="text-[11px] text-indigo-600 dark:text-indigo-400 font-semibold mb-2">
+                    {activeTab === 'reputation' ? `${currentData[1].reputation} pts` : `${currentData[1].postCount} posts`}
+                  </p>
+                  <div className="w-full h-24 sm:h-28 bg-gradient-to-t from-slate-300/40 to-slate-200/20 dark:from-slate-800 dark:to-slate-700/40 rounded-t-xl border-t-2 border-slate-400 dark:border-slate-500 flex items-center justify-center shadow-inner">
+                    <span className="text-xl font-extrabold text-slate-500 dark:text-slate-300">#2</span>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* 1st Place (Center - Tallest) */}
+              {currentData[0] && (
+                <motion.div
+                  initial={{ opacity: 0, y: 40 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                  className="flex-1 max-w-[190px] flex flex-col items-center text-center z-10"
+                >
+                  <div className="relative mb-2">
+                    <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-3xl z-10 animate-bounce">👑</span>
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full p-1 bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-600 shadow-xl ring-4 ring-yellow-400/30">
+                      <div className="w-full h-full rounded-full bg-white dark:bg-gray-800 flex items-center justify-center font-black text-amber-600 dark:text-amber-400 text-xl sm:text-2xl">
+                        {currentData[0].displayName?.charAt(0) || 'U'}
+                      </div>
+                    </div>
+                  </div>
+                  <p className="font-extrabold text-sm sm:text-base text-gray-900 dark:text-white truncate max-w-full">
+                    {currentData[0].displayName}
+                  </p>
+                  <p className="text-xs text-amber-600 dark:text-amber-400 font-extrabold mb-2">
+                    {activeTab === 'reputation' ? `${currentData[0].reputation} pts` : `${currentData[0].postCount} posts`}
+                  </p>
+                  <div className="w-full h-32 sm:h-36 bg-gradient-to-t from-amber-400/40 via-yellow-300/20 to-amber-100/30 dark:from-amber-900/60 dark:to-amber-700/30 rounded-t-xl border-t-4 border-amber-400 dark:border-amber-500 flex items-center justify-center shadow-lg">
+                    <span className="text-2xl font-black text-amber-600 dark:text-amber-300">🥇 #1</span>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* 3rd Place (Right) */}
+              {currentData[2] && (
+                <motion.div
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="flex-1 max-w-[170px] flex flex-col items-center text-center"
+                >
+                  <div className="relative mb-2">
+                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-2xl z-10">🥉</span>
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full p-1 bg-gradient-to-br from-amber-600 via-orange-700 to-amber-800 shadow-md">
+                      <div className="w-full h-full rounded-full bg-white dark:bg-gray-800 flex items-center justify-center font-bold text-amber-700 dark:text-amber-400 text-lg">
+                        {currentData[2].displayName?.charAt(0) || 'U'}
+                      </div>
+                    </div>
+                  </div>
+                  <p className="font-bold text-xs sm:text-sm text-gray-900 dark:text-white truncate max-w-full">
+                    {currentData[2].displayName}
+                  </p>
+                  <p className="text-[11px] text-amber-700 dark:text-amber-500 font-semibold mb-2">
+                    {activeTab === 'reputation' ? `${currentData[2].reputation} pts` : `${currentData[2].postCount} posts`}
+                  </p>
+                  <div className="w-full h-20 sm:h-24 bg-gradient-to-t from-orange-400/30 to-amber-200/20 dark:from-orange-950/60 dark:to-orange-800/30 rounded-t-xl border-t-2 border-amber-600 dark:border-amber-700 flex items-center justify-center shadow-inner">
+                    <span className="text-xl font-extrabold text-amber-700 dark:text-amber-400">#3</span>
+                  </div>
+                </motion.div>
+              )}
+            </div>
+          </div>
+
+          {/* Full Rankings List (starting from #4 onwards or complete list) */}
+          <div className="space-y-3 pt-2">
+            <h3 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider px-1">
+              Full Rankings
+            </h3>
+            {currentData.map((userData, index) => 
+              renderLeaderboardItem(userData, index, activeTab)
+            )}
+          </div>
+        </div>
+      ) : (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-center py-12"
+        >
+          <UserIcon className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No data available</h3>
+          <p className="text-gray-600 dark:text-gray-400">
+            Be the first to contribute and appear on the leaderboard!
+          </p>
+        </motion.div>
+      )}
 
       {/* Refresh Button */}
       <motion.div

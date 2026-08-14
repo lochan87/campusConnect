@@ -381,37 +381,34 @@ const Home = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
       >
-        <div className="flex space-x-1">
-          <button 
-            onClick={() => setActiveTab('posts')}
-            className={`flex-1 px-4 py-2 rounded-md font-medium transition-all ${
-              activeTab === 'posts' 
-                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' 
-                : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-            }`}
-          >
-            📝 Posts
-          </button>
-          <button 
-            onClick={() => setActiveTab('polls')}
-            className={`flex-1 px-4 py-2 rounded-md font-medium transition-all ${
-              activeTab === 'polls' 
-                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' 
-                : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-            }`}
-          >
-            📊 Polls
-          </button>
-          <button 
-            onClick={() => setActiveTab('events')}
-            className={`flex-1 px-4 py-2 rounded-md font-medium transition-all ${
-              activeTab === 'events' 
-                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' 
-                : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-            }`}
-          >
-            📅 Events
-          </button>
+        <div className="relative flex space-x-1">
+          {[
+            { id: 'posts', label: '📝 Posts' },
+            { id: 'polls', label: '📊 Polls' },
+            { id: 'events', label: '📅 Events' },
+          ].map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`relative flex-1 px-4 py-2 rounded-md font-medium transition-colors select-none ${
+                  isActive
+                    ? 'text-blue-700 dark:text-blue-400'
+                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+                }`}
+              >
+                {isActive && (
+                  <motion.div
+                    layoutId="activeTabIndicator"
+                    className="absolute inset-0 bg-blue-100 dark:bg-blue-900/40 rounded-md z-0"
+                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                  />
+                )}
+                <span className="relative z-10">{tab.label}</span>
+              </button>
+            );
+          })}
         </div>
       </motion.div>
 

@@ -15,30 +15,30 @@
 
 /* ─── Shimmer wave skeleton ─── */
 @keyframes shimmer-wave {
-  0%   { background-position: -800px 0; }
-  100% { background-position:  800px 0; }
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
 }
 
 .shimmer-wave {
   background: linear-gradient(
     90deg,
-    #e5e7eb 25%,
+    #e5e7eb 0%,
     #f3f4f6 50%,
-    #e5e7eb 75%
+    #e5e7eb 100%
   );
-  background-size: 800px 100%;
-  animation: shimmer-wave 1.4s ease-in-out infinite;
+  background-size: 200% 100%;
+  animation: shimmer-wave 1.6s ease-in-out infinite;
 }
 
 .dark .shimmer-wave {
   background: linear-gradient(
     90deg,
-    #374151 25%,
+    #374151 0%,
     #4b5563 50%,
-    #374151 75%
+    #374151 100%
   );
-  background-size: 800px 100%;
-  animation: shimmer-wave 1.4s ease-in-out infinite;
+  background-size: 200% 100%;
+  animation: shimmer-wave 1.6s ease-in-out infinite;
 }
 
 /* Loading animations */

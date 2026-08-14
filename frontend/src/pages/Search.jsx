@@ -163,6 +163,31 @@ const EventResult = ({ item, query }) => (
   </Link>
 );
 
+const UserResult = ({ item, query }) => (
+  <Link to={`/profile/${item.id || item.uid}`} className="block group">
+    <div className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors rounded-lg">
+      <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0 text-white font-bold text-sm shadow-sm">
+        {item.displayName?.charAt(0) || 'U'}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <p className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+            {highlightMatch(item.displayName, query)}
+          </p>
+          {item.department && (
+            <span className="text-xs bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 px-1.5 py-0.5 rounded-full">
+              {item.department}
+            </span>
+          )}
+        </div>
+        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+          {highlightMatch(item.email || item.course || 'Campus Member', query)}
+        </p>
+      </div>
+    </div>
+  </Link>
+);
+
 // ─── Tab definitions ─────────────────────────────────────────────────────────
 
 const TABS = [
@@ -170,6 +195,7 @@ const TABS = [
   { id: 'posts',  label: 'Posts',  icon: FiFileText },
   { id: 'polls',  label: 'Polls',  icon: FiBarChart2 },
   { id: 'events', label: 'Events', icon: FiCalendar },
+  { id: 'users',  label: 'Users',  icon: FiUser },
 ];
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
@@ -183,7 +209,7 @@ const Search = () => {
   const [inputValue, setInputValue] = useState(initialQuery);
   const [activeQuery, setActiveQuery] = useState(initialQuery);
   const [activeTab, setActiveTab] = useState('all');
-  const [results, setResults] = useState({ posts: [], polls: [], events: [] });
+  const [results, setResults] = useState({ posts: [], polls: [], events: [], users: [] });
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -203,13 +229,18 @@ const Search = () => {
       const response = await apiService.search({
         q: query.trim(),
         campusId: user.campusId,
-        types: 'posts,polls,events',
+        types: 'posts,polls,events,users',
         limit: 15
       });
 
       if (response.data.success) {
-        setResults(response.data.results);
-        setTotal(response.data.total);
+        setResults({
+          posts: response.data.results.posts || [],
+          polls: response.data.results.polls || [],
+          events: response.data.results.events || [],
+          users: response.data.results.users || []
+        });
+        setTotal(response.data.total || 0);
         setActiveQuery(query.trim());
       }
     } catch (err) {
@@ -256,15 +287,17 @@ const Search = () => {
     all: total,
     posts: results.posts.length,
     polls: results.polls.length,
-    events: results.events.length
+    events: results.events.length,
+    users: results.users.length
   };
 
   // Items shown in the active tab
   const visiblePosts  = activeTab === 'all' || activeTab === 'posts'  ? results.posts  : [];
   const visiblePolls  = activeTab === 'all' || activeTab === 'polls'  ? results.polls  : [];
   const visibleEvents = activeTab === 'all' || activeTab === 'events' ? results.events : [];
+  const visibleUsers  = activeTab === 'all' || activeTab === 'users'  ? results.users  : [];
 
-  const hasResults = visiblePosts.length + visiblePolls.length + visibleEvents.length > 0;
+  const hasResults = visiblePosts.length + visiblePolls.length + visibleEvents.length + visibleUsers.length > 0;
 
   return (
     <motion.div
@@ -276,7 +309,7 @@ const Search = () => {
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Search</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          Search posts, polls, and events on your campus
+          Search posts, polls, events, and campus members
         </p>
       </div>
 
@@ -289,7 +322,7 @@ const Search = () => {
             type="text"
             value={inputValue}
             onChange={handleInputChange}
-            placeholder="Search campus posts, polls, events…"
+            placeholder="Search campus posts, polls, events, users…"
             autoFocus
             className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600
               bg-white dark:bg-gray-800 text-gray-900 dark:text-white
@@ -326,7 +359,7 @@ const Search = () => {
 
             {/* Tabs */}
             {total > 0 && (
-              <div className="flex border-b border-gray-100 dark:border-gray-700 overflow-x-auto">
+              <div className="relative flex border-b border-gray-100 dark:border-gray-700 overflow-x-auto p-1 bg-gray-50/50 dark:bg-gray-800/50">
                 {TABS.map(tab => {
                   const Icon = tab.icon;
                   const count = tabCounts[tab.id];
@@ -335,18 +368,25 @@ const Search = () => {
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
-                      className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
+                      className={`relative flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium whitespace-nowrap rounded-lg transition-colors z-10 select-none ${
                         isActive
-                          ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                          : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                          ? 'text-blue-600 dark:text-blue-400 font-semibold'
+                          : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
                       }`}
                     >
-                      <Icon className="w-4 h-4" />
-                      {tab.label}
+                      {isActive && (
+                        <motion.div
+                          layoutId="activeSearchTab"
+                          className="absolute inset-0 bg-white dark:bg-gray-700 shadow-sm rounded-lg z-0"
+                          transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                        />
+                      )}
+                      <Icon className="w-4 h-4 relative z-10" />
+                      <span className="relative z-10">{tab.label}</span>
                       {count > 0 && (
-                        <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                        <span className={`relative z-10 text-xs px-1.5 py-0.5 rounded-full ${
                           isActive
-                            ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300'
+                            ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 font-bold'
                             : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
                         }`}>
                           {count}
@@ -447,6 +487,22 @@ const Search = () => {
                     )}
                     {visibleEvents.map(item => (
                       <EventResult key={item.id} item={item} query={activeQuery} />
+                    ))}
+                  </div>
+                )}
+
+                {/* Users section */}
+                {visibleUsers.length > 0 && (
+                  <div>
+                    {activeTab === 'all' && (
+                      <div className="px-4 pt-3 pb-1">
+                        <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                          Users
+                        </p>
+                      </div>
+                    )}
+                    {visibleUsers.map(item => (
+                      <UserResult key={item.id || item.uid} item={item} query={activeQuery} />
                     ))}
                   </div>
                 )}

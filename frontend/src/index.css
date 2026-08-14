@@ -162,10 +162,38 @@
   }
 }
 
-/* Loading skeleton */
+/* Loading skeleton shimmer effect */
+@keyframes shimmer-sweep {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
 @layer components {
   .skeleton {
-    @apply bg-gray-200 dark:bg-gray-700 animate-pulse rounded;
+    background: linear-gradient(
+      90deg,
+      rgba(229, 231, 235, 0.8) 0%,
+      rgba(243, 244, 246, 0.95) 50%,
+      rgba(229, 231, 235, 0.8) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer-sweep 1.6s ease-in-out infinite;
+    @apply rounded;
+  }
+
+  .dark .skeleton {
+    background: linear-gradient(
+      90deg,
+      rgba(55, 65, 81, 0.8) 0%,
+      rgba(75, 85, 99, 0.95) 50%,
+      rgba(55, 65, 81, 0.8) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer-sweep 1.6s ease-in-out infinite;
   }
 }
 
