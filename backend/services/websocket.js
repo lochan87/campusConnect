@@ -1,7 +1,6 @@
 const { verifyToken } = require('../middleware/auth');
 
 const setupWebSocket = (io) => {
-  console.log('🔌 Setting up WebSocket connections');
 
   // ── Socket authentication middleware ──────────────────────────────────────
   // Validates token on every new connection before any event handlers fire.
@@ -49,7 +48,6 @@ const setupWebSocket = (io) => {
     socket.on('join_dm_room', (conversationId) => {
       if (conversationId) {
         socket.join(`dm_${conversationId}`);
-        console.log(`💬 Socket ${socket.id} joined DM room: dm_${conversationId}`);
       }
     });
 
@@ -66,7 +64,6 @@ const setupWebSocket = (io) => {
         conversationIds.forEach((convId) => {
           socket.join(`dm_${convId}`);
         });
-        console.log(`💬 Socket ${socket.id} joined ${conversationIds.length} DM rooms`);
       }
     });
 

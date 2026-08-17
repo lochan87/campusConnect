@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { 
@@ -683,7 +683,7 @@ const Register = () => {
     // Validate student ID format: YYCCCDDNNN
     const studentIdRegex = /^\d{2}[A-Z]{3}\d{5}$/i;
     if (!studentIdRegex.test(studentId.trim())) {
-      toast.error('Student ID must be in format YYCCCDDNNN (e.g., 22BEN03073). Course and department will be auto-selected from this ID.');
+      toast.error('Student ID must be in format YYCCCDDNNN(e.g,22BEN03073). Course and department will be auto-selected from this ID.');
       return false;
     }
     
@@ -1134,7 +1134,7 @@ const Register = () => {
                       value={formData.studentId}
                       onChange={handleChange}
                       className="pl-10 w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 font-mono"
-                      placeholder="YYCCCDDNNN (e.g., 22BEN01001)"
+                      placeholder="YYCCCDDNNN(e.g,22BEN01001)"
                     />
                   </div>
                   <p className="text-xs text-blue-600 dark:text-blue-400 mt-1 flex items-center gap-1">
@@ -1196,11 +1196,19 @@ const Register = () => {
                     </div>
 
                     {/* Tab Content */}
-                    <div className="p-4 space-y-4 max-h-[420px] overflow-y-auto">
+                    <div className="p-4 max-h-[420px] overflow-y-auto">
+                      <AnimatePresence mode="wait">
 
-                      {/* BUILDER TAB */}
-                      {activeHelpTab === 'builder' && (
-                        <div className="space-y-4">
+                        {/* BUILDER TAB */}
+                        {activeHelpTab === 'builder' && (
+                          <motion.div
+                            key="builder"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            transition={{ type: 'spring', damping: 25, stiffness: 280 }}
+                            className="space-y-4"
+                          >
                           <div className="bg-gray-50 dark:bg-gray-800/60 rounded-xl border border-gray-200 dark:border-gray-700/60 p-3 space-y-3">
                             <p className="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Configure Student ID Fields</p>
                             <div className="grid grid-cols-2 gap-2.5">
@@ -1304,12 +1312,19 @@ const Register = () => {
                               </div>
                             );
                           })()}
-                        </div>
-                      )}
+                          </motion.div>
+                        )}
 
-                      {/* DIRECTORY TAB */}
-                      {activeHelpTab === 'directory' && (
-                        <div className="space-y-3">
+                        {/* DIRECTORY TAB */}
+                        {activeHelpTab === 'directory' && (
+                          <motion.div
+                            key="directory"
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 10 }}
+                            transition={{ type: 'spring', damping: 25, stiffness: 280 }}
+                            className="space-y-3"
+                          >
                           <div className="grid grid-cols-4 gap-1.5">
                             {[
                               { code: 'YY', name: 'Year', eg: '24 → 2024', color: 'bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800/60', text: 'text-amber-700 dark:text-amber-300' },
@@ -1366,9 +1381,10 @@ const Register = () => {
                                 </div>
                               );
                             })()}
-                          </div>
-                        </div>
-                      )}
+                           </div>  {/* closes dept codes section */}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
                   </div>
                 )}

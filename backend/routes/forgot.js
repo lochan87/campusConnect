@@ -1,4 +1,4 @@
-﻿const express = require('express');
+const express = require('express');
 const router = express.Router();
 const admin = require('firebase-admin');
 const { sendPasswordResetEmail } = require('../services/emailService');
@@ -25,11 +25,10 @@ router.post('/forgot-password', async (req, res) => {
     try {
       userRecord = await admin.auth().getUserByEmail(email);
     } catch (err) {
-      // Don't reveal if user exists (security best practice)
       console.log(`Password reset requested for non-existent email: ${email}`);
-      return res.status(200).json({
-        success: true,
-        message: 'If an account with that email exists, a reset link has been sent.',
+      return res.status(404).json({
+        success: false,
+        error: 'No account found with this email address. Please check and try again.',
       });
     }
 

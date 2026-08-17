@@ -40,13 +40,11 @@ class SocketService {
     if (!this.socket) return;
 
     this.socket.on('connect', () => {
-      console.log('✅ Connected to CampusConnect server');
       this.isConnected = true;
       this.emit('connectionStatusChanged', true);
     });
 
     this.socket.on('disconnect', (reason) => {
-      console.log('❌ Disconnected from server:', reason);
       this.isConnected = false;
       this.emit('connectionStatusChanged', false);
       
@@ -64,7 +62,6 @@ class SocketService {
 
     // Campus-wide events
     this.socket.on('post_created', (post) => {
-      console.log('📝 New post created:', post);
       this.emit('newPost', post);
       
       // Show notification for relevant posts
@@ -74,69 +71,57 @@ class SocketService {
     });
 
     this.socket.on('post_updated', (postData) => {
-      console.log('📝 Post updated:', postData);
       this.emit('postUpdated', postData);
     });
 
     this.socket.on('post_deleted', (data) => {
-      console.log('🗑️ Post deleted:', data);
       this.emit('postDeleted', data);
     });
 
     this.socket.on('post_voted', (voteData) => {
-      console.log('👍 Post voted:', voteData);
       this.emit('postVoted', voteData);
     });
 
     // Like count update — keeps all viewers in sync without a full refresh
     this.socket.on('post_liked', (data) => {
-      console.log('❤️ Post liked/unliked:', data);
       this.emit('postLiked', data);
     });
 
     // New event broadcast — mirrors post_created pattern
     this.socket.on('event_created', (event) => {
-      console.log('🎉 New event created:', event);
       this.emit('newEvent', event);
     });
 
     // Poll events
     this.socket.on('poll_created', (poll) => {
-      console.log('📊 New poll created:', poll);
       this.emit('newPoll', poll);
       toast.success(`📊 New poll: ${poll.question.substring(0, 50)}...`);
     });
 
     this.socket.on('poll_updated', (pollData) => {
-      console.log('📊 Poll updated:', pollData);
       this.emit('pollUpdated', pollData);
     });
 
     this.socket.on('poll_closed', (data) => {
-      console.log('📊 Poll closed:', data);
       this.emit('pollClosed', data);
     });
 
     this.socket.on('poll_deleted', (data) => {
-      console.log('🗑️ Poll deleted:', data);
       this.emit('pollDeleted', data);
     });
 
     // Event updates
     this.socket.on('event_updated', (eventData) => {
-      console.log('🎉 Event updated:', eventData);
       this.emit('eventUpdated', eventData);
     });
 
     // User updates (reputation, postCount, etc.)
     this.socket.on('user_updated', (userData) => {
-      console.log('👤 User updated:', userData);
       this.emit('userUpdated', userData);
     });
 
     // Meme reactions
     this.socket.on('meme_updated', (memeData) => {
-      console.log('😂 Meme updated:', memeData);
       this.emit('memeUpdated', memeData);
     });
 
@@ -151,7 +136,6 @@ class SocketService {
 
     // General notifications
     this.socket.on('notification', (notification) => {
-      console.log('🔔 Notification:', notification);
       this.emit('notification', notification);
       
       switch (notification.type) {
@@ -169,9 +153,8 @@ class SocketService {
       }
     });
 
-    // ── Direct Messaging events ───────────────────────────────
+    // ── Direct Messaging events ───────────────────────────
     this.socket.on('dm_new_message', (data) => {
-      console.log('💬 DM new message:', data);
       this.emit('dmNewMessage', data);
     });
 
@@ -180,12 +163,10 @@ class SocketService {
     });
 
     this.socket.on('dm_read_receipt', (data) => {
-      console.log('✅ DM read receipt:', data);
       this.emit('dmReadReceipt', data);
     });
 
     this.socket.on('dm_message_deleted', (data) => {
-      console.log('🗑️ DM message deleted:', data);
       this.emit('dmMessageDeleted', data);
     });
   }
@@ -194,28 +175,24 @@ class SocketService {
   joinCampus(campusId) {
     if (this.socket?.connected) {
       this.socket.emit('join_campus', campusId);
-      console.log(`🏫 Joined campus: ${campusId}`);
     }
   }
 
   joinLocation(locationId) {
     if (this.socket?.connected) {
       this.socket.emit('join_location', locationId);
-      console.log(`📍 Joined location: ${locationId}`);
     }
   }
 
   joinPost(postId) {
     if (this.socket?.connected) {
       this.socket.emit('join_post', postId);
-      console.log(`📝 Joined post discussion: ${postId}`);
     }
   }
 
   leavePost(postId) {
     if (this.socket?.connected) {
       this.socket.emit('leave_post', postId);
-      console.log(`📝 Left post discussion: ${postId}`);
     }
   }
 

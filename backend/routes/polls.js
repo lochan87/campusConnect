@@ -100,9 +100,7 @@ router.get('/', async (req, res) => {
 // POST /api/polls - Create a new poll (auth required)
 router.post('/', requireAuth, validatePoll, async (req, res) => {
   try {
-    console.log('📊 Creating new poll...');
-    console.log('Poll data received:', req.body);
-    
+
     const db = getFirestore();
     const {
       question,
@@ -140,9 +138,7 @@ router.post('/', requireAuth, validatePoll, async (req, res) => {
       updatedAt: new Date()
     };
 
-    console.log('Writing poll to Firestore:', pollData);
     const docRef = await db.collection('polls').add(pollData);
-    console.log('✅ Poll saved with ID:', docRef.id);
     
     const newPoll = {
       id: docRef.id,
@@ -171,8 +167,6 @@ router.post('/', requireAuth, validatePoll, async (req, res) => {
               pollCount: currentPollCount + 1,
               lastActive: new Date()
             });
-            console.log(`📈 Poll creation: User ${userId} earned +5 reputation (${currentReputation} → ${currentReputation + 5}), postCount updated (${currentPostCount} → ${currentPostCount + 1}), pollCount updated (${currentPollCount} → ${currentPollCount + 1})`);
-            
             // Emit user update via WebSocket
             if (req.app.get('io')) {
               req.app.get('io').emit('user_updated', {
@@ -183,8 +177,6 @@ router.post('/', requireAuth, validatePoll, async (req, res) => {
               });
             }
           }
-        } else {
-          console.log(`🚫 Demo user ${userId} - no reputation awarded for poll creation`);
         }
       } catch (reputationError) {
         console.error('Error updating reputation for poll creation:', reputationError);

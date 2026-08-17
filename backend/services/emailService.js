@@ -1,618 +1,280 @@
 const nodemailer = require('nodemailer');
+const path = require('path');
 
-const createTransporter = () => {
-  return nodemailer.createTransport({
+// Path to the logo file — resolved from this file's location
+const LOGO_PATH = path.resolve(__dirname, '../../frontend/public/favicon.png');
+
+const createTransporter = () =>
+  nodemailer.createTransport({
     service: process.env.EMAIL_SERVICE || 'gmail',
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
+    auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
   });
+
+// ─── Shared logo attachment (CID) ───────────────────────────────────────────
+// Using CID is the most reliable cross-client way to embed images in emails.
+const logoAttachment = {
+  filename: 'logo.png',
+  path: LOGO_PATH,
+  cid: 'campusconnect_logo',   // referenced in HTML as cid:campusconnect_logo
 };
 
+// ─── Shared CSS (light theme — works in ALL email clients) ──────────────────
+const sharedStyles = `
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:#f1f5f9; margin:0; padding:0; }
+  .pre { display:none !important; max-height:0; overflow:hidden; }
+`;
+
+// ─── Shared email wrapper ────────────────────────────────────────────────────
+const wrap = (innerHtml) => `
+  <div style="background:#f1f5f9;padding:40px 16px;">
+    <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+      ${innerHtml}
+      <!-- Footer -->
+      <div style="padding:24px 40px;background:#f8fafc;border-top:1px solid #e2e8f0;text-align:center;">
+        <div style="margin-bottom:12px;">
+          <span style="display:inline-block;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;background:#f0fdf4;border:1px solid #bbf7d0;color:#16a34a;margin-right:6px;">🔒 Firebase Secured</span>
+          <span style="display:inline-block;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;background:#eff6ff;border:1px solid #bfdbfe;color:#3b82f6;">✉️ Official Mail</span>
+        </div>
+        <p style="font-size:11px;color:#94a3b8;line-height:1.7;">&copy; ${new Date().getFullYear()} CampusConnect &middot; All rights reserved</p>
+      </div>
+    </div>
+    <!-- Bottom branding -->
+    <p style="text-align:center;margin-top:20px;font-size:11px;color:#94a3b8;">CampusConnect &mdash; Your Campus, Connected.</p>
+  </div>
+`;
+
+// ─── Purple gradient header ──────────────────────────────────────────────────
+const header = (title, subtitle) => `
+  <!-- Purple gradient header -->
+  <div style="background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%);padding:40px 40px 36px;text-align:center;">
+    <!-- Logo via CID -->
+    <img src="cid:campusconnect_logo" width="72" height="72" alt="CampusConnect"
+      style="border-radius:16px;display:block;margin:0 auto 16px;border:3px solid rgba(255,255,255,0.3);box-shadow:0 4px 20px rgba(0,0,0,0.3);" />
+    <p style="font-size:11px;font-weight:700;letter-spacing:3px;color:rgba(255,255,255,0.7);text-transform:uppercase;margin-bottom:12px;">CampusConnect</p>
+    <h1 style="font-size:26px;font-weight:800;color:#ffffff;letter-spacing:-0.5px;line-height:1.25;margin-bottom:8px;">${title}</h1>
+    <p style="font-size:14px;color:rgba(255,255,255,0.8);line-height:1.5;">${subtitle}</p>
+  </div>
+`;
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PASSWORD RESET EMAIL
+// ═══════════════════════════════════════════════════════════════════════════
 const sendPasswordResetEmail = async (toEmail, resetLink, displayName = '') => {
   const transporter = createTransporter();
   const firstName = displayName ? displayName.split(' ')[0] : 'there';
-  const year = new Date().getFullYear();
 
-  const htmlTemplate = `<!DOCTYPE html>
-<html lang="en" xmlns:v="urn:schemas-microsoft-com:vml">
+  const html = `<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <meta name="x-apple-disable-message-reformatting"/>
-  <title>Reset Your CampusConnect Password</title>
-  <!--[if mso]>
-  <noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript>
-  <![endif]-->
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-    * { margin:0; padding:0; box-sizing:border-box; }
-    body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #070714;
-      -webkit-text-size-adjust: 100%;
-      margin: 0; padding: 0;
-    }
-    .preheader { display:none !important; max-height:0; overflow:hidden; mso-hide:all; }
-    .email-wrapper { width:100%; background:#070714; padding: 48px 16px; }
-    .email-card {
-      max-width: 580px;
-      margin: 0 auto;
-      background: #0d0d1f;
-      border-radius: 24px;
-      overflow: hidden;
-      border: 1px solid rgba(139,92,246,0.15);
-      box-shadow:
-        0 0 0 1px rgba(139,92,246,0.08),
-        0 32px 64px rgba(0,0,0,0.6),
-        0 0 80px rgba(109,40,217,0.08);
-    }
-
-    /* ── TOP ACCENT BAR ── */
-    .accent-bar {
-      height: 4px;
-      background: linear-gradient(90deg, #7c3aed, #6366f1, #a855f7, #6366f1, #7c3aed);
-      background-size: 200% 100%;
-    }
-
-    /* ── HERO HEADER ── */
-    .hero {
-      padding: 48px 40px 40px;
-      text-align: center;
-      position: relative;
-      background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(109,40,217,0.18) 0%, transparent 70%);
-      border-bottom: 1px solid rgba(255,255,255,0.05);
-    }
-    .logo-wrap {
-      display: inline-block;
-      margin-bottom: 28px;
-    }
-    .logo-outer {
-      width: 80px; height: 80px;
-      background: linear-gradient(135deg, rgba(124,58,237,0.25), rgba(99,102,241,0.25));
-      border-radius: 22px;
-      border: 1.5px solid rgba(139,92,246,0.35);
-      display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 8px 32px rgba(124,58,237,0.2), inset 0 1px 0 rgba(255,255,255,0.08);
-      margin: 0 auto;
-    }
-    .logo-inner {
-      width: 54px; height: 54px;
-      background: linear-gradient(135deg, #7c3aed, #4f46e5);
-      border-radius: 14px;
-      display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 4px 16px rgba(124,58,237,0.4);
-    }
-    .logo-text { font-size: 20px; font-weight: 800; color: #fff; letter-spacing: -0.5px; }
-
-    .brand-name {
-      font-size: 13px; font-weight: 600; letter-spacing: 3px;
-      color: rgba(167,139,250,0.7); text-transform: uppercase;
-      margin-bottom: 20px; display: block;
-    }
-
-    /* Lock icon circle */
-    .icon-circle {
-      width: 64px; height: 64px;
-      background: linear-gradient(135deg, rgba(124,58,237,0.15), rgba(99,102,241,0.15));
-      border: 1.5px solid rgba(139,92,246,0.25);
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      margin: 0 auto 20px;
-      font-size: 28px;
-    }
-    .hero-title {
-      font-size: 30px; font-weight: 800;
-      color: #f8fafc;
-      letter-spacing: -0.8px;
-      line-height: 1.2;
-      margin-bottom: 10px;
-    }
-    .hero-title span { 
-      background: linear-gradient(135deg, #a78bfa, #818cf8);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    .hero-subtitle {
-      font-size: 15px; color: #64748b; line-height: 1.5;
-    }
-
-    /* ── BODY ── */
-    .body { padding: 40px 40px 32px; }
-
-    .greeting {
-      font-size: 18px; font-weight: 700;
-      color: #f1f5f9; margin-bottom: 12px;
-    }
-    .message {
-      font-size: 15px; color: #94a3b8; line-height: 1.75;
-      margin-bottom: 36px;
-    }
-    .email-pill {
-      display: inline-block;
-      background: rgba(139,92,246,0.12);
-      border: 1px solid rgba(139,92,246,0.25);
-      border-radius: 6px;
-      padding: 2px 8px;
-      color: #c4b5fd;
-      font-weight: 600;
-      font-size: 14px;
-      font-family: 'Courier New', monospace;
-    }
-
-    /* ── CTA BUTTON ── */
-    .btn-outer {
-      text-align: center;
-      margin-bottom: 36px;
-    }
-    .btn-container {
-      display: inline-block;
-      background: linear-gradient(135deg, #7c3aed 0%, #6366f1 100%);
-      border-radius: 16px;
-      padding: 2px;
-      box-shadow: 0 8px 32px rgba(124,58,237,0.35), 0 2px 8px rgba(0,0,0,0.3);
-    }
-    .btn {
-      display: inline-block;
-      background: linear-gradient(135deg, #7c3aed 0%, #6366f1 100%);
-      color: #ffffff !important;
-      text-decoration: none;
-      padding: 18px 52px;
-      border-radius: 14px;
-      font-size: 16px;
-      font-weight: 700;
-      letter-spacing: 0.2px;
-    }
-
-    /* ── STEP CARDS ── */
-    .steps-label {
-      font-size: 11px; font-weight: 700; letter-spacing: 2px;
-      text-transform: uppercase; color: #475569;
-      margin-bottom: 14px;
-    }
-    .steps {
-      display: flex;
-      gap: 0;
-      margin-bottom: 36px;
-      border-radius: 14px;
-      overflow: hidden;
-      border: 1px solid rgba(255,255,255,0.06);
-    }
-    .step {
-      flex: 1;
-      padding: 16px 14px;
-      text-align: center;
-      background: rgba(255,255,255,0.02);
-      border-right: 1px solid rgba(255,255,255,0.05);
-    }
-    .step:last-child { border-right: none; }
-    .step-num {
-      width: 28px; height: 28px;
-      background: linear-gradient(135deg, #7c3aed, #6366f1);
-      border-radius: 50%;
-      font-size: 12px; font-weight: 700; color: #fff;
-      display: flex; align-items: center; justify-content: center;
-      margin: 0 auto 8px;
-    }
-    .step-text { font-size: 11px; color: #64748b; line-height: 1.4; }
-    .step-text strong { color: #94a3b8; font-weight: 600; display: block; margin-bottom: 2px; }
-
-    /* ── EXPIRY NOTICE ── */
-    .notice {
-      display: flex;
-      align-items: flex-start;
-      gap: 14px;
-      background: linear-gradient(135deg, rgba(245,158,11,0.06), rgba(251,191,36,0.04));
-      border: 1px solid rgba(245,158,11,0.18);
-      border-radius: 14px;
-      padding: 18px 20px;
-      margin-bottom: 28px;
-    }
-    .notice-icon-wrap {
-      width: 36px; height: 36px; flex-shrink: 0;
-      background: rgba(245,158,11,0.1);
-      border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 18px;
-    }
-    .notice-content { flex: 1; }
-    .notice-title { font-size: 13px; font-weight: 700; color: #fbbf24; margin-bottom: 4px; }
-    .notice-body { font-size: 12px; color: #92400e; line-height: 1.5; color: rgba(251,191,36,0.65); }
-
-    /* ── LINK FALLBACK ── */
-    .link-box {
-      background: rgba(255,255,255,0.02);
-      border: 1px dashed rgba(255,255,255,0.1);
-      border-radius: 12px;
-      padding: 18px 20px;
-      margin-bottom: 32px;
-    }
-    .link-box-label {
-      font-size: 11px; font-weight: 600; letter-spacing: 1px;
-      text-transform: uppercase; color: #475569; margin-bottom: 10px;
-    }
-    .link-box a {
-      font-size: 11.5px; color: #818cf8;
-      word-break: break-all; text-decoration: none;
-      line-height: 1.5;
-    }
-
-    /* ── DIVIDER ── */
-    .divider {
-      height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent);
-      margin: 28px 0;
-    }
-
-    .ignore-note {
-      font-size: 13px; color: #334155; text-align: center; line-height: 1.6;
-    }
-
-    /* ── FOOTER ── */
-    .footer {
-      padding: 28px 40px;
-      border-top: 1px solid rgba(255,255,255,0.04);
-      background: rgba(0,0,0,0.3);
-    }
-    .footer-badges {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-    }
-    .badge {
-      display: inline-flex; align-items: center; gap: 5px;
-      padding: 5px 12px;
-      border-radius: 20px;
-      font-size: 11px; font-weight: 500;
-    }
-    .badge-green {
-      background: rgba(16,185,129,0.08);
-      border: 1px solid rgba(16,185,129,0.18);
-      color: #34d399;
-    }
-    .badge-blue {
-      background: rgba(99,102,241,0.08);
-      border: 1px solid rgba(99,102,241,0.18);
-      color: #818cf8;
-    }
-    .footer-copy {
-      text-align: center;
-      font-size: 12px; color: #1e293b; color: #334155; line-height: 1.7;
-    }
-    .footer-copy a { color: #4f46e5; text-decoration: none; }
-    .footer-divider {
-      height: 1px;
-      background: rgba(255,255,255,0.04);
-      margin: 16px 0;
-    }
-    .footer-legal {
-      text-align: center;
-      font-size: 11px; color: #1e293b; line-height: 1.6;
-    }
-  </style>
+  <title>Reset Your Password</title>
+  <style>${sharedStyles}</style>
 </head>
 <body>
-  <!-- Preheader (invisible preview text in inbox) -->
-  <span class="preheader">Reset your CampusConnect password — this link expires in 1 hour. If you didn't request this, ignore this email.</span>
+  <span class="pre">Reset your CampusConnect Password — link expires in 1 hour.</span>
+  ${wrap(`
+    ${header('Reset Your Password', 'A password reset request was requested form your account')}
 
-  <div class="email-wrapper">
-    <div class="email-card">
+    <!-- Body -->
+    <div style="padding:36px 40px;">
 
-      <!-- Accent bar -->
-      <div class="accent-bar"></div>
+      <p style="font-size:17px;font-weight:700;color:#1e293b;margin-bottom:8px;">Hey ${firstName}! 👋</p>
+      <p style="font-size:14px;color:#64748b;line-height:1.8;margin-bottom:8px;">
+        We received a request to reset the Password for your CampusConnect account.
+      </p>
+      <p style="font-size:14px;color:#64748b;line-height:1.8;margin-bottom:28px;">
+        Account: <span style="background:#f5f3ff;border:1px solid #ddd6fe;border-radius:6px;padding:2px 10px;color:#6d28d9;font-weight:700;font-family:monospace;font-size:13px;">${toEmail}</span>
+      </p>
 
-      <!-- Hero -->
-      <div class="hero">
-        <!-- Logo -->
-        <div class="logo-wrap">
-          <div class="logo-outer">
-            <div class="logo-inner">
-              <span class="logo-text">CC</span>
-            </div>
-          </div>
-        </div>
-        <span class="brand-name">CampusConnect</span>
-        <div class="icon-circle">🔐</div>
-        <h1 class="hero-title">Reset Your<br/><span>Password</span></h1>
-        <p class="hero-subtitle">A request was made to reset your account password</p>
+      <!-- CTA -->
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px;">
+        <tr><td align="center">
+          <a href="${resetLink}" style="display:inline-block;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#ffffff;text-decoration:none;padding:16px 44px;border-radius:10px;font-size:15px;font-weight:700;box-shadow:0 4px 16px rgba(79,70,229,0.4);">
+            🔐 &nbsp;Reset My Password
+          </a>
+        </td></tr>
+      </table>
+
+      <!-- Steps -->
+      <p style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#94a3b8;margin-bottom:12px;">How it works</p>
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;">
+        <tr>
+          <td style="width:33%;padding:14px 10px;text-align:center;border-right:1px solid #e2e8f0;">
+            <div style="width:28px;height:28px;background:linear-gradient(135deg,#4f46e5,#7c3aed);border-radius:50%;font-size:12px;font-weight:800;color:#fff;text-align:center;line-height:28px;margin:0 auto 8px;">1</div>
+            <p style="font-size:12px;color:#1e293b;font-weight:600;">Click button</p>
+          </td>
+          <td style="width:33%;padding:14px 10px;text-align:center;border-right:1px solid #e2e8f0;">
+            <div style="width:28px;height:28px;background:linear-gradient(135deg,#4f46e5,#7c3aed);border-radius:50%;font-size:12px;font-weight:800;color:#fff;text-align:center;line-height:28px;margin:0 auto 8px;">2</div>
+            <p style="font-size:12px;color:#1e293b;font-weight:600;">New Password</p>
+          </td>
+          <td style="width:33%;padding:14px 10px;text-align:center;">
+            <div style="width:28px;height:28px;background:linear-gradient(135deg,#4f46e5,#7c3aed);border-radius:50%;font-size:12px;font-weight:800;color:#fff;text-align:center;line-height:28px;margin:0 auto 8px;">3</div>
+            <p style="font-size:12px;color:#1e293b;font-weight:600;">Sign in</p>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Expiry notice -->
+      <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:16px 18px;margin-bottom:24px;">
+        <table width="100%" cellpadding="0" cellspacing="0"><tr>
+          <td style="width:34px;vertical-align:middle;font-size:22px;">⏰</td>
+          <td style="vertical-align:middle;padding-left:10px;">
+            <p style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:2px;">Expires in 1 hour</p>
+            <p style="font-size:12px;color:#a16207;line-height:1.5;">After expiry, request a new reset link from the login page.</p>
+          </td>
+        </tr></table>
       </div>
 
-      <!-- Body -->
-      <div class="body">
-        <p class="greeting">Hey ${firstName}! 👋</p>
-        <p class="message">
-          We received a password reset request for your CampusConnect account
-          linked to <span class="email-pill">${toEmail}</span>.<br/><br/>
-          No worries — it happens! Just click the button below and you'll be back
-          on campus in no time.
-        </p>
-
-        <!-- CTA -->
-        <div class="btn-outer">
-          <div class="btn-container">
-            <a href="${resetLink}" class="btn">Reset My Password &rarr;</a>
-          </div>
-        </div>
-
-        <!-- Steps -->
-        <p class="steps-label">How it works</p>
-        <table width="100%" cellpadding="0" cellspacing="0" style="border-radius:14px;overflow:hidden;border:1px solid rgba(255,255,255,0.06);margin-bottom:36px;">
-          <tr>
-            <td style="width:33.3%;padding:16px 14px;text-align:center;background:rgba(255,255,255,0.02);border-right:1px solid rgba(255,255,255,0.05);">
-              <div style="width:28px;height:28px;background:linear-gradient(135deg,#7c3aed,#6366f1);border-radius:50%;font-size:12px;font-weight:700;color:#fff;text-align:center;line-height:28px;margin:0 auto 8px;">1</div>
-              <p style="font-size:11px;color:#94a3b8;font-weight:600;margin-bottom:2px;">Click button</p>
-              <p style="font-size:11px;color:#475569;">Above link opens</p>
-            </td>
-            <td style="width:33.3%;padding:16px 14px;text-align:center;background:rgba(255,255,255,0.02);border-right:1px solid rgba(255,255,255,0.05);">
-              <div style="width:28px;height:28px;background:linear-gradient(135deg,#7c3aed,#6366f1);border-radius:50%;font-size:12px;font-weight:700;color:#fff;text-align:center;line-height:28px;margin:0 auto 8px;">2</div>
-              <p style="font-size:11px;color:#94a3b8;font-weight:600;margin-bottom:2px;">New password</p>
-              <p style="font-size:11px;color:#475569;">Choose a strong one</p>
-            </td>
-            <td style="width:33.3%;padding:16px 14px;text-align:center;background:rgba(255,255,255,0.02);">
-              <div style="width:28px;height:28px;background:linear-gradient(135deg,#7c3aed,#6366f1);border-radius:50%;font-size:12px;font-weight:700;color:#fff;text-align:center;line-height:28px;margin:0 auto 8px;">3</div>
-              <p style="font-size:11px;color:#94a3b8;font-weight:600;margin-bottom:2px;">Sign in</p>
-              <p style="font-size:11px;color:#475569;">Back on campus!</p>
-            </td>
-          </tr>
-        </table>
-
-        <!-- Expiry notice -->
-        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
-          <tr>
-            <td style="background:linear-gradient(135deg,rgba(245,158,11,0.06),rgba(251,191,36,0.04));border:1px solid rgba(245,158,11,0.18);border-radius:14px;padding:18px 20px;">
-              <table width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td style="width:44px;vertical-align:top;">
-                    <div style="width:36px;height:36px;background:rgba(245,158,11,0.1);border-radius:10px;text-align:center;line-height:36px;font-size:18px;">⏰</div>
-                  </td>
-                  <td style="vertical-align:top;padding-left:12px;">
-                    <p style="font-size:13px;font-weight:700;color:#fbbf24;margin-bottom:4px;">Expires in 1 hour</p>
-                    <p style="font-size:12px;color:rgba(251,191,36,0.6);line-height:1.5;">This reset link will expire after one hour for your security. After that, you'll need to request a new one from the login page.</p>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-        </table>
-
-        <!-- Link fallback -->
-        <div class="link-box">
-          <p class="link-box-label">Or copy this link</p>
-          <a href="${resetLink}">${resetLink}</a>
-        </div>
-
-        <!-- Divider -->
-        <div class="divider"></div>
-        <p class="ignore-note">
-          🛡️ &nbsp;Didn't request a password reset?<br/>
-          <span style="color:#1e40af;color:#334155;">Your account is safe — just ignore this email. No changes will be made.</span>
-        </p>
+      <!-- Link fallback -->
+      <div style="background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;margin-bottom:24px;">
+        <p style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#94a3b8;margin-bottom:8px;">Button not working? Copy this link</p>
+        <a href="${resetLink}" style="font-size:11px;color:#6d28d9;word-break:break-all;text-decoration:none;line-height:1.6;">${resetLink}</a>
       </div>
 
-      <!-- Footer -->
-      <div class="footer">
-        <div class="footer-badges">
-          <span class="badge badge-green">🔒 Firebase Secured</span>
-          <span class="badge badge-blue">✉️ Official Email</span>
-        </div>
-        <p class="footer-copy">
-          Sent by CampusConnect &middot; <a href="mailto:${process.env.EMAIL_USER}">${process.env.EMAIL_USER}</a>
-        </p>
-        <div class="footer-divider"></div>
-        <p class="footer-legal">
-          &copy; ${year} CampusConnect. All rights reserved.<br/>
-          You're receiving this because a password reset was requested for your account.
-        </p>
-      </div>
-
+      <!-- Ignore note -->
+      <p style="font-size:12px;color:#94a3b8;text-align:center;line-height:1.7;">
+        🛡️ Didn't request a password reset? <strong style="color:#64748b;">Just ignore this email</strong> — your account is safe.
+      </p>
     </div>
-  </div>
+  `)}
 </body>
 </html>`;
 
-  const mailOptions = {
+  await transporter.sendMail({
     from: `"CampusConnect" <${process.env.EMAIL_USER}>`,
     to: toEmail,
-    subject: '🔐 Reset your CampusConnect password',
-    html: htmlTemplate,
-    text: `Hi ${firstName},
-
-A password reset was requested for your CampusConnect account (${toEmail}).
-
-Reset your password here (link expires in 1 hour):
-${resetLink}
-
-If you didn't request this, you can safely ignore this email.
-
-— CampusConnect Team`,
-  };
-
-  const info = await transporter.sendMail(mailOptions);
-  console.log(`✅ Password reset email sent to ${toEmail} [${info.messageId}]`);
-  return info;
+    subject: '🔐 Reset your CampusConnect Password',
+    html,
+    attachments: [logoAttachment],
+    text: `Hi ${firstName},\n\nReset your CampusConnect Password (expires in 1 hour):\n${resetLink}\n\nIgnore this if you didn't request it.\n\n— CampusConnect`,
+  });
 };
 
-// ─────────────────────────────────────────────
+
+// ═══════════════════════════════════════════════════════════════════════════
 // WELCOME EMAIL — sent once on first registration
-// ─────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
 const sendWelcomeEmail = async (toEmail, displayName = '', username = '') => {
   const transporter = createTransporter();
   const firstName = displayName ? displayName.split(' ')[0] : 'there';
-  const year = new Date().getFullYear();
+  const handle = username || toEmail.split('@')[0];
 
   const features = [
-    { icon: '📢', title: 'Campus Feed', desc: 'Post updates, share memes, ask questions — your campus timeline lives here.' },
-    { icon: '📊', title: 'Live Polls', desc: 'Create polls and get instant reactions from your entire campus community.' },
-    { icon: '🎉', title: 'Events', desc: 'Discover fests, workshops, and club events. RSVP in one tap.' },
-    { icon: '🏆', title: 'Leaderboard', desc: 'Earn reputation points by contributing. Climb the campus rankings.' },
-    { icon: '💬', title: 'Direct Messages', desc: 'Chat privately with classmates and club members.' },
-    { icon: '🤖', title: 'AI Assistant', desc: 'Powered by Gemini AI — get smart summaries, suggestions, and more.' },
+    { icon: '📢', title: 'Campus Feed',     desc: 'Post updates, share memes, ask questions — your campus timeline.' },
+    { icon: '📊', title: 'Live Polls',      desc: 'Create polls and get instant reactions from the campus.' },
+    { icon: '🎉', title: 'Events',          desc: 'Discover fests, workshops and club events. RSVP in one tap.' },
+    { icon: '🏆', title: 'Leaderboard',     desc: 'Earn reputation points. Climb the campus rankings.' },
+    { icon: '💬', title: 'Messages',        desc: 'Chat privately with classmates and club members.' },
+    { icon: '🤖', title: 'AI Assistant',    desc: 'Powered by Gemini AI — smart summaries and suggestions.' },
   ];
 
   const featureRows = features.map(f => `
     <tr>
       <td style="padding:0 0 16px 0;">
-        <table width="100%" cellpadding="0" cellspacing="0">
-          <tr>
-            <td style="width:52px;vertical-align:top;">
-              <div style="width:44px;height:44px;background:linear-gradient(135deg,rgba(124,58,237,0.15),rgba(99,102,241,0.15));border:1px solid rgba(139,92,246,0.2);border-radius:12px;text-align:center;line-height:44px;font-size:20px;">${f.icon}</div>
-            </td>
-            <td style="vertical-align:top;padding-left:14px;">
-              <p style="font-size:14px;font-weight:700;color:#f1f5f9;margin:0 0 3px;">${f.title}</p>
-              <p style="font-size:13px;color:#64748b;margin:0;line-height:1.5;">${f.desc}</p>
-            </td>
-          </tr>
-        </table>
+        <table width="100%" cellpadding="0" cellspacing="0"><tr>
+          <td style="width:48px;vertical-align:top;">
+            <div style="width:40px;height:40px;background:#f5f3ff;border:1px solid #ddd6fe;border-radius:10px;text-align:center;line-height:40px;font-size:19px;">${f.icon}</div>
+          </td>
+          <td style="vertical-align:middle;padding-left:14px;">
+            <p style="font-size:14px;font-weight:700;color:#1e293b;margin:0 0 2px;">${f.title}</p>
+            <p style="font-size:12px;color:#64748b;margin:0;line-height:1.5;">${f.desc}</p>
+          </td>
+        </tr></table>
       </td>
     </tr>
   `).join('');
 
-  const htmlTemplate = `<!DOCTYPE html>
+  const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Welcome to CampusConnect!</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-    * { margin:0; padding:0; box-sizing:border-box; }
-    body { font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:#070714; }
-    .preheader { display:none !important; max-height:0; overflow:hidden; }
-  </style>
+  <style>${sharedStyles}</style>
 </head>
 <body>
-  <span class="preheader">Welcome to CampusConnect, ${firstName}! Your campus life starts here. Explore your feed, join events, and connect with your college community.</span>
+  <span class="pre">Welcome to CampusConnect, ${firstName}! Your campus life starts here.</span>
+  ${wrap(`
+    ${header('Welcome aboard,<br/>' + firstName + '! 🎓', "You've joined your campus community — let's get you started")}
 
-  <div style="background:#070714;padding:48px 16px;">
-    <div style="max-width:580px;margin:0 auto;background:#0d0d1f;border-radius:24px;overflow:hidden;border:1px solid rgba(139,92,246,0.15);box-shadow:0 32px 64px rgba(0,0,0,0.6);">
+    <!-- Stats strip -->
+    <table width="100%" cellpadding="0" cellspacing="0" style="border-bottom:1px solid #f1f5f9;">
+      <tr>
+        <td style="width:33%;padding:16px 0;text-align:center;border-right:1px solid #f1f5f9;">
+          <p style="font-size:20px;font-weight:800;color:#4f46e5;margin-bottom:2px;">6+</p>
+          <p style="font-size:10px;color:#94a3b8;letter-spacing:1px;text-transform:uppercase;">Features</p>
+        </td>
+        <td style="width:33%;padding:16px 0;text-align:center;border-right:1px solid #f1f5f9;">
+          <p style="font-size:20px;font-weight:800;color:#7c3aed;margin-bottom:2px;">∞</p>
+          <p style="font-size:10px;color:#94a3b8;letter-spacing:1px;text-transform:uppercase;">Connections</p>
+        </td>
+        <td style="width:33%;padding:16px 0;text-align:center;">
+          <p style="font-size:20px;font-weight:800;color:#059669;margin-bottom:2px;">AI</p>
+          <p style="font-size:10px;color:#94a3b8;letter-spacing:1px;text-transform:uppercase;">Powered</p>
+        </td>
+      </tr>
+    </table>
 
-      <!-- Accent bar -->
-      <div style="height:4px;background:linear-gradient(90deg,#7c3aed,#6366f1,#a855f7,#6366f1,#7c3aed);"></div>
+    <!-- Body -->
+    <div style="padding:36px 40px;">
 
-      <!-- Hero -->
-      <div style="padding:52px 40px 40px;text-align:center;background:radial-gradient(ellipse 90% 60% at 50% 0%,rgba(109,40,217,0.2) 0%,transparent 70%);border-bottom:1px solid rgba(255,255,255,0.05);">
-        <!-- Logo -->
-        <div style="width:80px;height:80px;background:linear-gradient(135deg,rgba(124,58,237,0.25),rgba(99,102,241,0.25));border-radius:22px;border:1.5px solid rgba(139,92,246,0.35);margin:0 auto 12px;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 32px rgba(124,58,237,0.2),inset 0 1px 0 rgba(255,255,255,0.08);">
-          <div style="width:54px;height:54px;background:linear-gradient(135deg,#7c3aed,#4f46e5);border-radius:14px;text-align:center;line-height:54px;">
-            <span style="font-size:20px;font-weight:800;color:#fff;">CC</span>
-          </div>
-        </div>
-        <span style="display:block;font-size:11px;font-weight:700;letter-spacing:3px;color:rgba(167,139,250,0.6);text-transform:uppercase;margin-bottom:24px;">CampusConnect</span>
+      <p style="font-size:14px;color:#64748b;line-height:1.8;margin-bottom:8px;">
+        Hey <strong style="color:#1e293b;">${firstName}</strong>, your account
+        <span style="background:#f5f3ff;border:1px solid #ddd6fe;border-radius:6px;padding:2px 10px;color:#6d28d9;font-weight:700;font-family:monospace;font-size:12px;">@${handle}</span>
+        is all set. Here's everything waiting for you:
+      </p>
 
-        <!-- Party popper animation row -->
-        <div style="font-size:40px;margin-bottom:18px;">🎓</div>
+      <div style="height:1px;background:#f1f5f9;margin:24px 0;"></div>
 
-        <h1 style="font-size:32px;font-weight:800;color:#f8fafc;letter-spacing:-0.8px;line-height:1.2;margin-bottom:12px;">Welcome aboard,<br/><span style="background:linear-gradient(135deg,#a78bfa,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">${firstName}!</span></h1>
-        <p style="font-size:15px;color:#64748b;line-height:1.6;max-width:380px;margin:0 auto;">You've joined a platform built for your campus community. Your college life just got a whole lot better.</p>
-      </div>
+      <p style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#94a3b8;margin-bottom:16px;">What you can do</p>
+      <table width="100%" cellpadding="0" cellspacing="0">${featureRows}</table>
 
-      <!-- Quick stats strip -->
-      <table width="100%" cellpadding="0" cellspacing="0" style="border-bottom:1px solid rgba(255,255,255,0.05);">
+      <div style="height:1px;background:#f1f5f9;margin:8px 0 24px;"></div>
+
+      <!-- CTA -->
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+        <tr><td align="center">
+          <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}" style="display:inline-block;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#ffffff;text-decoration:none;padding:16px 48px;border-radius:10px;font-size:15px;font-weight:700;box-shadow:0 4px 16px rgba(79,70,229,0.4);">
+            Go to CampusConnect &rarr;
+          </a>
+        </td></tr>
+      </table>
+
+      <!-- Tips -->
+      <table width="100%" cellpadding="0" cellspacing="0">
         <tr>
-          <td style="width:33.3%;padding:20px 0;text-align:center;border-right:1px solid rgba(255,255,255,0.05);">
-            <p style="font-size:22px;font-weight:800;color:#a78bfa;margin-bottom:2px;">6+</p>
-            <p style="font-size:11px;color:#475569;">Features</p>
+          <td style="width:50%;padding-right:8px;vertical-align:top;">
+            <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px;">
+              <p style="font-size:12px;font-weight:700;color:#16a34a;margin-bottom:5px;">✅ Pro tip</p>
+              <p style="font-size:11px;color:#4b5563;line-height:1.5;">Complete your profile to get discovered by peers.</p>
+            </div>
           </td>
-          <td style="width:33.3%;padding:20px 0;text-align:center;border-right:1px solid rgba(255,255,255,0.05);">
-            <p style="font-size:22px;font-weight:800;color:#818cf8;margin-bottom:2px;">∞</p>
-            <p style="font-size:11px;color:#475569;">Connections</p>
-          </td>
-          <td style="width:33.3%;padding:20px 0;text-align:center;">
-            <p style="font-size:22px;font-weight:800;color:#c4b5fd;margin-bottom:2px;">AI</p>
-            <p style="font-size:11px;color:#475569;">Powered</p>
+          <td style="width:50%;padding-left:8px;vertical-align:top;">
+            <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:14px;">
+              <p style="font-size:12px;font-weight:700;color:#2563eb;margin-bottom:5px;">🔔 Stay updated</p>
+              <p style="font-size:11px;color:#4b5563;line-height:1.5;">Enable notifications to never miss events or polls.</p>
+            </div>
           </td>
         </tr>
       </table>
 
-      <!-- Body -->
-      <div style="padding:40px 40px 32px;">
-
-        <!-- Greeting -->
-        <p style="font-size:15px;color:#94a3b8;line-height:1.75;margin-bottom:36px;">
-          Hey <strong style="color:#f1f5f9;">${firstName}</strong>, your account <span style="background:rgba(139,92,246,0.12);border:1px solid rgba(139,92,246,0.25);border-radius:6px;padding:2px 8px;color:#c4b5fd;font-weight:600;font-family:'Courier New',monospace;font-size:13px;">@${username || toEmail.split('@')[0]}</span> is all set. Here's everything waiting for you:
-        </p>
-
-        <!-- Feature label -->
-        <p style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#334155;margin-bottom:20px;">What you can do</p>
-
-        <!-- Features table -->
-        <table width="100%" cellpadding="0" cellspacing="0">
-          ${featureRows}
-        </table>
-
-        <!-- Divider -->
-        <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.07),transparent);margin:28px 0;"></div>
-
-        <!-- CTA Button -->
-        <p style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#334155;text-align:center;margin-bottom:18px;">Ready to dive in?</p>
-        <table width="100%" cellpadding="0" cellspacing="0">
-          <tr>
-            <td align="center">
-              <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}" style="display:inline-block;background:linear-gradient(135deg,#7c3aed 0%,#6366f1 100%);color:#ffffff;text-decoration:none;padding:18px 56px;border-radius:14px;font-size:16px;font-weight:700;letter-spacing:0.2px;box-shadow:0 8px 32px rgba(124,58,237,0.35);">Go to CampusConnect &rarr;</a>
-            </td>
-          </tr>
-        </table>
-
-        <!-- Divider -->
-        <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.07),transparent);margin:28px 0;"></div>
-
-        <!-- Tips row -->
-        <table width="100%" cellpadding="0" cellspacing="0">
-          <tr>
-            <td style="width:50%;padding-right:10px;vertical-align:top;">
-              <div style="background:rgba(16,185,129,0.05);border:1px solid rgba(16,185,129,0.15);border-radius:12px;padding:16px;">
-                <p style="font-size:13px;font-weight:700;color:#34d399;margin-bottom:6px;">✅ Pro tip</p>
-                <p style="font-size:12px;color:#475569;line-height:1.5;">Complete your profile to boost your campus reputation and get discovered by peers.</p>
-              </div>
-            </td>
-            <td style="width:50%;padding-left:10px;vertical-align:top;">
-              <div style="background:rgba(99,102,241,0.05);border:1px solid rgba(99,102,241,0.15);border-radius:12px;padding:16px;">
-                <p style="font-size:13px;font-weight:700;color:#818cf8;margin-bottom:6px;">🔔 Stay updated</p>
-                <p style="font-size:12px;color:#475569;line-height:1.5;">Enable notifications in Settings to never miss an event or poll on your campus.</p>
-              </div>
-            </td>
-          </tr>
-        </table>
-
-      </div>
-
-      <!-- Footer -->
-      <div style="padding:28px 40px;border-top:1px solid rgba(255,255,255,0.04);background:rgba(0,0,0,0.3);">
-        <div style="text-align:center;margin-bottom:16px;">
-          <span style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:500;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.18);color:#34d399;margin-right:8px;">🔒 Firebase Secured</span>
-          <span style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:500;background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.18);color:#818cf8;">✉️ Official Email</span>
-        </div>
-        <p style="text-align:center;font-size:12px;color:#334155;line-height:1.7;">
-          Sent by CampusConnect &middot; <a href="mailto:${process.env.EMAIL_USER}" style="color:#4f46e5;text-decoration:none;">${process.env.EMAIL_USER}</a>
-        </p>
-        <div style="height:1px;background:rgba(255,255,255,0.04);margin:14px 0;"></div>
-        <p style="text-align:center;font-size:11px;color:#1e293b;line-height:1.6;">
-          &copy; ${year} CampusConnect. All rights reserved.<br/>
-          You received this because you just created an account on CampusConnect.
-        </p>
-      </div>
-
     </div>
-  </div>
+  `)}
 </body>
 </html>`;
 
-  const mailOptions = {
+  await transporter.sendMail({
     from: `"CampusConnect" <${process.env.EMAIL_USER}>`,
     to: toEmail,
     subject: `🎓 Welcome to CampusConnect, ${firstName}!`,
-    html: htmlTemplate,
-    text: `Hi ${firstName},\n\nWelcome to CampusConnect! Your account (@${username || toEmail.split('@')[0]}) is all set.\n\nHere's what you can do:\n• Campus Feed — post updates and connect\n• Live Polls — get instant community reactions\n• Events — discover fests and workshops\n• Leaderboard — earn reputation points\n• Direct Messages — chat with classmates\n• AI Assistant — powered by Gemini AI\n\nVisit us at: ${process.env.FRONTEND_URL || 'http://localhost:3000'}\n\n— CampusConnect Team`,
-  };
-
-  const info = await transporter.sendMail(mailOptions);
-  console.log(`🎓 Welcome email sent to ${toEmail} [${info.messageId}]`);
-  return info;
+    html,
+    attachments: [logoAttachment],
+    text: `Hi ${firstName},\n\nWelcome to CampusConnect! Your account (@${handle}) is all set.\n\nVisit: ${process.env.FRONTEND_URL || 'http://localhost:3000'}\n\n— CampusConnect`,
+  });
 };
 
-module.exports = { sendPasswordResetEmail, sendWelcomeEmail };
 
+module.exports = { sendPasswordResetEmail, sendWelcomeEmail };

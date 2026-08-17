@@ -200,13 +200,6 @@ router.post('/', requireAuth, upload.single('image'), validatePost, async (req, 
     // Convert string boolean to actual boolean
     const isAnonymousPost = isAnonymous === 'true' || isAnonymous === true;
     
-    console.log('🔍 Post creation debug:', {
-      receivedIsAnonymous: isAnonymous,
-      typeOfIsAnonymous: typeof isAnonymous,
-      convertedIsAnonymousPost: isAnonymousPost,
-      userName: userName,
-      userId: userId
-    });
 
     // Moderate content using Gemini AI
     const moderation = await geminiService.moderateContent(content);
@@ -246,8 +239,6 @@ router.post('/', requireAuth, upload.single('image'), validatePost, async (req, 
     // Handle image upload if present
     if (req.file) {
       try {
-        console.log('Processing image upload...');
-        
         // Validate the image
         if (!imageService.validateImage(req.file.buffer, req.file.mimetype)) {
           return res.status(400).json({
@@ -271,8 +262,6 @@ router.post('/', requireAuth, upload.single('image'), validatePost, async (req, 
           uploadedAt: imageData.uploadedAt
         };
         postData.hasImage = true;
-        
-        console.log(`Image processed successfully: ${imageData.size} bytes`);
       } catch (uploadError) {
         console.error('Failed to process image:', uploadError);
         return res.status(400).json({
@@ -309,8 +298,6 @@ router.post('/', requireAuth, upload.single('image'), validatePost, async (req, 
               postCount: currentPostCount + 1,
               lastActive: new Date()
             });
-            console.log(`📈 Post creation: User ${userId} earned +5 reputation (${currentReputation} → ${currentReputation + 5}) and postCount updated (${currentPostCount} → ${currentPostCount + 1})`);
-            
             // Emit user update via WebSocket
             if (req.app.get('io')) {
               req.app.get('io').emit('user_updated', {
@@ -321,7 +308,6 @@ router.post('/', requireAuth, upload.single('image'), validatePost, async (req, 
             }
           }
         } else {
-          console.log(`🚫 Demo user ${userId} - no reputation awarded for post creation`);
         }
       } catch (reputationError) {
         console.error('Error updating reputation for post creation:', reputationError);
@@ -468,14 +454,10 @@ router.post('/:id/like', requireAuth, async (req, res) => {
         const authorData = authorDoc.data();
         const newReputation = (authorData.reputation || 0) + reputationChange;
         
-        console.log(`📈 Updating reputation for user ${postData.userId}: ${authorData.reputation || 0} + ${reputationChange} = ${newReputation}`);
-        
         transaction.update(authorRef, {
           reputation: newReputation,
           lastActive: new Date()
         });
-      } else if (reputationChange > 0 && postData.userId && postData.userId !== userId) {
-        console.log(`🚫 Demo user ${postData.userId} - no reputation awarded for like`);
       }
 
       return { likes, reputationChange, isLiked };
@@ -483,14 +465,6 @@ router.post('/:id/like', requireAuth, async (req, res) => {
 
     // Use the transaction result for consistency
     const userHasLiked = result.isLiked;
-
-    // Log like/unlike operation
-    console.log(`${userHasLiked ? '👍' : '👎'} Post ${id} ${userHasLiked ? 'liked' : 'unliked'} by user ${userId}. New like count: ${result.likes}`);
-
-    // Log reputation changes
-    if (result.reputationChange > 0) {
-      console.log(`✨ Reputation +${result.reputationChange} awarded to post author for like`);
-    }
 
     // Emit real-time update
     if (req.app.get('io')) {
@@ -524,10 +498,6 @@ router.put('/:id', requireAuth, upload.single('image'), async (req, res) => {
   try {
     const db = getFirestore();
     const { id } = req.params;
-    
-    // Log the received data for debugging
-    console.log('Edit post request body:', req.body);
-    console.log('Edit post request file:', req.file);
     
     const { title, content, category, location, userId } = req.body;
     
