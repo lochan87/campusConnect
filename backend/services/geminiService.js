@@ -191,6 +191,42 @@ Comments: ${meme.commentCount || 0}
       };
     }
   }
+  async suggestCategory(content) {
+    const categories = ['general', 'announcements', 'lost_found', 'food', 'memes', 'events'];
+    try {
+      const prompt = `You are a campus social-media post classifier.
+Given the post below, choose the single best category from this list:
+${categories.join(', ')}
+
+Post: "${content.substring(0, 600)}"
+
+Rules:
+- announcements: official campus news, notices, admin updates
+- events: campus events, fests, workshops, seminars, competitions
+- lost_found: lost or found items on campus
+- food: canteen, food stalls, food recommendations, mess issues
+- memes: jokes, humour, meme content
+- general: anything else
+
+Respond with ONLY a raw JSON object, no markdown, no explanation:
+{"category": "<one of the categories above>"}`;
+
+      const result = await this.model.generateContent(prompt);
+      const response = await result.response;
+
+      const raw = response.text().trim();
+      const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+      const parsed = JSON.parse(cleaned);
+
+      if (parsed.category && categories.includes(parsed.category)) {
+        return parsed.category;
+      }
+      return 'general';
+    } catch (error) {
+      console.error('Error suggesting category:', error);
+      return 'general'; // safe fallback
+    }
+  }
 }
 
 module.exports = new GeminiService();

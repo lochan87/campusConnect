@@ -85,6 +85,18 @@ class SocketService {
       this.emit('postVoted', voteData);
     });
 
+    // Like count update — keeps all viewers in sync without a full refresh
+    this.socket.on('post_liked', (data) => {
+      console.log('❤️ Post liked/unliked:', data);
+      this.emit('postLiked', data);
+    });
+
+    // New event broadcast — mirrors post_created pattern
+    this.socket.on('event_created', (event) => {
+      console.log('🎉 New event created:', event);
+      this.emit('newEvent', event);
+    });
+
     // Poll events
     this.socket.on('poll_created', (poll) => {
       console.log('📊 New poll created:', poll);

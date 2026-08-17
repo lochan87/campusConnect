@@ -90,17 +90,11 @@ const CreatePost = () => {
     { value: 'general',        label: 'General' }
   ];
 
-  // Feature #18 — AI-Powered Post Categoriser (frontend keyword classifier)
+  // Feature #18 — AI-Powered Post Categoriser (real Gemini API call)
   const [aiClassifying, setAiClassifying] = useState(false);
+  const [aiSuggested, setAiSuggested] = useState(false); // track if category was AI-suggested
 
-  const CATEGORY_KEYWORDS = {
-    lost_found:    ['lost', 'found', 'missing', 'wallet', 'keys', 'bag', 'phone', 'id card', 'bottle', 'earphone', 'charger', 'return', 'belong'],
-    food:          ['food', 'eat', 'lunch', 'dinner', 'breakfast', 'canteen', 'mess', 'snack', 'hungry', 'pizza', 'biryani', 'cafe', 'restaurant', 'menu', 'coupon', 'meal'],
-    memes:         ['meme', 'funny', 'lol', 'hilarious', 'joke', 'laugh', 'roast', 'shitpost', 'relatable', 'mood', 'literally me', 'cope'],
-    announcements: ['announce', 'notice', 'important', 'deadline', 'exam', 'result', 'holiday', 'seminar', 'workshop', 'fest', 'event', 'register', 'date', 'schedule', 'update'],
-    general:       []
-  };
-
+  // Location keywords remain client-side (no latency needed for this)
   const LOCATION_KEYWORDS = {
     canteen:          ['canteen', 'food', 'eat', 'lunch', 'snack', 'hungry', 'mess', 'meal', 'dinner'],
     library:          ['library', 'book', 'study', 'read', 'borrow', 'return book', 'reference'],
@@ -115,31 +109,24 @@ const CreatePost = () => {
     conveno:          ['conveno', 'shop', 'store', 'stationery']
   };
 
-  const handleAiClassify = () => {
-    const text = `${formData.title} ${formData.content}`.toLowerCase();
-    if (!text.trim()) {
-      toast.error('Write a title or content first so I can classify it!');
+  const handleAiClassify = async () => {
+    const text = `${formData.title} ${formData.content}`.trim();
+    if (text.length < 15) {
+      toast.error('Write a bit more content first so AI can classify it!');
       return;
     }
 
     setAiClassifying(true);
+    try {
+      const response = await apiService.suggestCategory(text);
+      const pickedCategory = response.data?.category || 'general';
 
-    setTimeout(() => {
-      // Score each category
-      const categoryScores = Object.entries(CATEGORY_KEYWORDS).map(([cat, keywords]) => ({
-        cat,
-        score: keywords.filter(kw => text.includes(kw)).length
-      }));
-
-      const best = categoryScores.reduce((a, b) => b.score > a.score ? b : a);
-      const pickedCategory = best.score > 0 ? best.cat : 'general';
-
-      // Score each location
+      // Also run location keyword-matching client-side (fast, no cost)
+      const lowerText = text.toLowerCase();
       const locationScores = Object.entries(LOCATION_KEYWORDS).map(([loc, keywords]) => ({
         loc,
-        score: keywords.filter(kw => text.includes(kw)).length
+        score: keywords.filter(kw => lowerText.includes(kw)).length
       }));
-
       const bestLoc = locationScores.reduce((a, b) => b.score > a.score ? b : a);
       const pickedLocation = bestLoc.score > 0 ? bestLoc.loc : '';
 
@@ -148,6 +135,7 @@ const CreatePost = () => {
         category: pickedCategory,
         ...(pickedLocation && { location: pickedLocation })
       }));
+      setAiSuggested(true);
 
       const catLabel = categories.find(c => c.value === pickedCategory)?.label || pickedCategory;
       const locLabel = pickedLocation
@@ -155,12 +143,16 @@ const CreatePost = () => {
         : null;
 
       toast.success(
-        `🤖 Classified as "${catLabel}"${locLabel ? ` · ${locLabel}` : ''}`,
+        `✨ AI suggested "${catLabel}"${locLabel ? ` · ${locLabel}` : ''}`,
         { duration: 3000 }
       );
-
+    } catch (err) {
+      console.error('Category suggestion failed:', err);
+      toast('Could not reach AI — using General as fallback', { icon: '⚠️' });
+      setFormData(prev => ({ ...prev, category: 'general' }));
+    } finally {
       setAiClassifying(false);
-    }, 600); // brief artificial delay for feedback
+    }
   };
 
   const handleInputChange = (e) => {
@@ -380,15 +372,20 @@ const CreatePost = () => {
           {/* Category + AI Classify button */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label htmlFor="category" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label htmlFor="category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
                 Category <span className="text-red-500 dark:text-red-400">*</span>
+                {aiSuggested && (
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300">
+                    ✨ AI suggested
+                  </span>
+                )}
               </label>
               <button
                 type="button"
                 id="ai-classify-btn"
                 onClick={handleAiClassify}
                 disabled={aiClassifying}
-                title="Auto-detect category & location from your title and content"
+                title="Auto-detect category & location using Gemini AI"
                 className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold
                   bg-gradient-to-r from-violet-500 to-indigo-500 text-white
                   hover:from-violet-600 hover:to-indigo-600 active:scale-95
@@ -400,16 +397,16 @@ const CreatePost = () => {
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
                   </svg>
                 ) : (
-                  <span>🤖</span>
+                  <span>✨</span>
                 )}
-                <span>{aiClassifying ? 'Classifying…' : 'Auto-detect'}</span>
+                <span>{aiClassifying ? 'Asking AI…' : 'Auto-detect'}</span>
               </button>
             </div>
             <select
               id="category"
               name="category"
               value={formData.category}
-              onChange={handleInputChange}
+              onChange={(e) => { handleInputChange(e); setAiSuggested(false); }}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               required
             >

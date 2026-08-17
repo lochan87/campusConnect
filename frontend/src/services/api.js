@@ -192,13 +192,16 @@ export const apiService = {
   deleteUserAccount: () => api.delete('/users/delete-account'),
   
   // Leaderboard
-  getLeaderboardData: () => api.get('/leaderboard'),
+  getLeaderboardData: (campusId) => api.get('/leaderboard', { params: campusId ? { campusId } : {} }),
   
   // Stats
   getStats: (params = {}) => api.get('/stats', { params }),
 
   // Search
   search: (params = {}) => api.get('/search', { params }),
+
+  // AI Category Suggestion (Feature #18 — real Gemini call)
+  suggestCategory: (content) => api.post('/posts/suggest-category', { content }),
   
   // Comments (if implemented)
   getComments: (postId) => api.get(`/posts/${postId}/comments`),
@@ -232,19 +235,13 @@ export const createComment = (postId, commentData) => apiService.createComment(p
 export const deleteComment = (postId, commentId, userId) => apiService.deleteComment(postId, commentId, userId);
 
 // Utility functions
-export const uploadImage = async (file) => {
-  try {
-    const formData = new FormData();
-    formData.append('image', file);
-    
-    const response = await api.post('/upload/image', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
-    
-    return response.data.imageUrl;
-  } catch (error) {
-    throw new Error('Failed to upload image');
-  }
+// Images are embedded as base64 via FormData in createPost() / createEvent().
+// There is no standalone upload endpoint — pass the File object under the 'image'
+// or 'poster' key when calling those functions instead.
+export const uploadImage = async (_file) => {
+  throw new Error(
+    'uploadImage() is not supported. Pass the File directly to createPost() or createEvent() via FormData.'
+  );
 };
 
 export const validateImageFile = (file) => {

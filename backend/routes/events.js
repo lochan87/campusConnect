@@ -378,6 +378,11 @@ router.post('/', upload.single('poster'), async (req, res) => {
       createdAt: eventData.createdAt.toISOString()
     };
 
+    // Emit real-time event_created to campus room — mirrors post_created pattern
+    if (req.app.get('io')) {
+      req.app.get('io').to(`campus_${campusId}`).emit('event_created', newEvent);
+    }
+
     res.status(201).json({
       success: true,
       message: 'Event created successfully',

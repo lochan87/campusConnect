@@ -27,16 +27,17 @@ const isDemoUser = (userId, userData) => {
   return false;
 };
 
-// GET /api/leaderboard - Get top users by reputation and activity
+// GET /api/leaderboard - Get top users by reputation and activity (scoped to campus)
 router.get('/', async (req, res) => {
   try {
     console.log('📊 Fetching leaderboard data');
     const db = getFirestore();
-    
-    // Get more users to filter out demo users
+    const { campusId } = req.query; // scope to campus when provided
+
+    // Get more users to filter out demo users and apply campus scope
     const reputationQuery = db.collection('users')
       .orderBy('reputation', 'desc')
-      .limit(50); // Get more to filter out demos
+      .limit(100); // fetch extra to have room after filtering
     
     const reputationSnapshot = await reputationQuery.get();
     const topReputation = [];
@@ -47,6 +48,11 @@ router.get('/', async (req, res) => {
       // Skip demo users
       if (isDemoUser(doc.id, userData)) {
         console.log('🚫 Excluding demo user from leaderboard:', doc.id);
+        return;
+      }
+
+      // Scope to campus when a campusId is provided
+      if (campusId && userData.campusId && userData.campusId !== campusId) {
         return;
       }
       
@@ -70,7 +76,7 @@ router.get('/', async (req, res) => {
     // Get top users by post count
     const activityQuery = db.collection('users')
       .orderBy('postCount', 'desc')
-      .limit(50); // Get more to filter out demos
+      .limit(100);
     
     const activitySnapshot = await activityQuery.get();
     const mostActive = [];
@@ -80,6 +86,11 @@ router.get('/', async (req, res) => {
       
       // Skip demo users
       if (isDemoUser(doc.id, userData)) {
+        return;
+      }
+
+      // Scope to campus when a campusId is provided
+      if (campusId && userData.campusId && userData.campusId !== campusId) {
         return;
       }
       
@@ -100,7 +111,7 @@ router.get('/', async (req, res) => {
     // Limit to top 10 after filtering
     mostActive.splice(10);
 
-    console.log('✅ Leaderboard data fetched:', { topReputation: topReputation.length, mostActive: mostActive.length });
+    console.log('✅ Leaderboard data fetched:', { campusId: campusId || 'global', topReputation: topReputation.length, mostActive: mostActive.length });
 
     res.json({
       success: true,

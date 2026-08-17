@@ -18,7 +18,8 @@ const NOTIFICATION_ACTIONS = {
   REMOVE_NOTIFICATION: 'REMOVE_NOTIFICATION',
   CLEAR_NOTIFICATIONS: 'CLEAR_NOTIFICATIONS',
   SET_CONNECTION_STATUS: 'SET_CONNECTION_STATUS',
-  UPDATE_UNREAD_COUNT: 'UPDATE_UNREAD_COUNT'
+  UPDATE_UNREAD_COUNT: 'UPDATE_UNREAD_COUNT',
+  LOAD_SAVED: 'LOAD_SAVED'  // hydrate from localStorage on mount
 };
 
 // Reducer
@@ -74,6 +75,14 @@ const notificationReducer = (state, action) => {
         ...state,
         notifications: [],
         unreadCount: 0
+      };
+
+    // Hydrate state from localStorage without double-counting unread items
+    case NOTIFICATION_ACTIONS.LOAD_SAVED:
+      return {
+        ...state,
+        notifications: action.payload.notifications || [],
+        unreadCount: action.payload.unreadCount || 0
       };
 
     case NOTIFICATION_ACTIONS.SET_CONNECTION_STATUS:
@@ -230,6 +239,46 @@ export const NotificationProvider = ({ children }) => {
       socketService.off('notification', handleNotification);
     };
   }, [user]);
+
+  // --- localStorage persistence ---
+  const storageKey = user?.uid ? `cc_notifications_${user.uid}` : null;
+
+  // Load saved notifications from localStorage when user is available
+  useEffect(() => {
+    if (!storageKey) return;
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed.notifications) && parsed.notifications.length > 0) {
+          dispatch({ type: NOTIFICATION_ACTIONS.LOAD_SAVED, payload: parsed });
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to load saved notifications:', e);
+    }
+  }, [storageKey]);
+
+  // Persist notifications to localStorage whenever they change
+  useEffect(() => {
+    if (!storageKey) return;
+    try {
+      if (state.notifications.length === 0) {
+        // If cleared, remove the key entirely so stale data doesn't return on next login
+        localStorage.removeItem(storageKey);
+      } else {
+        localStorage.setItem(
+          storageKey,
+          JSON.stringify({
+            notifications: state.notifications.slice(0, 50),
+            unreadCount: state.unreadCount
+          })
+        );
+      }
+    } catch (e) {
+      console.warn('Failed to save notifications:', e);
+    }
+  }, [state.notifications, state.unreadCount, storageKey]);
 
   // Add notification manually
   const addNotification = (notification) => {

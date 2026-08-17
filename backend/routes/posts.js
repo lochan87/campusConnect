@@ -22,6 +22,80 @@ const upload = multer({
   }
 });
 
+// GET /api/posts/summary/events - Get AI-generated event summary
+// IMPORTANT: must be registered BEFORE /:id to avoid being matched as id='summary'
+router.get('/summary/events', async (req, res) => {
+  try {
+    const db = getFirestore();
+    const { campusId } = req.query;
+
+    let query = db.collection('posts').where('category', '==', 'events');
+    
+    if (campusId) {
+      query = query.where('campusId', '==', campusId);
+    }
+
+    // Get recent events (last 7 days)
+    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    query = query.where('createdAt', '>=', weekAgo);
+
+    const snapshot = await query.get();
+    const eventPosts = [];
+
+    snapshot.forEach(doc => {
+      eventPosts.push({
+        id: doc.id,
+        ...doc.data()
+      });
+    });
+
+    const summary = await geminiService.generateEventSummary(eventPosts);
+
+    res.json({
+      success: true,
+      summary,
+      eventCount: eventPosts.length
+    });
+
+  } catch (error) {
+    console.error('Error generating event summary:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to generate event summary'
+    });
+  }
+});
+
+// POST /api/posts/suggest-category - AI-powered category suggestion
+// IMPORTANT: must be registered BEFORE /:id to avoid being matched as id='suggest-category'
+router.post('/suggest-category', async (req, res) => {
+  try {
+    const { content } = req.body;
+
+    if (!content || content.trim().length < 15) {
+      return res.status(400).json({
+        success: false,
+        error: 'Content must be at least 15 characters for category suggestion'
+      });
+    }
+
+    const category = await geminiService.suggestCategory(content.trim());
+
+    res.json({
+      success: true,
+      category
+    });
+
+  } catch (error) {
+    console.error('Error suggesting category:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to suggest category',
+      category: 'general' // always return a fallback
+    });
+  }
+});
+
 // GET /api/posts - Get all posts with filters
 router.get('/', async (req, res) => {
   try {
@@ -441,48 +515,6 @@ router.post('/:id/like', async (req, res) => {
   }
 });
 
-// GET /api/posts/summary/events - Get AI-generated event summary
-router.get('/summary/events', async (req, res) => {
-  try {
-    const db = getFirestore();
-    const { campusId } = req.query;
-
-    let query = db.collection('posts').where('category', '==', 'events');
-    
-    if (campusId) {
-      query = query.where('campusId', '==', campusId);
-    }
-
-    // Get recent events (last 7 days)
-    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-    query = query.where('createdAt', '>=', weekAgo);
-
-    const snapshot = await query.get();
-    const eventPosts = [];
-
-    snapshot.forEach(doc => {
-      eventPosts.push({
-        id: doc.id,
-        ...doc.data()
-      });
-    });
-
-    const summary = await geminiService.generateEventSummary(eventPosts);
-
-    res.json({
-      success: true,
-      summary,
-      eventCount: eventPosts.length
-    });
-
-  } catch (error) {
-    console.error('Error generating event summary:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to generate event summary'
-    });
-  }
-});
 
 // PUT /api/posts/:id - Edit a post (author only)
 router.put('/:id', upload.single('image'), async (req, res) => {

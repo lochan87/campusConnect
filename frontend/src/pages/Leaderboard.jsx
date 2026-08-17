@@ -60,7 +60,7 @@ const Leaderboard = () => {
       setLoading(true);
       console.log('🔄 Fetching leaderboard data...');
       
-      const response = await apiService.getLeaderboardData();
+      const response = await apiService.getLeaderboardData(user?.campusId);
       console.log('📊 Leaderboard data received:', response.data);
       
       if (response.data.success) {

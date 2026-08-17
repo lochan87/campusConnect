@@ -225,6 +225,10 @@ export const PostProvider = ({ children }) => {
       dispatch({ type: POST_ACTIONS.DELETE_POLL, payload: data.pollId });
     };
 
+    const handleNewEvent = (event) => {
+      dispatch({ type: POST_ACTIONS.ADD_EVENT, payload: event });
+    };
+
     const handleCommentAdded = (data) => {
       // Update the comment count for the post
       dispatch({
@@ -248,25 +252,28 @@ export const PostProvider = ({ children }) => {
     };
 
     // Register socket listeners
-    socketService.on('post_created', handleNewPost);
-    socketService.on('post_updated', handlePostUpdated);
-    socketService.on('post_deleted', handlePostDeleted);
-    socketService.on('post_liked', handlePostLiked);
-    socketService.on('poll_created', handleNewPoll);
-    socketService.on('poll_updated', handlePollUpdated);
-    socketService.on('poll_deleted', handlePollDeleted);
+    // NOTE: internal event names match what socket.js re-emits via this.emit(...)
+    socketService.on('newPost', handleNewPost);
+    socketService.on('postUpdated', handlePostUpdated);
+    socketService.on('postDeleted', handlePostDeleted);
+    socketService.on('postLiked', handlePostLiked);   // fixed: was 'post_liked'
+    socketService.on('newPoll', handleNewPoll);
+    socketService.on('pollUpdated', handlePollUpdated);
+    socketService.on('pollDeleted', handlePollDeleted);
+    socketService.on('newEvent', handleNewEvent);     // new: real-time event_created
     socketService.on('comment_added', handleCommentAdded);
     socketService.on('comment_deleted', handleCommentDeleted);
 
     // Cleanup
     return () => {
-      socketService.off('post_created', handleNewPost);
-      socketService.off('post_updated', handlePostUpdated);
-      socketService.off('post_deleted', handlePostDeleted);
-      socketService.off('post_liked', handlePostLiked);
-      socketService.off('poll_created', handleNewPoll);
-      socketService.off('poll_updated', handlePollUpdated);
-      socketService.off('poll_deleted', handlePollDeleted);
+      socketService.off('newPost', handleNewPost);
+      socketService.off('postUpdated', handlePostUpdated);
+      socketService.off('postDeleted', handlePostDeleted);
+      socketService.off('postLiked', handlePostLiked);
+      socketService.off('newPoll', handleNewPoll);
+      socketService.off('pollUpdated', handlePollUpdated);
+      socketService.off('pollDeleted', handlePollDeleted);
+      socketService.off('newEvent', handleNewEvent);
       socketService.off('comment_added', handleCommentAdded);
       socketService.off('comment_deleted', handleCommentDeleted);
     };
