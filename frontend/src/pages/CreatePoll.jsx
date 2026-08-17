@@ -122,8 +122,6 @@ const CreatePoll = () => {
         pollData.userName = user.displayName || user.name || user.email;
       }
 
-      console.log('Creating poll with data:', pollData);
-
       const response = await apiService.createPoll(pollData);
       
       if (response.data.success) {

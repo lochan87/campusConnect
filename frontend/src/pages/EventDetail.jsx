@@ -65,8 +65,7 @@ const EventDetail = () => {
     const fetchEvent = async () => {
       try {
         const response = await getEvent(eventId, user?.uid);
-        console.log('Event response:', response.data); // Debug log
-        setEvent(response.data.event); // Access the event property
+        setEvent(response.data.event);
       } catch (error) {
         console.error('Error fetching event:', error);
         toast.error('Failed to load event');

@@ -130,15 +130,6 @@ const EditPostModal = ({ post, isOpen, onClose }) => {
         postData.append('image', formData.image);
       }
 
-      console.log('Updating post data:', {
-        title: formData.title,
-        content: formData.content,
-        category: formData.category.toLowerCase().replace(' & ', '_').replace(' ', '_'),
-        location: formData.location,
-        isAnonymous: formData.isAnonymous,
-        hasNewImage: !!formData.image
-      });
-
       const result = await editPost(post.id, postData);
       
       if (result.success) {

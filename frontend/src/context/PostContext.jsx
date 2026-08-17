@@ -284,11 +284,7 @@ export const PostProvider = ({ children }) => {
     if (state.loading || !user?.campusId) return;
     
     try {
-      // Reduced logging for better performance
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🔄 Fetching posts..., loadMore:', loadMore);
-      }
-      
+
       if (!loadMore) {
         dispatch({ type: POST_ACTIONS.SET_LOADING, payload: true });
         dispatch({ type: POST_ACTIONS.RESET_PAGINATION });

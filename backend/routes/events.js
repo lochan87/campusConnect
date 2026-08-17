@@ -204,8 +204,8 @@ router.get('/:eventId', async (req, res) => {
   }
 });
 
-// Create new event
-router.post('/', upload.single('poster'), async (req, res) => {
+// Create new event (auth required)
+router.post('/', requireAuth, upload.single('poster'), async (req, res) => {
   try {
     const {
       title,
@@ -558,8 +558,8 @@ router.delete('/:eventId', requireAuth, async (req, res) => {
   }
 });
 
-// POST /api/events/:eventId/report - Report an event
-router.post('/:eventId/report', async (req, res) => {
+// POST /api/events/:eventId/report (auth required)
+router.post('/:eventId/report', requireAuth, async (req, res) => {
   try {
     const db = getFirestore();
     const { eventId } = req.params;
@@ -630,8 +630,8 @@ router.post('/:eventId/report', async (req, res) => {
   }
 });
 
-// Like/Unlike event
-router.post('/:id/like', async (req, res) => {
+// Like/Unlike event (auth required)
+router.post('/:id/like', requireAuth, async (req, res) => {
   try {
     const db = getFirestore();
     const { id } = req.params;
@@ -764,8 +764,8 @@ router.get('/:id/comments', async (req, res) => {
   }
 });
 
-// POST /api/events/:id/comments - Add a comment to an event
-router.post('/:id/comments', async (req, res) => {
+// POST /api/events/:id/comments (auth required)
+router.post('/:id/comments', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const { content, userId, isAnonymous = false } = req.body;
@@ -882,8 +882,8 @@ router.post('/:id/comments', async (req, res) => {
   }
 });
 
-// DELETE /api/events/:eventId/comments/:commentId - Delete a comment
-router.delete('/:eventId/comments/:commentId', async (req, res) => {
+// DELETE /api/events/:eventId/comments/:commentId (auth required)
+router.delete('/:eventId/comments/:commentId', requireAuth, async (req, res) => {
   try {
     const { eventId, commentId } = req.params;
     const { userId } = req.body;

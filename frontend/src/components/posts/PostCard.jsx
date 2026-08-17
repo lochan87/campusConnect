@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { FiHeart, FiMessageCircle, FiShare2, FiMapPin, FiClock, FiMoreHorizontal, FiEdit2, FiTrash2, FiFlag } from 'react-icons/fi';
@@ -455,5 +455,14 @@ const PostCard = ({ post, currentUser, onLike, onShare, onEdit, onDelete }) => {
     </motion.div>
   );
 };
-
-export default PostCard;
+// Wrap in memo — prevents re-render when parent state changes but this post's data hasn't changed
+export default memo(PostCard, (prev, next) => {
+  return (
+    prev.post.id === next.post.id &&
+    prev.post.likes === next.post.likes &&
+    prev.post.userHasLiked === next.post.userHasLiked &&
+    prev.post.commentCount === next.post.commentCount &&
+    prev.post.content === next.post.content &&
+    prev.currentUser?.uid === next.currentUser?.uid
+  );
+});

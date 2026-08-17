@@ -230,23 +230,7 @@ const CreatePost = () => {
         postData.append('image', formData.image);
       }
 
-      console.log('Submitting post data:', {
-        title: formData.title,
-        content: formData.content,
-        category: formData.category,
-        location: formData.location,
-        isAnonymous: formData.isAnonymous,
-        isAnonymousString: formData.isAnonymous ? 'true' : 'false',
-        hasImage: !!formData.image,
-        userId: !formData.isAnonymous ? (user.uid || user.id) : null,
-        userName: !formData.isAnonymous ? (user.displayName || user.name || user.email) : null
-      });
-
       const response = await apiService.createPost(postData);
-      
-      console.log('Post creation response:', response);
-      console.log('Response data:', response.data);
-      console.log('Response data success:', response.data.success);
       
       if (response.data && response.data.success) {
         toast.success('Post created successfully!');

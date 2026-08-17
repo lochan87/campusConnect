@@ -58,11 +58,9 @@ const Leaderboard = () => {
   const fetchLeaderboard = async () => {
     try {
       setLoading(true);
-      console.log('🔄 Fetching leaderboard data...');
-      
+
       const response = await apiService.getLeaderboardData(user?.campusId);
-      console.log('📊 Leaderboard data received:', response.data);
-      
+
       if (response.data.success) {
         setLeaderboardData(response.data.leaderboard);
       } else {

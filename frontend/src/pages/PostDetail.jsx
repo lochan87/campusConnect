@@ -76,7 +76,6 @@ const PostDetail = () => {
         // First check if the post exists in PostContext
         const contextPost = posts.find(p => p.id === postId);
         if (contextPost) {
-          console.log('Found post in context:', contextPost);
           setPost(contextPost);
           setLoading(false);
           return;
@@ -84,9 +83,7 @@ const PostDetail = () => {
         
         // If not found in context, fetch from API
         const response = await getPost(postId, user?.uid);
-        console.log('Post response:', response.data); // Debug log
-        console.log('Post commentCount from Firestore:', response.data.post?.commentCount); // Debug comment count
-        setPost(response.data.post); // Access the post property
+        setPost(response.data.post);
       } catch (error) {
         console.error('Error fetching post:', error);
         toast.error('Failed to load post');
@@ -105,10 +102,7 @@ const PostDetail = () => {
         const response = await getComments(postId);
         if (response.data.success) {
           const commentsData = response.data.comments || [];
-          console.log('Comments fetched:', commentsData);
-          console.log('Comments count:', commentsData.length);
-          console.log('Comment IDs:', commentsData.map(c => c.id));
-          
+
           // Filter out any duplicate comments by ID
           const uniqueComments = commentsData.filter((comment, index, self) => 
             index === self.findIndex(c => c.id === comment.id)
@@ -147,10 +141,6 @@ const PostDetail = () => {
         contextPost.likes !== post.likes ||
         contextPost.likesCount !== post.likesCount
       )) {
-        console.log('Updating post from context:', {
-          old: { userHasLiked: post.userHasLiked, likes: post.likes },
-          new: { userHasLiked: contextPost.userHasLiked, likes: contextPost.likes }
-        });
         setPost(prev => ({
           ...prev,
           userHasLiked: contextPost.userHasLiked,
@@ -249,8 +239,6 @@ const PostDetail = () => {
         isAnonymous: false
       });
 
-      console.log('Comment creation response:', response); // Debug log
-
       // Check if response exists and has data
       if (response && response.data) {
         if (response.data.success && response.data.comment) {
@@ -263,7 +251,6 @@ const PostDetail = () => {
           // Refresh post data to get the updated commentCount from Firestore
           const postResponse = await getPost(postId, user?.uid);
           if (postResponse.data.post) {
-            console.log('Updated commentCount from Firestore after comment creation:', postResponse.data.post.commentCount);
             setPost(postResponse.data.post);
           }
           
@@ -348,7 +335,6 @@ const PostDetail = () => {
       // Refresh post data to get updated commentCount from Firestore
       const postResponse = await getPost(postId, user?.uid);
       if (postResponse.data.post) {
-        console.log('Updated commentCount from Firestore after comment deletion:', postResponse.data.post.commentCount);
         setPost(postResponse.data.post);
       }
       
@@ -466,15 +452,6 @@ const PostDetail = () => {
   }
 
   const isOwner = user?.uid === post.userId;
-
-  // Debug info for report button visibility
-  console.log('PostDetail Debug:', {
-    user: user?.uid,
-    postUserId: post.userId,
-    isOwner,
-    canReport: user && post,
-    userHasLiked: post.userHasLiked
-  });
 
   return (
     <motion.div

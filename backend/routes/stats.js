@@ -1,6 +1,7 @@
 const express = require('express');
 const { getFirestore } = require('../config/firebase');
 const { cleanupService } = require('../services/cleanupService');
+const { requireAuth } = require('../middleware/auth');
 const router = express.Router();
 
 // GET /api/stats - Get quick stats for dashboard
@@ -67,8 +68,8 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /api/stats/cleanup - Trigger manual cleanup (useful for testing)
-router.get('/cleanup', async (req, res) => {
+// GET /api/stats/cleanup - Trigger manual cleanup (auth required)
+router.get('/cleanup', requireAuth, async (req, res) => {
   try {
     console.log('🧹 Manual cleanup triggered via API');
     const result = await cleanupService.runOnce();

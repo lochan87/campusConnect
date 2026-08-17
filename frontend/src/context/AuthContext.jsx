@@ -131,7 +131,6 @@ export const AuthProvider = ({ children }) => {
               eventCount: userData.eventCount
             }
           });
-          console.log('👤 User stats updated in real-time:', userData);
         }
       };
 
