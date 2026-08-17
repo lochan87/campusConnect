@@ -3,7 +3,20 @@ const { getFirestore, getAuth } = require('../config/firebase');
 const admin = require('firebase-admin');
 const geminiService = require('../services/geminiService');
 const { requireAuth, generateToken } = require('../middleware/auth');
+const multer = require('multer');
+const storageService = require('../services/storageService');
 const router = express.Router();
+
+// Multer for avatar uploads (2 MB, images only)
+const avatarUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 2 * 1024 * 1024 },
+  fileFilter: (_, file, cb) => {
+    ['image/jpeg', 'image/png', 'image/webp'].includes(file.mimetype)
+      ? cb(null, true)
+      : cb(new Error('Only JPEG, PNG, or WebP images are allowed'));
+  },
+});
 
 // Auto-selection logic for course and department based on Student ID
 const autoSelectCourseAndDepartment = (studentId) => {
@@ -1104,12 +1117,13 @@ router.get('/profile/:id', async (req, res) => {
       displayName: userData.displayName || userData.email,
       username: userData.username || null,
       email: userData.email,
+      avatar: userData.avatar || null,   // ← profile photo (base64 data URL or null)
       studentId: userData.studentId || '',
       course: userData.course || '',
       department: userData.department || '',
       year: userData.year || '',
       bio: userData.bio || '',
-      reputation: isDemo ? 0 : (userData.reputation || 0), // Always 0 for demo users
+      reputation: isDemo ? 0 : (userData.reputation || 0),
       postCount: userData.postCount || totalPosts,
       joinedAt: userData.joinedAt?.toDate?.() || userData.joinedAt || userData.createdAt?.toDate?.() || userData.createdAt || new Date(),
       stats: {
@@ -1187,6 +1201,7 @@ router.put('/profile/:id', async (req, res) => {
       }
     }
     
+    const { avatar } = req.body; // also accept avatar field here
     const updateData = {};
     if (displayName !== undefined) updateData.displayName = displayName;
     if (username !== undefined && username.trim()) updateData.username = username.toLowerCase().trim();
@@ -1195,7 +1210,8 @@ router.put('/profile/:id', async (req, res) => {
     if (year !== undefined) updateData.year = year;
     if (bio !== undefined) updateData.bio = bio;
     if (studentId !== undefined) updateData.studentId = studentId;
-    
+    if (avatar !== undefined) updateData.avatar = avatar; // base64 data URL or null
+
     updateData.updatedAt = new Date();
     
     console.log('💾 Updating user profile:', {
@@ -1221,7 +1237,73 @@ router.put('/profile/:id', async (req, res) => {
   }
 });
 
+// ══════════════════════════════════════════════════════════
+// POST /api/users/profile/:id/avatar
+// Upload / replace profile photo (multipart, field name: avatar)
+// Returns { success, avatar: base64DataUrl }
+// ══════════════════════════════════════════════════════════
+router.post('/profile/:id/avatar', requireAuth, avatarUpload.single('avatar'), async (req, res) => {
+  try {
+    const db = getFirestore();
+    const userId = req.params.id;
+
+    // Only allow users to update their own avatar
+    if (req.user.uid !== userId) {
+      return res.status(403).json({ success: false, error: 'Not authorised' });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ success: false, error: 'No image file provided' });
+    }
+
+    // Convert to base64 data URL (≤ 300 KB enforced by storageService)
+    const avatarDataUrl = storageService.uploadAvatar(req.file);
+
+    // Persist to Firestore
+    await db.collection('users').doc(userId).update({
+      avatar: avatarDataUrl,
+      updatedAt: new Date(),
+    });
+
+    console.log(`🖼️ Avatar updated for user ${userId} (${Math.round(avatarDataUrl.length / 1024)} KB)`);
+
+    res.json({ success: true, avatar: avatarDataUrl });
+  } catch (err) {
+    console.error('❌ POST /profile/:id/avatar error:', err);
+    res.status(err.message?.includes('too large') ? 413 : 500).json({
+      success: false,
+      error: err.message || 'Failed to upload avatar',
+    });
+  }
+});
+
+// ══════════════════════════════════════════════════════════
+// DELETE /api/users/profile/:id/avatar
+// Remove profile photo (sets avatar to null)
+// ══════════════════════════════════════════════════════════
+router.delete('/profile/:id/avatar', requireAuth, async (req, res) => {
+  try {
+    const db = getFirestore();
+    const userId = req.params.id;
+
+    if (req.user.uid !== userId) {
+      return res.status(403).json({ success: false, error: 'Not authorised' });
+    }
+
+    await db.collection('users').doc(userId).update({
+      avatar: null,
+      updatedAt: new Date(),
+    });
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('❌ DELETE /profile/:id/avatar error:', err);
+    res.status(500).json({ success: false, error: 'Failed to remove avatar' });
+  }
+});
+
 // GET /api/users/digest/:campusId - Get AI-generated campus digest
+
 router.get('/digest/:campusId', async (req, res) => {
   try {
     const db = getFirestore();

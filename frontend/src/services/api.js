@@ -186,7 +186,15 @@ export const apiService = {
   // Profile
   getUserProfile: (id) => api.get(`/users/profile/${id}`),
   updateUserProfile: (id, profileData) => api.put(`/users/profile/${id}`, profileData),
+  // Upload a new profile photo (pass FormData with 'avatar' file field)
+  uploadAvatar: (id, formData) =>
+    api.post(`/users/profile/${id}/avatar`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+  // Remove profile photo
+  deleteAvatar: (id) => api.delete(`/users/profile/${id}/avatar`),
   changePassword: (passwordData) => api.put('/users/change-password', passwordData),
+
   changeEmail: (emailData) => api.put('/users/change-email', emailData),
   changeStudentId: (studentIdData) => api.put('/users/change-student-id', studentIdData),
   deleteUserAccount: () => api.delete('/users/delete-account'),

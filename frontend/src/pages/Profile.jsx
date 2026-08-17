@@ -17,11 +17,12 @@ import { useDM } from '../context/DMContext';
 import toast from 'react-hot-toast';
 import AnimatedCounter from '../components/ui/AnimatedCounter';
 import ActivityGraph from '../components/profile/ActivityGraph';
+import AvatarUploader from '../components/profile/AvatarUploader';
 
 const Profile = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, updateAvatar, removeAvatar } = useAuth();
   const { startConversation } = useDM();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -206,11 +207,21 @@ const Profile = () => {
             {/* Profile Info */}
             <div className="flex items-start space-x-3 sm:space-x-4 flex-1">
               {/* Avatar */}
-              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
-                <span className="text-xl sm:text-2xl font-bold text-white">
-                  {profile.displayName.charAt(0).toUpperCase()}
-                </span>
-              </div>
+              <AvatarUploader
+                currentAvatar={profile.avatar || null}
+                displayName={profile.displayName}
+                size={isOwnProfile ? 88 : 80}
+                editable={isOwnProfile}
+                onUpload={async (file) => {
+                  await updateAvatar(file);
+                  // Also sync local profile state immediately
+                  setProfile((prev) => ({ ...prev, avatar: URL.createObjectURL(file) }));
+                }}
+                onRemove={async () => {
+                  await removeAvatar();
+                  setProfile((prev) => ({ ...prev, avatar: null }));
+                }}
+              />
               
               {/* Basic Info */}
               <div className="flex-1 min-w-0">

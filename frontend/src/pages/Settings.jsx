@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { apiService } from '../services/api';
+import AvatarUploader from '../components/profile/AvatarUploader';
 import {
   FiUser,
   FiLock,
@@ -15,15 +16,16 @@ import {
   FiSave,
   FiCreditCard,
   FiTrash2,
-  FiAlertTriangle
+  FiAlertTriangle,
+  FiCamera
 } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
 const Settings = () => {
-  const { user, logout } = useAuth();
+  const { user, updateAvatar, removeAvatar } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('username');
+  const [activeTab, setActiveTab] = useState('photo');
 
   // Username change state
   const [usernameData, setUsernameData] = useState({
@@ -429,9 +431,10 @@ const Settings = () => {
   };
 
   const tabs = [
-    { id: 'username', label: 'Change Username', icon: FiUser },
-    { id: 'password', label: 'Change Password', icon: FiLock },
-    { id: 'email', label: 'Change Email', icon: FiMail },
+    { id: 'photo',     label: 'Profile Photo',    icon: FiCamera },
+    { id: 'username',  label: 'Change Username',  icon: FiUser },
+    { id: 'password',  label: 'Change Password',  icon: FiLock },
+    { id: 'email',     label: 'Change Email',     icon: FiMail },
     { id: 'studentId', label: 'Change Student ID', icon: FiCreditCard }
   ];
 
@@ -480,6 +483,51 @@ const Settings = () => {
         {/* Tab Content */}
         <div className="p-4 sm:p-6">
           <AnimatePresence mode="wait">
+
+            {/* ── Profile Photo tab ── */}
+            {activeTab === 'photo' && (
+              <motion.div
+                key="photo"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.2 }}
+              >
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-1">Profile Photo</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
+                      Your profile photo is visible to everyone on your campus. Upload a clear, square photo for best results.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col items-center py-6 bg-gray-50 dark:bg-gray-900/30 rounded-2xl border border-gray-200 dark:border-gray-700">
+                    <AvatarUploader
+                      currentAvatar={user?.avatar || null}
+                      displayName={user?.displayName || user?.username || '?'}
+                      size={120}
+                      editable={true}
+                      onUpload={async (file) => {
+                        await updateAvatar(file);
+                      }}
+                      onRemove={async () => {
+                        await removeAvatar();
+                      }}
+                    />
+                  </div>
+
+                  <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-xl p-4 border border-indigo-100 dark:border-indigo-800">
+                    <h4 className="text-xs font-bold text-indigo-700 dark:text-indigo-300 uppercase tracking-wider mb-2">Tips</h4>
+                    <ul className="text-xs text-indigo-600/80 dark:text-indigo-400 space-y-1">
+                      <li>• Use a square image for best results (it will be cropped to a circle)</li>
+                      <li>• Supported formats: JPEG, PNG, WebP · Max file size: 5 MB</li>
+                      <li>• Your image is resized to 300×300 px before upload to keep it fast</li>
+                    </ul>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
             {activeTab === 'username' && (
               <motion.div
                 key="username"

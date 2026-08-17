@@ -245,6 +245,30 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Update avatar — upload file, persist locally, update global state
+  const updateAvatar = async (file) => {
+    if (!state.user) throw new Error('Not logged in');
+    const formData = new FormData();
+    formData.append('avatar', file);
+    const { apiService } = await import('../services/api');
+    const res = await apiService.uploadAvatar(state.user.uid, formData);
+    if (!res.data.success) throw new Error(res.data.error || 'Upload failed');
+    const avatarUrl = res.data.avatar;
+    // Persist in localStorage so it survives page refresh
+    const updated = authService.updateAvatarInStorage(avatarUrl);
+    dispatch({ type: AUTH_ACTIONS.UPDATE_USER, payload: { avatar: avatarUrl } });
+    return avatarUrl;
+  };
+
+  // Remove avatar
+  const removeAvatar = async () => {
+    if (!state.user) throw new Error('Not logged in');
+    const { apiService } = await import('../services/api');
+    await apiService.deleteAvatar(state.user.uid);
+    authService.updateAvatarInStorage(null);
+    dispatch({ type: AUTH_ACTIONS.UPDATE_USER, payload: { avatar: null } });
+  };
+
   // Refresh user data from database
   const refreshUserData = async () => {
     try {
@@ -289,6 +313,8 @@ export const AuthProvider = ({ children }) => {
     demoLogin,
     logout,
     updateUser,
+    updateAvatar,
+    removeAvatar,
     refreshUserData,
     clearError,
     canPerformAction

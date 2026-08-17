@@ -138,7 +138,16 @@ class AuthService {
       const response = await apiService.getUser(this.currentUser.uid);
       
       if (response.data.success) {
-        const { user } = response.data;
+        let user = response.data.user;
+
+        // Also fetch avatar from profile endpoint (GET /:id doesn't include it)
+        try {
+          const profileRes = await apiService.getUserProfile(this.currentUser.uid);
+          if (profileRes.data.success && profileRes.data.profile?.avatar) {
+            user = { ...user, avatar: profileRes.data.profile.avatar };
+          }
+        } catch (_) { /* avatar fetch is non-critical */ }
+
         this.saveUserToStorage(user, this.getToken());
         return user;
       }
@@ -148,6 +157,14 @@ class AuthService {
       console.error('Error refreshing user:', error);
       return this.currentUser;
     }
+  }
+
+  // Persist an updated avatar URL into local storage without a full refresh
+  updateAvatarInStorage(avatarUrl) {
+    if (!this.currentUser) return;
+    const updated = { ...this.currentUser, avatar: avatarUrl };
+    this.saveUserToStorage(updated, this.getToken());
+    return updated;
   }
 
   // Check if user can perform action

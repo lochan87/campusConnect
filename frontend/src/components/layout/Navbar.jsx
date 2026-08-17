@@ -294,11 +294,22 @@ const Navbar = ({ onToggleSidebar }) => {
               onClick={() => { setShowUserMenu(!showUserMenu); setShowNotifications(false); }}
               className="flex items-center gap-1.5 p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             >
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
-                <span className="text-white text-sm font-medium">{user?.firstName?.charAt(0) || 'U'}</span>
-              </div>
+              {/* Avatar — real photo if set, else gradient initial */}
+              {user?.avatar ? (
+                <img
+                  src={user.avatar}
+                  alt={user?.displayName || user?.firstName || 'User'}
+                  className="w-8 h-8 rounded-full object-cover flex-shrink-0 ring-2 ring-indigo-200 dark:ring-indigo-700"
+                />
+              ) : (
+                <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
+                  <span className="text-white text-sm font-semibold">
+                    {(user?.displayName || user?.firstName || 'U').charAt(0).toUpperCase()}
+                  </span>
+                </div>
+              )}
               <span className="hidden md:block text-sm text-gray-700 dark:text-gray-300 max-w-[80px] truncate">
-                {user?.firstName || 'User'}
+                {user?.displayName || user?.firstName || 'User'}
               </span>
             </button>
 
@@ -309,9 +320,20 @@ const Navbar = ({ onToggleSidebar }) => {
                 onClick={(e) => e.stopPropagation()}
                 className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50"
               >
-                <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700">
-                  <p className="font-medium text-gray-900 dark:text-white truncate">{user?.displayName}</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{user?.email}</p>
+                <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700 flex items-center gap-3">
+                  {user?.avatar ? (
+                    <img src={user.avatar} alt={user?.displayName} className="w-10 h-10 rounded-full object-cover flex-shrink-0 ring-2 ring-indigo-100 dark:ring-indigo-800" />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+                      <span className="text-white text-base font-bold">
+                        {(user?.displayName || user?.firstName || 'U').charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <p className="font-semibold text-gray-900 dark:text-white truncate text-sm">{user?.displayName}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email}</p>
+                  </div>
                 </div>
                 <div className="py-1">
                   <Link to="/profile" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700" onClick={() => setShowUserMenu(false)}>

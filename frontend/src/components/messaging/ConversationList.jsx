@@ -24,13 +24,15 @@ const ConversationList = ({ onNewChat, searchQuery, onSearchChange }) => {
   const unreadTotal = conversations.reduce((sum, c) => sum + (c.unreadCount || 0), 0);
 
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-gray-800 border-r border-gray-100 dark:border-gray-700/80">
+    <div className="flex flex-col h-full bg-white dark:bg-gray-900 border-r border-gray-200/70 dark:border-gray-700/60">
 
       {/* ── Header ── */}
-      <div className="flex-shrink-0 px-5 pt-5 pb-3">
+      <div className="flex-shrink-0 px-5 pt-5 pb-3 bg-white dark:bg-gray-900">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">Messages</h2>
+            <h2 className="text-xl font-extrabold text-gray-900 dark:text-white tracking-tight bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+              Messages
+            </h2>
             {conversations.length > 0 && (
               <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 font-medium">
                 {conversations.length} conversation{conversations.length !== 1 ? 's' : ''}
@@ -38,10 +40,10 @@ const ConversationList = ({ onNewChat, searchQuery, onSearchChange }) => {
             )}
           </div>
           <motion.button
-            whileHover={{ scale: 1.08 }}
-            whileTap={{ scale: 0.92 }}
+            whileHover={{ scale: 1.1, rotate: 8 }}
+            whileTap={{ scale: 0.9 }}
             onClick={onNewChat}
-            className="w-9 h-9 rounded-2xl bg-gradient-to-br from-indigo-500 via-indigo-600 to-purple-600 flex items-center justify-center text-white shadow-md shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-shadow"
+            className="w-9 h-9 rounded-2xl bg-gradient-to-br from-indigo-500 via-indigo-600 to-purple-600 flex items-center justify-center text-white shadow-md shadow-indigo-500/30 hover:shadow-indigo-500/50 transition-shadow"
             title="New conversation"
           >
             <FiEdit2 className="w-4 h-4" />
@@ -56,7 +58,7 @@ const ConversationList = ({ onNewChat, searchQuery, onSearchChange }) => {
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Search messages..."
-            className="w-full pl-9 pr-8 py-2.5 text-xs bg-gray-100 dark:bg-gray-700/80 border border-transparent focus:border-indigo-300 dark:focus:border-indigo-600 rounded-2xl outline-none text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 transition-colors"
+            className="w-full pl-9 pr-8 py-2.5 text-xs bg-gray-100/80 dark:bg-gray-800/80 border border-transparent focus:border-indigo-300 dark:focus:border-indigo-600 focus:bg-white dark:focus:bg-gray-800 rounded-2xl outline-none text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 transition-all"
           />
           {searchQuery && (
             <button
@@ -69,13 +71,13 @@ const ConversationList = ({ onNewChat, searchQuery, onSearchChange }) => {
         </div>
 
         {/* Filter Tabs */}
-        <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700/50 p-1 rounded-xl">
+        <div className="flex items-center gap-1 bg-gray-100/80 dark:bg-gray-800/60 p-1 rounded-xl">
           <button
             onClick={() => setFilterTab('all')}
             className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${
               filterTab === 'all'
-                ? 'bg-white dark:bg-gray-800 text-indigo-600 dark:text-indigo-400 shadow-xs'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-800'
+                ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
             }`}
           >
             All
@@ -84,8 +86,8 @@ const ConversationList = ({ onNewChat, searchQuery, onSearchChange }) => {
             onClick={() => setFilterTab('unread')}
             className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${
               filterTab === 'unread'
-                ? 'bg-white dark:bg-gray-800 text-indigo-600 dark:text-indigo-400 shadow-xs'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-800'
+                ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
             }`}
           >
             <span>Unread</span>
