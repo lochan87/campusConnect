@@ -18,6 +18,7 @@ import EventDetail from './pages/EventDetail';
 import Leaderboard from './pages/Leaderboard';
 import Settings from './pages/Settings';
 import Search from './pages/Search';
+import Messages from './pages/Messages';
 import BackToTop from './components/ui/BackToTop';
 import CommandPalette from './components/ui/CommandPalette';
 
@@ -29,6 +30,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { PostProvider } from './context/PostContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { DMProvider } from './context/DMContext';
 
 // Styles
 import './App.css';
@@ -163,6 +165,8 @@ const AppContent = () => {
                 <Route path="/leaderboard" element={<Leaderboard />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/search" element={<Search />} />
+                <Route path="/messages" element={<Messages />} />
+                <Route path="/messages/:conversationId" element={<Messages />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </AnimatePresence>
@@ -185,7 +189,9 @@ const App = () => {
       <AuthProvider>
         <PostProvider>
           <NotificationProvider>
-            <AppContent />
+            <DMProvider>
+              <AppContent />
+            </DMProvider>
           </NotificationProvider>
         </PostProvider>
       </AuthProvider>

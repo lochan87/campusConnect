@@ -221,6 +221,23 @@ export const NotificationProvider = ({ children }) => {
       });
     };
 
+    // DM notification — only add to bell if not currently on /messages
+    const handleDMNewMessage = (data) => {
+      const { message, conversationId } = data;
+      const isOnMessagesPage = window.location.pathname.startsWith('/messages');
+      if (!isOnMessagesPage && message?.senderId !== user.uid) {
+        dispatch({
+          type: NOTIFICATION_ACTIONS.ADD_NOTIFICATION,
+          payload: {
+            type: 'dm',
+            message: `💬 New message received`,
+            data: { conversationId },
+            priority: 'high'
+          }
+        });
+      }
+    };
+
     // Register socket listeners
     socketService.on('connectionStatusChanged', handleConnectionStatusChanged);
     socketService.on('newPost', handleNewPost);
@@ -228,6 +245,7 @@ export const NotificationProvider = ({ children }) => {
     socketService.on('postVoted', handlePostVoted);
     socketService.on('eventUpdated', handleEventUpdated);
     socketService.on('notification', handleNotification);
+    socketService.on('dmNewMessage', handleDMNewMessage);
 
     // Cleanup
     return () => {
@@ -237,7 +255,9 @@ export const NotificationProvider = ({ children }) => {
       socketService.off('postVoted', handlePostVoted);
       socketService.off('eventUpdated', handleEventUpdated);
       socketService.off('notification', handleNotification);
+      socketService.off('dmNewMessage', handleDMNewMessage);
     };
+
   }, [user]);
 
   // --- localStorage persistence ---
@@ -341,6 +361,8 @@ export const NotificationProvider = ({ children }) => {
         return preferences.events;
       case 'meme':
         return preferences.memes;
+      case 'dm':
+        return true; // always receive DM notifications
       default:
         return true;
     }

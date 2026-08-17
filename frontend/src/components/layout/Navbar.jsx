@@ -15,8 +15,10 @@ import {
   FiAward,
   FiTrendingUp,
   FiWifi,
-  FiWifiOff
+  FiWifiOff,
+  FiMessageSquare
 } from 'react-icons/fi';
+import { useDM } from '../../context/DMContext';
 
 /* Extracted outside Navbar so React doesn't treat it as a new component type
    on every render — prevents the input from unmounting/remounting and losing focus */
@@ -113,10 +115,12 @@ const Navbar = ({ onToggleSidebar }) => {
     clearAllNotifications,
     removeNotification
   } = useNotifications();
+  const { totalUnread: dmTotalUnread } = useDM();
   const navigate = useNavigate();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+
 
   // Close popups when main content is scrolled — same UX as sidebar
   useEffect(() => {
@@ -205,6 +209,20 @@ const Navbar = ({ onToggleSidebar }) => {
           >
             <FiAward className="w-4 h-4 text-amber-500" />
             <span className="hidden lg:inline">Champions</span>
+          </Link>
+
+          {/* Direct Messages icon */}
+          <Link
+            to="/messages"
+            className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            aria-label="Messages"
+          >
+            <FiMessageSquare className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+            {dmTotalUnread > 0 && (
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-indigo-500 text-white text-xs rounded-full flex items-center justify-center leading-none">
+                {dmTotalUnread > 9 ? '9+' : dmTotalUnread}
+              </span>
+            )}
           </Link>
 
           {/* Notifications */}

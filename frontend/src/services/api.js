@@ -210,6 +210,44 @@ export const apiService = {
 
   // Notifications
 
+  // ── Direct Messaging ──────────────────────────────────────────
+  // Get all conversations for the current user
+  getConversations: () => api.get('/messages/conversations'),
+
+  // Get single conversation metadata
+  getConversation: (convId) => api.get(`/messages/conversations/${convId}`),
+
+  // Start or retrieve a 1-on-1 conversation with recipientId
+  getOrCreateConversation: (recipientId) =>
+    api.post('/messages/conversations', { recipientId }),
+
+  // Paginated message history — pass { before: lastMsgId, limit: 30 }
+  getMessages: (convId, params = {}) =>
+    api.get(`/messages/${convId}/messages`, { params }),
+
+  // Send a text or image message (pass FormData for images)
+  sendMessage: (convId, data) => {
+    if (data instanceof FormData) {
+      return api.post(`/messages/${convId}/messages`, data, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+    }
+    return api.post(`/messages/${convId}/messages`, data);
+  },
+
+  // Soft-delete a message. deleteForBoth=true requires < 60s window.
+  deleteMessage: (convId, msgId, deleteForBoth = false) =>
+    api.delete(`/messages/${convId}/messages/${msgId}`, {
+      data: { deleteForBoth },
+    }),
+
+  // Mark all messages in a conversation as read
+  markConversationRead: (convId) => api.put(`/messages/${convId}/read`),
+
+  // Search campus users to start a new conversation
+  searchDMUsers: (q, campusId) =>
+    api.get('/messages/users/search', { params: { q, campusId } }),
+
   // Health check
   healthCheck: () => api.get('/health', { baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000' })
 };

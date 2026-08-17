@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { 
   PencilIcon, 
   UserIcon, 
@@ -13,16 +13,20 @@ import {
 } from '@heroicons/react/24/outline';
 import { apiService } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useDM } from '../context/DMContext';
 import toast from 'react-hot-toast';
 import AnimatedCounter from '../components/ui/AnimatedCounter';
 import ActivityGraph from '../components/profile/ActivityGraph';
 
 const Profile = () => {
   const { userId } = useParams();
+  const navigate = useNavigate();
   const { user } = useAuth();
+  const { startConversation } = useDM();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
+  const [sendingDM, setSendingDM] = useState(false);
   const [editData, setEditData] = useState({
     displayName: '',
     course: '',
@@ -235,8 +239,8 @@ const Profile = () => {
               </div>
             </div>
             
-            {/* Edit Button - Responsive */}
-            {isOwnProfile && !editing && (
+            {/* Action Buttons (own = edit, other = message) */}
+            {isOwnProfile && !editing ? (
               <div className="flex justify-center sm:justify-end">
                 <button
                   onClick={() => setEditing(true)}
@@ -244,6 +248,25 @@ const Profile = () => {
                 >
                   <PencilIcon className="w-4 h-4" />
                   <span className="font-medium">Edit Profile</span>
+                </button>
+              </div>
+            ) : !isOwnProfile && (
+              <div className="flex justify-center sm:justify-end">
+                <button
+                  disabled={sendingDM}
+                  onClick={async () => {
+                    setSendingDM(true);
+                    try {
+                      const conv = await startConversation(currentUserId);
+                      navigate(`/messages/${conv.id}`);
+                    } finally {
+                      setSendingDM(false);
+                    }
+                  }}
+                  className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg hover:opacity-90 transition-opacity shadow-md w-full sm:w-auto justify-center disabled:opacity-60"
+                >
+                  <ChatBubbleLeftRightIcon className="w-4 h-4" />
+                  <span className="font-medium">{sendingDM ? 'Opening…' : 'Send Message'}</span>
                 </button>
               </div>
             )}

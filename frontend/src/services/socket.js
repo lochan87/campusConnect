@@ -165,6 +165,26 @@ class SocketService {
           toast(notification.message);
       }
     });
+
+    // ── Direct Messaging events ───────────────────────────────
+    this.socket.on('dm_new_message', (data) => {
+      console.log('💬 DM new message:', data);
+      this.emit('dmNewMessage', data);
+    });
+
+    this.socket.on('dm_typing', (data) => {
+      this.emit('dmTyping', data);
+    });
+
+    this.socket.on('dm_read_receipt', (data) => {
+      console.log('✅ DM read receipt:', data);
+      this.emit('dmReadReceipt', data);
+    });
+
+    this.socket.on('dm_message_deleted', (data) => {
+      console.log('🗑️ DM message deleted:', data);
+      this.emit('dmMessageDeleted', data);
+    });
   }
 
   // Room management
@@ -230,6 +250,37 @@ class SocketService {
   emitEventLocationUpdate(eventData) {
     if (this.socket?.connected) {
       this.socket.emit('event_location_update', eventData);
+    }
+  }
+
+  // ── Direct Messaging socket methods ───────────────────────────
+  joinDMRoom(conversationId) {
+    if (this.socket?.connected && conversationId) {
+      this.socket.emit('join_dm_room', conversationId);
+    }
+  }
+
+  leaveDMRoom(conversationId) {
+    if (this.socket?.connected && conversationId) {
+      this.socket.emit('leave_dm_room', conversationId);
+    }
+  }
+
+  joinDMRooms(conversationIds) {
+    if (this.socket?.connected && Array.isArray(conversationIds)) {
+      this.socket.emit('join_dm_rooms', conversationIds);
+    }
+  }
+
+  emitDMTypingStart(conversationId, userId, username) {
+    if (this.socket?.connected) {
+      this.socket.emit('dm_typing_start', { conversationId, userId, username });
+    }
+  }
+
+  emitDMTypingStop(conversationId, userId) {
+    if (this.socket?.connected) {
+      this.socket.emit('dm_typing_stop', { conversationId, userId });
     }
   }
 

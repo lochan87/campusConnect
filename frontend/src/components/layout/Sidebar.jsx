@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import { usePosts } from '../../context/PostContext';
+import { useDM } from '../../context/DMContext';
 import { 
   FiHome, 
   FiPlus, 
@@ -16,16 +17,19 @@ import {
   FiSearch,
   FiBox,
   FiSpeaker,
-  FiPackage
+  FiPackage,
+  FiMessageSquare
 } from 'react-icons/fi';
 
 const Sidebar = ({ onClose }) => {
   const { user } = useAuth();
   const { filters, updateFilters } = usePosts();
+  const { totalUnread: dmUnread } = useDM();
   const location = useLocation();
 
   const navigationItems = [
     { name: 'Home', path: '/', icon: FiHome },
+    { name: 'Messages', path: '/messages', icon: FiMessageSquare, badge: dmUnread },
     { name: 'Create Post', path: '/create-post', icon: FiPlus },
     { name: 'Create Poll', path: '/create-poll', icon: FiBarChart2 },
     { name: 'Create Event', path: '/create-event', icon: FiCalendar },
@@ -127,7 +131,12 @@ const Sidebar = ({ onClose }) => {
                   }`}
                 >
                   <Icon className="w-5 h-5" />
-                  <span className="text-sm font-medium">{item.name}</span>
+                  <span className="text-sm font-medium flex-1">{item.name}</span>
+                  {item.badge > 0 && (
+                    <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-indigo-500 text-white text-[10px] font-bold flex items-center justify-center">
+                      {item.badge > 99 ? '99+' : item.badge}
+                    </span>
+                  )}
                 </Link>
               );
             })}

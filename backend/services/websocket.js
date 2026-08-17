@@ -12,6 +12,57 @@ const setupWebSocket = (io) => {
       socket.join(`location_${locationId}`);
     });
 
+    // ── DM room management ──────────────────────────────
+    // Join a private conversation room (client sends after opening a chat)
+    socket.on('join_dm_room', (conversationId) => {
+      if (conversationId) {
+        socket.join(`dm_${conversationId}`);
+        console.log(`💬 Socket ${socket.id} joined DM room: dm_${conversationId}`);
+      }
+    });
+
+    // Leave a DM room (client sends when navigating away)
+    socket.on('leave_dm_room', (conversationId) => {
+      if (conversationId) {
+        socket.leave(`dm_${conversationId}`);
+      }
+    });
+
+    // Join multiple DM rooms at once (used on app load to receive background DM alerts)
+    socket.on('join_dm_rooms', (conversationIds) => {
+      if (Array.isArray(conversationIds)) {
+        conversationIds.forEach((convId) => {
+          socket.join(`dm_${convId}`);
+        });
+        console.log(`💬 Socket ${socket.id} joined ${conversationIds.length} DM rooms`);
+      }
+    });
+
+    // ── DM typing indicators ────────────────────────────
+    socket.on('dm_typing_start', (data) => {
+      // data: { conversationId, userId, username }
+      if (data?.conversationId) {
+        socket.to(`dm_${data.conversationId}`).emit('dm_typing', {
+          conversationId: data.conversationId,
+          userId: data.userId,
+          username: data.username,
+          isTyping: true,
+        });
+      }
+    });
+
+    socket.on('dm_typing_stop', (data) => {
+      // data: { conversationId, userId }
+      if (data?.conversationId) {
+        socket.to(`dm_${data.conversationId}`).emit('dm_typing', {
+          conversationId: data.conversationId,
+          userId: data.userId,
+          isTyping: false,
+        });
+      }
+    });
+
+    // ── Legacy post/poll/event handlers ────────────────
     // Handle new post creation
     socket.on('new_post', (postData) => {
       // Broadcast to campus room
@@ -79,9 +130,16 @@ const emitToAll = (io, event, data) => {
   io.emit(event, data);
 };
 
+// ── DM-specific helper ──────────────────────────────────
+// Used by the messages route to emit to a DM conversation room
+const emitToDM = (io, conversationId, event, data) => {
+  io.to(`dm_${conversationId}`).emit(event, data);
+};
+
 module.exports = {
   setupWebSocket,
   emitToCampus,
   emitToLocation,
-  emitToAll
+  emitToAll,
+  emitToDM,
 };
