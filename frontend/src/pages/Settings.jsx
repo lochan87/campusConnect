@@ -439,7 +439,7 @@ const Settings = () => {
   ];
 
   return (
-    <div className="max-w-4xl mx-auto p-4 sm:p-6">
+    <div className="max-w-6xl mx-auto p-4 sm:p-6">
       <motion.div
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -452,27 +452,22 @@ const Settings = () => {
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
         {/* Tab Navigation */}
         <div className="border-b border-gray-200 dark:border-gray-700">
-          <nav className="flex">
+          <nav className="flex w-full">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               return (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex-1 px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium border-b-2 transition-colors ${
+                  className={`flex-1 px-2 sm:px-4 py-3 sm:py-4 text-xs sm:text-sm font-medium border-b-2 transition-colors ${
                     activeTab === tab.id
                       ? 'border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
                       : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
                   }`}
                 >
-                  <div className="flex items-center justify-center space-x-1 sm:space-x-2">
-                    <Icon className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                    <span className="hidden sm:inline truncate">{tab.label}</span>
-                    <span className="sm:hidden truncate">
-                      {tab.id === 'username' ? 'Username' : 
-                       tab.id === 'password' ? 'Password' : 
-                       tab.id === 'email' ? 'Email' : 'Student ID'}
-                    </span>
+                  <div className="flex items-center justify-center gap-1.5">
+                    <Icon className="w-4 h-4 flex-shrink-0" />
+                    <span className="whitespace-nowrap">{tab.label}</span>
                   </div>
                 </button>
               );

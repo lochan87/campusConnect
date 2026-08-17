@@ -13,6 +13,7 @@
     "canvas-confetti": "^1.9.4",
     "date-fns": "^2.30.0",
     "emoji-picker-react": "^4.4.9",
+    "firebase": "^12.17.1",
     "framer-motion": "^10.12.18",
     "react": "^18.2.0",
     "react-activity-calendar": "^3.2.1",
