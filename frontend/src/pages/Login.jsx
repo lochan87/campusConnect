@@ -8,7 +8,7 @@ import { BsSunFill, BsMoonStarsFill } from 'react-icons/bs';
 import toast from 'react-hot-toast';
 
 const Login = () => {
-  const { login, demoLogin, loading, error } = useAuth();
+  const { login, demoLogin, loading } = useAuth();
   const { isDarkMode, toggleTheme } = useTheme();
   const navigate = useNavigate();
   
@@ -18,16 +18,28 @@ const Login = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loginError, setLoginError] = useState('');
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+    if (loginError) setLoginError(''); // clear error on new input
+  };
+  const getFriendlyError = (err) => {
+    const msg = err?.response?.data?.error || err?.message || '';
+    if (msg.includes('Invalid email or password') || msg.includes('auth/wrong-password') || msg.includes('auth/invalid-credential'))
+      return 'Incorrect email or password. Please try again.';
+    if (msg.includes('auth/user-not-found') || msg.includes('auth/user-disabled'))
+      return 'No account found with this email.';
+    if (msg.includes('auth/too-many-requests'))
+      return 'Too many failed attempts. Please try again later.';
+    if (msg.includes('auth/network-request-failed') || msg.includes('Network Error'))
+      return 'Network error. Check your connection.';
+    return msg || 'Login failed. Please try again.';
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoginError('');
     setIsSubmitting(true);
     
     try {
@@ -40,7 +52,9 @@ const Login = () => {
       toast.success('Welcome to CampusConnect!');
       navigate('/');
     } catch (error) {
-      toast.error(error.message || 'Login failed');
+      const friendly = getFriendlyError(error);
+      setLoginError(friendly);
+      toast.error(friendly);
     } finally {
       setIsSubmitting(false);
     }
@@ -146,13 +160,14 @@ const Login = () => {
           </div>
 
           {/* Error message */}
-          {error && (
+          {loginError && (
             <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg p-3"
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg p-3 flex items-start gap-2"
             >
-              <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+              <span className="text-red-500 mt-0.5">⚠</span>
+              <p className="text-sm text-red-600 dark:text-red-400">{loginError}</p>
             </motion.div>
           )}
 

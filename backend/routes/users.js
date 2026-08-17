@@ -1324,13 +1324,15 @@ router.put('/change-student-id', requireAuth, async (req, res) => {
 router.delete('/delete-account', requireAuth, async (req, res) => {
   try {
     const userId = req.user.uid;
+    const db = getFirestore();
+    const auth = getAuth();
     
     // Use a batch to delete all user data atomically
     const batch = db.batch();
     
     // Delete user's posts
     const postsSnapshot = await db.collection('posts')
-      .where('authorId', '==', userId)
+      .where('userId', '==', userId)
       .get();
     
     postsSnapshot.docs.forEach(doc => {
@@ -1339,53 +1341,18 @@ router.delete('/delete-account', requireAuth, async (req, res) => {
     
     // Delete user's polls
     const pollsSnapshot = await db.collection('polls')
-      .where('authorId', '==', userId)
+      .where('userId', '==', userId)
       .get();
     
     pollsSnapshot.docs.forEach(doc => {
       batch.delete(doc.ref);
     });
     
-    // Delete user's comments on posts
-    const postCommentsSnapshot = await db.collectionGroup('comments')
-      .where('authorId', '==', userId)
-      .get();
+    // Note: comments are cleaned up via comment_post and comment_event collections below.
+    // collectionGroup queries are avoided here to prevent requiring Firestore composite indexes.
     
-    postCommentsSnapshot.docs.forEach(doc => {
-      batch.delete(doc.ref);
-    });
-    
-    // Delete user's votes on polls
-    const pollVotesSnapshot = await db.collectionGroup('votes')
-      .where('userId', '==', userId)
-      .get();
-    
-    pollVotesSnapshot.docs.forEach(doc => {
-      batch.delete(doc.ref);
-    });
-    
-    // Remove user's likes from all posts and polls (legacy)
-    const allPostsSnapshot = await db.collection('posts').get();
-    allPostsSnapshot.docs.forEach(doc => {
-      const data = doc.data();
-      if (data.likes && data.likes.includes(userId)) {
-        batch.update(doc.ref, {
-          likes: data.likes.filter(id => id !== userId)
-        });
-      }
-    });
-    
-    const allPollsSnapshot = await db.collection('polls').get();
-    allPollsSnapshot.docs.forEach(doc => {
-      const data = doc.data();
-      if (data.likes && data.likes.includes(userId)) {
-        batch.update(doc.ref, {
-          likes: data.likes.filter(id => id !== userId)
-        });
-      }
-    });
 
-    // Remove user's likes from new separate collections
+    // Remove user's likes from separate collections
     const postLikesSnapshot = await db.collection('like_post')
       .where('userId', '==', userId)
       .get();

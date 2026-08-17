@@ -50,11 +50,16 @@ api.interceptors.response.use(
     pendingRequests = Math.max(0, pendingRequests - 1);
 
     const message = error.response?.data?.error || error.message || 'An error occurred';
+    const isAuthEndpoint = error.config?.url?.includes('/login') || error.config?.url?.includes('/register');
 
-    // Don't show toast for auth errors or specific errors we handle elsewhere
+    // Don't show toast for:
+    // - 401/403 (handled by Login.jsx / component-level catch)
+    // - auth endpoints on 401 (Login.jsx shows its own toast)
+    // - rate-limit / timeout messages
     if (
       error.response?.status !== 401 &&
       error.response?.status !== 403 &&
+      !isAuthEndpoint &&
       !message.includes('concurrent') &&
       !message.includes('timeout') &&
       error.code !== 'ECONNABORTED'
@@ -62,8 +67,9 @@ api.interceptors.response.use(
       toast.error(message);
     }
 
-    // Auto-logout on 401
-    if (error.response?.status === 401) {
+    // Auto-logout on 401 — but NOT for login/register endpoints
+    // (those should show an error, not redirect)
+    if (error.response?.status === 401 && !isAuthEndpoint) {
       localStorage.removeItem('authToken');
       localStorage.removeItem('user');
       window.location.href = '/login';
