@@ -1,171 +1,212 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiCheck, FiTrash2, FiMoreVertical } from 'react-icons/fi';
+import { FiTrash2, FiMoreVertical, FiAlertCircle } from 'react-icons/fi';
 
+/* ── helpers ──────────────────────────────────────────────────────────── */
 const formatTime = (ts) => {
   if (!ts) return '';
   const d = ts?.toDate ? ts.toDate() : new Date(ts);
-  if (isNaN(d)) return '';
-  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return isNaN(d) ? '' : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 };
 
-const formatDate = (ts) => {
-  if (!ts) return '';
-  const d = ts?.toDate ? ts.toDate() : new Date(ts);
-  if (isNaN(d)) return '';
-  return d.toLocaleString();
-};
+/* ── WhatsApp-style ticks ─────────────────────────────────────────────── */
+// States:
+//   isPending  → ⏳ clock (sending…)
+//   sent       → ✓  single grey  (confirmed by server, readBy has only sender)
+//   delivered  → ✓✓ double grey  (recipient received; we don't track this separately, treat same as sent)
+//   read       → ✓✓ double blue  (readBy includes recipient)
 
-/**
- * ReadStatus — shows ✓ (sent), ✓✓ (read by all).
- */
-const ReadStatus = ({ message, isMine, participants }) => {
+const Ticks = ({ isPending, isRead, isMine }) => {
   if (!isMine) return null;
-  const readByOthers = (message.readBy || []).filter((uid) => uid !== message.senderId);
-  const isRead = readByOthers.length > 0;
+
+  // Pending — small clock
+  if (isPending) {
+    return (
+      <svg width="12" height="12" viewBox="0 0 24 24" className="inline-block opacity-50" fill="none"
+        stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10" />
+        <polyline points="12 6 12 12 16 14" />
+      </svg>
+    );
+  }
+
+  // Sent / read — double tick
+  const color = isRead ? '#60a5fa' : 'currentColor';
+  const opacity = isRead ? 1 : 0.55;
+
   return (
-    <span className={`flex items-center gap-0 ${isRead ? 'text-indigo-400' : 'text-gray-400'}`}>
-      <FiCheck className="w-3 h-3" />
-      {isRead && <FiCheck className="w-3 h-3 -ml-1.5" />}
-    </span>
+    <svg width="18" height="11" viewBox="0 0 18 11" className="inline-block flex-shrink-0">
+      {/* back tick */}
+      <path d="M1 5.5 L4.5 9 L10.5 1.5"
+        stroke={color} strokeWidth="1.8" fill="none"
+        strokeLinecap="round" strokeLinejoin="round" opacity={opacity} />
+      {/* front tick (shifted right) */}
+      <path d="M6 5.5 L9.5 9 L15.5 1.5"
+        stroke={color} strokeWidth="1.8" fill="none"
+        strokeLinecap="round" strokeLinejoin="round" opacity={opacity} />
+    </svg>
   );
 };
 
-/**
- * ImageLightbox — click to enlarge message image.
- */
-const ImageLightbox = ({ src, onClose }) => (
+/* ── Lightbox ─────────────────────────────────────────────────────────── */
+const Lightbox = ({ src, onClose }) => (
   <motion.div
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    exit={{ opacity: 0 }}
-    className="fixed inset-0 z-[200] bg-black/80 flex items-center justify-center p-4"
+    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+    className="fixed inset-0 z-[300] bg-black/90 flex items-center justify-center p-4"
     onClick={onClose}
   >
     <motion.img
-      initial={{ scale: 0.85 }}
-      animate={{ scale: 1 }}
-      exit={{ scale: 0.85 }}
-      src={src}
-      alt="Full size"
-      className="max-w-full max-h-full object-contain rounded-xl shadow-2xl"
+      initial={{ scale: 0.85 }} animate={{ scale: 1 }} exit={{ scale: 0.85 }}
+      src={src} alt="Full size"
+      className="max-w-full max-h-[90vh] object-contain rounded-2xl shadow-2xl"
       onClick={(e) => e.stopPropagation()}
     />
+    <button onClick={onClose}
+      className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white text-xl transition-colors">
+      ✕
+    </button>
   </motion.div>
 );
 
-const MessageBubble = ({ message, isMine, onDelete }) => {
-  const [showMenu, setShowMenu] = useState(false);
-  const [lightbox, setLightbox] = useState(false);
-  const isPending = !!message._pending;
-
+/* ── Delete menu ──────────────────────────────────────────────────────── */
+const DeleteMenu = ({ message, onDelete, onClose }) => {
   const canUnsend = () => {
-    if (!isMine) return false;
     const sent = message.createdAt?.toDate?.() || new Date(message.createdAt);
     return (Date.now() - sent.getTime()) / 1000 < 60;
   };
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.88, y: 6 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.88, y: 6 }}
+      transition={{ type: 'spring', damping: 22, stiffness: 380 }}
+      className="absolute bottom-full right-0 mb-2 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden z-40 w-48"
+      onMouseLeave={onClose}
+    >
+      {canUnsend() && (
+        <button
+          onClick={() => { onDelete(message.id, true); onClose(); }}
+          className="w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2.5 font-medium border-b border-gray-100 dark:border-gray-700 transition-colors"
+        >
+          <FiAlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+          Unsend for everyone
+        </button>
+      )}
+      <button
+        onClick={() => { onDelete(message.id, false); onClose(); }}
+        className="w-full text-left px-4 py-3 text-sm text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/60 flex items-center gap-2.5 transition-colors"
+      >
+        <FiTrash2 className="w-3.5 h-3.5 flex-shrink-0" />
+        Delete for me
+      </button>
+    </motion.div>
+  );
+};
+
+/* ── Main bubble ──────────────────────────────────────────────────────── */
+const MessageBubble = ({ message, isMine, onDelete }) => {
+  const [showMenu, setShowMenu] = useState(false);
+  const [lightbox, setLightbox] = useState(false);
+
+  const isPending = !!message._pending;
+  const readByOthers = (message.readBy || []).filter((uid) => uid !== message.senderId);
+  const isRead = readByOthers.length > 0;
 
   return (
     <>
       <AnimatePresence>
-        {lightbox && (
-          <ImageLightbox src={message.imageUrl} onClose={() => setLightbox(false)} />
-        )}
+        {lightbox && <Lightbox src={message.imageUrl} onClose={() => setLightbox(false)} />}
       </AnimatePresence>
 
       <motion.div
         layout
-        initial={{ opacity: 0, y: 8, scale: 0.96 }}
+        initial={{ opacity: 0, y: 10, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, scale: 0.9 }}
-        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-        className={`group flex items-end gap-2 mb-1 ${isMine ? 'flex-row-reverse' : 'flex-row'}`}
+        transition={{ type: 'spring', damping: 28, stiffness: 350 }}
+        className={`group flex items-end gap-1.5 px-3 mb-1 ${isMine ? 'flex-row-reverse' : 'flex-row'}`}
       >
-        {/* Bubble */}
-        <div className={`relative max-w-[75%] ${isMine ? 'items-end' : 'items-start'} flex flex-col`}>
-          {/* Image message */}
-          {message.imageUrl && (
-            <button
-              onClick={() => setLightbox(true)}
-              className={`overflow-hidden rounded-2xl ${isMine ? 'rounded-br-sm' : 'rounded-bl-sm'} shadow-md`}
-            >
-              <img
-                src={message.imageUrl}
-                alt="Sent image"
-                className="max-w-[220px] max-h-[220px] object-cover hover:opacity-90 transition-opacity"
-              />
-            </button>
-          )}
-
-          {/* Text bubble */}
-          {message.text && (
-            <div
-              className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed shadow-sm ${
-                isMine
-                  ? `rounded-br-sm ${isPending ? 'bg-indigo-300 dark:bg-indigo-700 text-white opacity-70' : 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white'}`
-                  : 'rounded-bl-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 border border-gray-100 dark:border-gray-600'
-              }`}
-            >
-              {message.text}
-            </div>
-          )}
-
-          {/* Timestamp + read status */}
-          <div
-            className={`flex items-center gap-1 mt-0.5 px-1 opacity-0 group-hover:opacity-100 transition-opacity ${
-              isMine ? 'flex-row-reverse' : 'flex-row'
-            }`}
-          >
-            <span
-              className="text-[10px] text-gray-400 dark:text-gray-500 whitespace-nowrap cursor-default"
-              title={formatDate(message.createdAt)}
-            >
-              {formatTime(message.createdAt)}
-            </span>
-            <ReadStatus message={message} isMine={isMine} />
-          </div>
-        </div>
-
-        {/* Context menu trigger (visible on group-hover) */}
+        {/* ⋮ context menu button — only mine, shown on hover */}
         {isMine && (
-          <div className="relative self-center opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="relative self-end mb-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
             <button
-              onClick={() => setShowMenu((v) => !v)}
-              className="p-1 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              onClick={(e) => { e.stopPropagation(); setShowMenu((v) => !v); }}
+              className="p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             >
               <FiMoreVertical className="w-3.5 h-3.5" />
             </button>
-
             <AnimatePresence>
               {showMenu && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9, y: -4 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.9, y: -4 }}
-                  className="absolute bottom-full right-0 mb-1 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden z-20 min-w-[140px]"
-                  onMouseLeave={() => setShowMenu(false)}
-                >
-                  <button
-                    onClick={() => { onDelete(message.id, false); setShowMenu(false); }}
-                    className="w-full text-left px-4 py-2.5 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2 transition-colors"
-                  >
-                    <FiTrash2 className="w-3.5 h-3.5" />
-                    Delete for me
-                  </button>
-                  {canUnsend() && (
-                    <button
-                      onClick={() => { onDelete(message.id, true); setShowMenu(false); }}
-                      className="w-full text-left px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2 transition-colors"
-                    >
-                      <FiTrash2 className="w-3.5 h-3.5" />
-                      Unsend for everyone
-                    </button>
-                  )}
-                </motion.div>
+                <DeleteMenu message={message} onDelete={onDelete} onClose={() => setShowMenu(false)} />
               )}
             </AnimatePresence>
           </div>
         )}
+
+        {/* Bubble column */}
+        <div className={`flex flex-col max-w-[68%] ${isMine ? 'items-end' : 'items-start'}`}>
+
+          {/* Image */}
+          {message.imageUrl && (
+            <motion.button
+              whileHover={{ opacity: 0.9 }}
+              onClick={() => setLightbox(true)}
+              className={`overflow-hidden rounded-2xl shadow-md mb-0.5 ${isMine ? 'rounded-br-sm' : 'rounded-bl-sm'}`}
+            >
+              <img src={message.imageUrl} alt="Attachment"
+                className="max-w-[220px] max-h-[220px] object-cover" />
+            </motion.button>
+          )}
+
+          {/* Text bubble — timestamp + ticks INSIDE, WhatsApp style */}
+          {message.text && (
+            <div
+              className={`
+                relative rounded-2xl text-sm leading-relaxed select-text overflow-hidden
+                ${isMine
+                  ? `rounded-br-sm ${isPending
+                      ? 'bg-indigo-300 dark:bg-indigo-700 text-white/80'
+                      : 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/25'
+                    }`
+                  : 'rounded-bl-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 shadow-md shadow-gray-200/70 dark:shadow-gray-900/40 border border-gray-100 dark:border-gray-600'
+                }
+              `}
+            >
+              {/*
+                Layout trick (same as WhatsApp):
+                - Text flows naturally
+                - An invisible float-right spacer at the END of the text reserves
+                  space so the last line never overlaps the timestamp row
+                - Timestamp row sits at the bottom-right, inline with text flow
+              */}
+              <div className="px-3.5 pt-2 pb-1.5">
+                <span className="break-words whitespace-pre-wrap">
+                  {message.text}
+                  {/* Invisible spacer — reserve room for timestamp + ticks */}
+                  <span className="inline-block" style={{ width: isMine ? '72px' : '48px' }}>&nbsp;</span>
+                </span>
+              </div>
+
+              {/* Timestamp + ticks row — absolute bottom-right inside bubble */}
+              <div
+                className={`absolute bottom-1.5 right-2.5 flex items-center gap-1 text-[10px] font-medium leading-none select-none pointer-events-none ${
+                  isMine ? 'text-white/70' : 'text-gray-400 dark:text-gray-500'
+                }`}
+              >
+                <span>{isPending ? '' : formatTime(message.createdAt)}</span>
+                <Ticks isMine={isMine} isPending={isPending} isRead={isRead} />
+              </div>
+            </div>
+          )}
+
+          {/* Image-only: show timestamp below */}
+          {message.imageUrl && !message.text && (
+            <div className={`flex items-center gap-1 mt-0.5 px-1 text-[10px] text-gray-400 ${isMine ? 'flex-row-reverse' : 'flex-row'}`}>
+              <span>{formatTime(message.createdAt)}</span>
+              <Ticks isMine={isMine} isPending={isPending} isRead={isRead} />
+            </div>
+          )}
+        </div>
       </motion.div>
     </>
   );

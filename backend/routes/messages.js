@@ -366,6 +366,14 @@ router.delete('/:convId/messages/:msgId', requireAuth, async (req, res) => {
       const convData = convSnap.data();
       await msgRef.update({ deletedFor: convData.participants });
 
+      // Clear conversation lastMessage if it was this message
+      if (convData.lastMessage?.senderId === uid) {
+        await db.collection('conversations').doc(convId).update({
+          lastMessage: null,
+          updatedAt: new Date(),
+        });
+      }
+
       if (io) {
         io.to(`dm_${convId}`).emit('dm_message_deleted', {
           conversationId: convId,
@@ -408,22 +416,23 @@ router.put('/:convId/read', requireAuth, async (req, res) => {
     // Reset unread count for this user
     await convRef.update({ [`unreadCounts.${uid}`]: 0 });
 
-    // Mark unread messages as readBy this user (batch write)
-    const unreadMsgs = await db
+    // Fetch all messages and mark unread ones as read (filter in JS — no composite index needed)
+    const allMsgs = await db
       .collection('conversations')
       .doc(convId)
       .collection('messages')
-      .where('readBy', 'not-in', [[uid]]) // messages not yet read by uid
       .get();
 
     const batch = db.batch();
-    unreadMsgs.docs.forEach((doc) => {
+    let updateCount = 0;
+    allMsgs.docs.forEach((doc) => {
       const existing = doc.data().readBy || [];
       if (!existing.includes(uid)) {
         batch.update(doc.ref, { readBy: [...existing, uid] });
+        updateCount++;
       }
     });
-    await batch.commit();
+    if (updateCount > 0) await batch.commit();
 
     // Emit read receipt to conversation room
     if (io) {

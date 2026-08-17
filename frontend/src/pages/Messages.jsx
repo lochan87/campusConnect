@@ -65,7 +65,7 @@ const Messages = () => {
       {/* ── Chat area ── */}
       <div
         className={`
-          flex-1 overflow-hidden
+          flex-1 overflow-hidden relative
           ${mobileView === 'list' ? 'hidden md:flex md:flex-col' : 'flex flex-col'}
         `}
       >

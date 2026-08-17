@@ -35,6 +35,7 @@ const A = {
   SET_HAS_MORE: 'SET_HAS_MORE',
   SET_ERROR: 'SET_ERROR',
   MARK_CONV_READ: 'MARK_CONV_READ',
+  MARK_MESSAGES_READ: 'MARK_MESSAGES_READ', // update readBy on all messages when partner reads
 };
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -167,6 +168,23 @@ const dmReducer = (state, action) => {
       };
     }
 
+    // When the other participant reads the conversation, mark all messages as read
+    case A.MARK_MESSAGES_READ: {
+      const { convId, readerUid } = action.payload;
+      const existing = state.messages[convId] || [];
+      return {
+        ...state,
+        messages: {
+          ...state.messages,
+          [convId]: existing.map((msg) =>
+            msg.readBy?.includes(readerUid)
+              ? msg
+              : { ...msg, readBy: [...(msg.readBy || []), readerUid] }
+          ),
+        },
+      };
+    }
+
     case A.SET_LOADING_CONVS:
       return { ...state, loadingConversations: action.payload };
 
@@ -199,11 +217,13 @@ export const DMProvider = ({ children }) => {
   const { user } = useAuth();
   const typingTimersRef = useRef({});
 
-  // ── Stable refs for volatile state (avoids re-registering socket handlers) ──
+  // Stable refs for volatile state (avoids re-registering socket handlers)
   const activeConvIdRef = useRef(state.activeConversationId);
   const conversationsRef = useRef(state.conversations);
   const messagesRef = useRef(state.messages);
   const userRef = useRef(user);
+  // Track locally deleted message IDs so re-fetches can't resurrect them
+  const deletedMsgIdsRef = useRef(new Set());
 
   useEffect(() => { activeConvIdRef.current = state.activeConversationId; });
   useEffect(() => { conversationsRef.current = state.conversations; });
@@ -231,15 +251,13 @@ export const DMProvider = ({ children }) => {
       const { conversationId, message } = data;
       const currentUser = userRef.current;
 
-      // ✅ FIX: Skip messages we sent ourselves.
-      // Our optimistic UI already shows them; REPLACE_OPTIMISTIC will confirm.
-      // If we don't skip, socket appends a second copy of the same message.
+      // Skip messages we sent ourselves — optimistic UI + REPLACE_OPTIMISTIC handles them
       if (message.senderId === currentUser?.uid) return;
 
-      // Append message from the OTHER person
+      // Append to chat if messages are loaded for this conv
       dispatch({ type: A.APPEND_MESSAGE, payload: { convId: conversationId, message } });
 
-      // Update conversation preview
+      // Update conversation preview + bubble to top
       dispatch({
         type: A.ADD_OR_UPDATE_CONVERSATION,
         payload: {
@@ -254,15 +272,20 @@ export const DMProvider = ({ children }) => {
         },
       });
 
-      // Toast only if not in the active conversation
       const activeId = activeConvIdRef.current;
-      if (activeId !== conversationId) {
+      if (activeId === conversationId) {
+        // User is actively viewing this conv — auto mark as read so ticks turn blue for sender
+        apiService.markConversationRead(conversationId).catch(() => {});
+        dispatch({ type: A.MARK_CONV_READ, payload: conversationId });
+      } else {
+        // Background notification
         const conv = conversationsRef.current.find((c) => c.id === conversationId);
         const senderName = conv?.otherUser?.username || 'Someone';
         toast(`💬 ${senderName}: ${message.text || 'Sent an image'}`, {
           duration: 4000,
           icon: null,
         });
+        // Refresh conv list so unread badge + ordering updates
         loadConversations();
       }
     };
@@ -284,10 +307,14 @@ export const DMProvider = ({ children }) => {
     };
 
     const handleReadReceipt = (data) => {
-      const { conversationId } = data;
-      if (messagesRef.current[conversationId]) {
-        loadMessages(conversationId, true);
-      }
+      // Backend emits { conversationId, readBy: uid } when partner reads
+      const { conversationId, readBy: readerUid } = data;
+      if (!readerUid || readerUid === userRef.current?.uid) return; // ignore own read events
+      // Update readBy on all messages in this conversation locally — turns ticks blue
+      dispatch({
+        type: A.MARK_MESSAGES_READ,
+        payload: { convId: conversationId, readerUid },
+      });
     };
 
     const handleMessageDeleted = (data) => {
@@ -325,41 +352,46 @@ export const DMProvider = ({ children }) => {
 
   const loadMessages = useCallback(
     async (convId, refresh = false) => {
-      const alreadyLoaded = state.messages[convId]?.length > 0;
+      // Use ref to check current loaded state — avoids stale closure from state.messages dep
+      const alreadyLoaded = (messagesRef.current[convId]?.length || 0) > 0;
       if (!refresh && alreadyLoaded) return;
 
       dispatch({ type: A.SET_LOADING_MSGS, payload: { convId, value: true } });
       try {
         const res = await apiService.getMessages(convId, { limit: 30 });
         const { messages, hasMore } = res.data;
-        dispatch({ type: A.SET_MESSAGES, payload: { convId, messages } });
+        // Filter out any locally deleted messages so they never come back
+        const filtered = messages.filter((m) => !deletedMsgIdsRef.current.has(m.id));
+        dispatch({ type: A.SET_MESSAGES, payload: { convId, messages: filtered } });
         dispatch({ type: A.SET_HAS_MORE, payload: { convId, value: hasMore } });
       } catch (err) {
         console.error('loadMessages error:', err);
         dispatch({ type: A.SET_LOADING_MSGS, payload: { convId, value: false } });
       }
     },
-    [state.messages]
+    [] // stable — uses messagesRef and deletedMsgIdsRef (both refs, never stale)
   );
 
   const loadMoreMessages = useCallback(
     async (convId) => {
-      const msgs = state.messages[convId] || [];
-      if (!state.hasMoreMessages[convId] || msgs.length === 0) return;
-      const cursor = msgs[0].id; // oldest loaded message
+      // Use refs so this stays stable and doesn't cause openConversation to re-create
+      const msgs = messagesRef.current[convId] || [];
+      const hasMore = state.hasMoreMessages[convId];
+      if (!hasMore || msgs.length === 0) return;
+      const cursor = msgs[0].id;
 
       dispatch({ type: A.SET_LOADING_MSGS, payload: { convId, value: true } });
       try {
         const res = await apiService.getMessages(convId, { before: cursor, limit: 30 });
-        const { messages, hasMore } = res.data;
+        const { messages, hasMore: more } = res.data;
         dispatch({ type: A.PREPEND_MESSAGES, payload: { convId, messages } });
-        dispatch({ type: A.SET_HAS_MORE, payload: { convId, value: hasMore } });
+        dispatch({ type: A.SET_HAS_MORE, payload: { convId, value: more } });
       } catch (err) {
         console.error('loadMoreMessages error:', err);
         dispatch({ type: A.SET_LOADING_MSGS, payload: { convId, value: false } });
       }
     },
-    [state.messages, state.hasMoreMessages]
+    [state.hasMoreMessages]
   );
 
   const openConversation = useCallback(
@@ -443,17 +475,32 @@ export const DMProvider = ({ children }) => {
   );
 
   const deleteMessage = useCallback(async (convId, messageId, deleteForBoth = false) => {
+    // Optimistically remove from local state immediately
+    deletedMsgIdsRef.current.add(messageId);
+    dispatch({ type: A.REMOVE_MESSAGE, payload: { convId, messageId } });
+
+    // Optimistically clear lastMessage in conversation preview if it was the deleted msg
+    dispatch({
+      type: A.ADD_OR_UPDATE_CONVERSATION,
+      payload: { id: convId, lastMessage: null, updatedAt: new Date().toISOString() },
+    });
+
     try {
       await apiService.deleteMessage(convId, messageId, deleteForBoth);
       if (deleteForBoth) {
-        dispatch({ type: A.REMOVE_MESSAGE, payload: { convId, messageId } });
-      } else {
-        dispatch({ type: A.REMOVE_MESSAGE, payload: { convId, messageId } });
+        toast.success('Message unsent', { duration: 2000 });
       }
+      // Refresh conversation list so lastMessage preview reflects deletion
+      loadConversations();
     } catch (err) {
+      // Rollback
+      deletedMsgIdsRef.current.delete(messageId);
+      await loadMessages(convId, true);
+      loadConversations();
       toast.error(err.response?.data?.error || 'Could not delete message');
     }
-  }, []);
+  }, [loadMessages, loadConversations]);
+
 
   const emitTypingStart = useCallback(
     (convId) => {
