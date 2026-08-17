@@ -6,6 +6,7 @@ const { requireAuth, generateToken } = require('../middleware/auth');
 const multer = require('multer');
 const storageService = require('../services/storageService');
 const router = express.Router();
+const { sendWelcomeEmail } = require('../services/emailService');
 
 // Multer for avatar uploads (2 MB, images only)
 const avatarUpload = multer({
@@ -595,6 +596,11 @@ router.post('/register', async (req, res) => {
     };
 
     await db.collection('users').doc(userRecord.uid).set(userData);
+
+    // Send a branded welcome email (fire-and-forget — never block registration)
+    sendWelcomeEmail(email, `${firstName} ${lastName}`, username).catch(err =>
+      console.warn('⚠️  Welcome email failed (non-critical):', err.message)
+    );
 
     // Remove sensitive data from response
     const { password: _, ...userResponse } = userData;

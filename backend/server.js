@@ -15,6 +15,7 @@ const statsRoutes = require('./routes/stats');
 const leaderboardRoutes = require('./routes/leaderboard');
 const searchRoutes = require('./routes/search');
 const messageRoutes = require('./routes/messages');
+const authRoutes = require('./routes/forgot');
 const { initializeFirebase } = require('./config/firebase');
 const { setupWebSocket } = require('./services/websocket');
 const { cleanupService } = require('./services/cleanupService');
@@ -94,6 +95,7 @@ app.use('/api/stats', statsRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/auth', authRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

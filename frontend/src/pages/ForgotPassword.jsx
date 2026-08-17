@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiMail, FiArrowLeft, FiCheckCircle, FiLoader } from 'react-icons/fi';
 import toast from 'react-hot-toast';
-import { firebaseAuth, sendPasswordResetEmail, getFirebaseAuthErrorMessage } from '../services/firebase';
+// Password reset is handled via backend to send a custom branded email
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
@@ -25,17 +25,25 @@ const ForgotPassword = () => {
         throw new Error('Please enter a valid email address');
       }
 
-      // ✅ Real Firebase password reset — sends a secure reset link to the email
-      await sendPasswordResetEmail(firebaseAuth, email);
+      // ✅ Send reset email via backend — delivers our custom branded HTML email
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/auth/forgot-password`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        }
+      );
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to send reset email');
+      }
 
       setEmailSent(true);
       toast.success('Password reset email sent!');
     } catch (error) {
-      // Map Firebase error codes to user-friendly messages
-      const message = error.code
-        ? getFirebaseAuthErrorMessage(error.code)
-        : error.message || 'Failed to send reset email';
-      toast.error(message);
+      toast.error(error.message || 'Failed to send reset email');
     } finally {
       setIsSubmitting(false);
     }
