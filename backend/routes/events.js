@@ -267,8 +267,6 @@ router.post('/', requireAuth, upload.single('poster'), async (req, res) => {
     // Handle poster upload if provided
     if (req.file) {
       try {
-        console.log('Processing poster upload...');
-        
         // Validate the poster image
         if (!storageService.validateImage(req.file.buffer, req.file.mimetype)) {
           return res.status(400).json({
@@ -292,8 +290,6 @@ router.post('/', requireAuth, upload.single('poster'), async (req, res) => {
           uploadedAt: posterData.uploadedAt
         };
         eventData.hasPoster = true;
-        
-        console.log(`Poster processed successfully: ${posterData.size} bytes`);
       } catch (uploadError) {
         console.error('Failed to process poster:', uploadError);
         return res.status(400).json({
@@ -332,8 +328,6 @@ router.post('/', requireAuth, upload.single('poster'), async (req, res) => {
               eventCount: currentEventCount + 1,
               lastActive: new Date()
             });
-            console.log(`📈 Event creation: User ${eventData.userId} (${userRole}) earned +${reputationBonus} reputation (${currentReputation} → ${currentReputation + reputationBonus}), postCount updated (${currentPostCount} → ${currentPostCount + 1}), eventCount updated (${currentEventCount} → ${currentEventCount + 1})`);
-            
             // Emit user update via WebSocket
             if (req.app.get('io')) {
               req.app.get('io').emit('user_updated', {
@@ -344,8 +338,6 @@ router.post('/', requireAuth, upload.single('poster'), async (req, res) => {
               });
             }
           }
-        } else {
-          console.log(`🚫 Demo user ${eventData.userId} - no reputation awarded for event creation`);
         }
       } catch (reputationError) {
         console.error('Error updating reputation for event creation:', reputationError);

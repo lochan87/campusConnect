@@ -794,14 +794,10 @@ router.post('/:id/comments', requireAuth, async (req, res) => {
               reputation: newReputation,
               lastActive: new Date()
             });
-            
-            console.log(`📈 Post comment: Awarded +1 reputation to post author ${postData.userId}: ${currentReputation} -> ${newReputation}`);
           }
         } catch (error) {
           console.error('Error updating author reputation for comment:', error);
         }
-      } else {
-        console.log(`🚫 Demo user ${postData.userId} - no reputation awarded for comment`);
       }
     }
     
@@ -878,13 +874,6 @@ router.delete('/:postId/comments/:commentId', requireAuth, async (req, res) => {
         success: false,
         error: 'Not authorized to delete this comment'
       });
-    }
-
-    // Log the deletion action
-    if (isPostOwner && !isCommentAuthor) {
-      console.log(`🗑️ Post owner (${userId}) deleted comment (${commentId}) on post (${postId}) by ${commentData.isAnonymous ? 'Anonymous' : commentData.userId}`);
-    } else if (isCommentAuthor) {
-      console.log(`🗑️ Comment author (${userId}) deleted their own comment (${commentId}) on post (${postId})`);
     }
 
     await db.collection('comment_post').doc(commentId).delete();

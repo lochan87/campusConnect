@@ -30,7 +30,6 @@ const isDemoUser = (userId, userData) => {
 // GET /api/leaderboard - Get top users by reputation and activity (scoped to campus)
 router.get('/', async (req, res) => {
   try {
-    console.log('📊 Fetching leaderboard data');
     const db = getFirestore();
     const { campusId } = req.query; // scope to campus when provided
 
@@ -47,7 +46,6 @@ router.get('/', async (req, res) => {
       
       // Skip demo users
       if (isDemoUser(doc.id, userData)) {
-        console.log('🚫 Excluding demo user from leaderboard:', doc.id);
         return;
       }
 
@@ -111,7 +109,6 @@ router.get('/', async (req, res) => {
     // Limit to top 10 after filtering
     mostActive.splice(10);
 
-    console.log('✅ Leaderboard data fetched:', { campusId: campusId || 'global', topReputation: topReputation.length, mostActive: mostActive.length });
 
     res.json({
       success: true,

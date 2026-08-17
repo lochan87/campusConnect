@@ -25,7 +25,6 @@ router.post('/forgot-password', async (req, res) => {
     try {
       userRecord = await admin.auth().getUserByEmail(email);
     } catch (err) {
-      console.log(`Password reset requested for non-existent email: ${email}`);
       return res.status(404).json({
         success: false,
         error: 'No account found with this email address. Please check and try again.',
