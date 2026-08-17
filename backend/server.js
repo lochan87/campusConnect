@@ -4,6 +4,7 @@ const socketIo = require('socket.io');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const compression = require('compression');
 require('dotenv').config();
 
 const postRoutes = require('./routes/posts');
@@ -35,6 +36,16 @@ app.set('io', io);
 initializeFirebase();
 
 // Middleware
+// Gzip compress all responses — reduces JSON size ~70%
+app.use(compression({
+  level: 6,          // Balanced compression (1=fast, 9=max)
+  threshold: 1024,   // Only compress responses > 1 KB
+  filter: (req, res) => {
+    // Don't compress server-sent events
+    if (req.headers['accept'] === 'text/event-stream') return false;
+    return compression.filter(req, res);
+  },
+}));
 app.use(helmet());
 app.use(cors({
   origin: process.env.FRONTEND_URL || "http://localhost:3000",

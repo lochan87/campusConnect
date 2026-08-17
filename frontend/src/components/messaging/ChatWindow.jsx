@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { FiArrowLeft, FiChevronDown, FiSearch, FiX, FiVolume2, FiVolumeX, FiInfo, FiUser, FiExternalLink } from 'react-icons/fi';
+import { FiArrowLeft, FiChevronDown, FiSearch, FiX, FiVolume2, FiVolumeX, FiInfo, FiUser, FiExternalLink, FiXCircle } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import { useDM } from '../../context/DMContext';
 import { useAuth } from '../../context/AuthContext';
@@ -153,7 +153,9 @@ const ChatWindow = ({ onBack }) => {
     toggleReaction,
     soundEnabled,
     toggleSound,
+    closeConversation,
   } = useDM();
+  const navigate = useNavigate();
 
   const scrollRef = useRef(null);
   const bottomRef = useRef(null);
@@ -315,6 +317,21 @@ const ChatWindow = ({ onBack }) => {
             title="Recipient details"
           >
             <FiInfo className="w-4 h-4" />
+          </button>
+
+          {/* Divider */}
+          <div className="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-0.5" />
+
+          {/* Close conversation */}
+          <button
+            onClick={() => {
+              closeConversation();
+              navigate('/messages', { replace: true });
+            }}
+            className="p-2 rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 dark:hover:text-red-400 transition-colors"
+            title="Close conversation"
+          >
+            <FiXCircle className="w-4 h-4" />
           </button>
         </div>
       </div>

@@ -211,10 +211,9 @@ const Profile = () => {
                 currentAvatar={profile.avatar || null}
                 displayName={profile.displayName}
                 size={isOwnProfile ? 88 : 80}
-                editable={isOwnProfile}
+                editable={isOwnProfile && editing}
                 onUpload={async (file) => {
                   await updateAvatar(file);
-                  // Also sync local profile state immediately
                   setProfile((prev) => ({ ...prev, avatar: URL.createObjectURL(file) }));
                 }}
                 onRemove={async () => {

@@ -1,26 +1,28 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// Components
+// Layout components (always needed — keep eager)
 import Navbar from './components/layout/Navbar';
 import Sidebar from './components/layout/Sidebar';
-import Home from './pages/Home';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import ForgotPassword from './pages/ForgotPassword';
-import Profile from './pages/Profile';
-import CreatePost from './pages/CreatePost';
-import CreatePoll from './pages/CreatePoll';
-import CreateEvent from './pages/CreateEvent';
-import PostDetail from './pages/PostDetail';
-import EventDetail from './pages/EventDetail';
-import Leaderboard from './pages/Leaderboard';
-import Settings from './pages/Settings';
-import Search from './pages/Search';
-import Messages from './pages/Messages';
 import BackToTop from './components/ui/BackToTop';
 import CommandPalette from './components/ui/CommandPalette';
+
+// Pages — lazy loaded (each becomes a separate JS chunk)
+const Home          = lazy(() => import('./pages/Home'));
+const Login         = lazy(() => import('./pages/Login'));
+const Register      = lazy(() => import('./pages/Register'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
+const Profile       = lazy(() => import('./pages/Profile'));
+const CreatePost    = lazy(() => import('./pages/CreatePost'));
+const CreatePoll    = lazy(() => import('./pages/CreatePoll'));
+const CreateEvent   = lazy(() => import('./pages/CreateEvent'));
+const PostDetail    = lazy(() => import('./pages/PostDetail'));
+const EventDetail   = lazy(() => import('./pages/EventDetail'));
+const Leaderboard   = lazy(() => import('./pages/Leaderboard'));
+const Settings      = lazy(() => import('./pages/Settings'));
+const Search        = lazy(() => import('./pages/Search'));
+const Messages      = lazy(() => import('./pages/Messages'));
 
 // Services
 import { socketService } from './services/socket';
@@ -34,6 +36,17 @@ import { DMProvider } from './context/DMContext';
 
 // Styles
 import './App.css';
+
+// Minimal page loader shown while a lazy chunk is downloading
+const PageLoader = () => (
+  <div className="flex items-center justify-center min-h-[60vh]">
+    <div className="flex flex-col items-center gap-3">
+      <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+      <p className="text-sm text-gray-400 dark:text-gray-500">Loading…</p>
+    </div>
+  </div>
+);
+
 
 const AppContent = () => {
   const { user, loading } = useAuth();
@@ -100,12 +113,14 @@ const AppContent = () => {
   if (!user) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="*" element={<Navigate to="/login" replace />} />
+          </Routes>
+        </Suspense>
       </div>
     );
   }
@@ -151,25 +166,27 @@ const AppContent = () => {
           onScroll={() => sidebarOpen && setSidebarOpen(false)}
         >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <AnimatePresence mode="wait">
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/profile/:userId" element={<Profile />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/create-post" element={<CreatePost />} />
-                <Route path="/create-poll" element={<CreatePoll />} />
-                <Route path="/create-event" element={<CreateEvent />} />
-                <Route path="/events/edit/:eventId" element={<CreateEvent />} />
-                <Route path="/event/:eventId" element={<EventDetail />} />
-                <Route path="/post/:postId" element={<PostDetail />} />
-                <Route path="/leaderboard" element={<Leaderboard />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/search" element={<Search />} />
-                <Route path="/messages" element={<Messages />} />
-                <Route path="/messages/:conversationId" element={<Messages />} />
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            </AnimatePresence>
+            <Suspense fallback={<PageLoader />}>
+              <AnimatePresence mode="wait">
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/profile/:userId" element={<Profile />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/create-post" element={<CreatePost />} />
+                  <Route path="/create-poll" element={<CreatePoll />} />
+                  <Route path="/create-event" element={<CreateEvent />} />
+                  <Route path="/events/edit/:eventId" element={<CreateEvent />} />
+                  <Route path="/event/:eventId" element={<EventDetail />} />
+                  <Route path="/post/:postId" element={<PostDetail />} />
+                  <Route path="/leaderboard" element={<Leaderboard />} />
+                  <Route path="/settings" element={<Settings />} />
+                  <Route path="/search" element={<Search />} />
+                  <Route path="/messages" element={<Messages />} />
+                  <Route path="/messages/:conversationId" element={<Messages />} />
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </AnimatePresence>
+            </Suspense>
           </div>
         </main>
       </div>

@@ -18,66 +18,57 @@ const api = axios.create({
 // Request interceptor
 api.interceptors.request.use(
   (config) => {
-    // Simplified request handling - just count requests but don't block
     pendingRequests++;
-    console.log(`🔄 API Request: ${config.method?.toUpperCase()} ${config.url} (${pendingRequests} pending)`);
-    
+
     // Add auth token if available
     const token = localStorage.getItem('authToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    
-    // Add user ID to requests if available
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    if (user.uid) {
-      config.headers['X-User-ID'] = user.uid;
-    }
-    
+
+    // Add user ID header (parse once, guard against bad JSON)
+    try {
+      const raw = localStorage.getItem('user');
+      if (raw) {
+        const uid = JSON.parse(raw)?.uid;
+        if (uid) config.headers['X-User-ID'] = uid;
+      }
+    } catch (_) { /* ignore */ }
+
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 // Response interceptor
 api.interceptors.response.use(
   (response) => {
     pendingRequests = Math.max(0, pendingRequests - 1);
-    console.log(`✅ API Success: ${response.config.method?.toUpperCase()} ${response.config.url} (${pendingRequests} pending)`);
-    
-    // Debug post creation responses
-    if (response.config.url === '/posts' && response.config.method === 'post') {
-      console.log('POST creation response data:', response.data);
-    }
-    
     return response;
   },
   (error) => {
     pendingRequests = Math.max(0, pendingRequests - 1);
-    console.log(`❌ API Error: ${error.config?.method?.toUpperCase()} ${error.config?.url} (${pendingRequests} pending)`);
-    console.error('Full error object:', error);
-    
+
     const message = error.response?.data?.error || error.message || 'An error occurred';
-    
+
     // Don't show toast for auth errors or specific errors we handle elsewhere
-    if (error.response?.status !== 401 && 
-        error.response?.status !== 403 && 
-        !message.includes('concurrent') &&
-        !message.includes('timeout') &&
-        error.code !== 'ECONNABORTED') {
-      console.log('Showing error toast:', message);
+    if (
+      error.response?.status !== 401 &&
+      error.response?.status !== 403 &&
+      !message.includes('concurrent') &&
+      !message.includes('timeout') &&
+      error.code !== 'ECONNABORTED'
+    ) {
       toast.error(message);
     }
-    
+
     // Auto-logout on 401
     if (error.response?.status === 401) {
       localStorage.removeItem('authToken');
       localStorage.removeItem('user');
       window.location.href = '/login';
     }
-    
+
     return Promise.reject(error);
   }
 );
