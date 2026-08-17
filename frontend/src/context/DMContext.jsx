@@ -1,7 +1,8 @@
-import React, { createContext, useContext, useReducer, useEffect, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useCallback, useRef, useState } from 'react';
 import { socketService } from '../services/socket';
 import { apiService } from '../services/api';
 import { useAuth } from './AuthContext';
+import { soundFx } from '../utils/soundEffects';
 import toast from 'react-hot-toast';
 
 // ── State shape ──────────────────────────────────────────────────────────────
@@ -36,6 +37,7 @@ const A = {
   SET_ERROR: 'SET_ERROR',
   MARK_CONV_READ: 'MARK_CONV_READ',
   MARK_MESSAGES_READ: 'MARK_MESSAGES_READ', // update readBy on all messages when partner reads
+  TOGGLE_REACTION: 'TOGGLE_REACTION',
 };
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -200,6 +202,30 @@ const dmReducer = (state, action) => {
         hasMoreMessages: { ...state.hasMoreMessages, [action.payload.convId]: action.payload.value },
       };
 
+    case A.TOGGLE_REACTION: {
+      const { convId, messageId, emoji, uid } = action.payload;
+      const existing = state.messages[convId] || [];
+      return {
+        ...state,
+        messages: {
+          ...state.messages,
+          [convId]: existing.map((msg) => {
+            if (msg.id !== messageId) return msg;
+            const currentReactions = { ...(msg.reactions || {}) };
+            const uidsForEmoji = currentReactions[emoji] || [];
+            if (uidsForEmoji.includes(uid)) {
+              const updated = uidsForEmoji.filter((u) => u !== uid);
+              if (updated.length === 0) delete currentReactions[emoji];
+              else currentReactions[emoji] = updated;
+            } else {
+              currentReactions[emoji] = [...uidsForEmoji, uid];
+            }
+            return { ...msg, reactions: currentReactions };
+          }),
+        },
+      };
+    }
+
     case A.SET_ERROR:
       return { ...state, error: action.payload };
 
@@ -216,6 +242,20 @@ export const DMProvider = ({ children }) => {
   const [state, dispatch] = useReducer(dmReducer, initialState);
   const { user } = useAuth();
   const typingTimersRef = useRef({});
+
+  // Sound preference state
+  const [soundEnabled, setSoundEnabled] = useState(() => {
+    return localStorage.getItem('dm_sound_enabled') !== 'false';
+  });
+  const soundEnabledRef = useRef(soundEnabled);
+  useEffect(() => {
+    soundEnabledRef.current = soundEnabled;
+    localStorage.setItem('dm_sound_enabled', soundEnabled);
+  }, [soundEnabled]);
+
+  const toggleSound = useCallback(() => {
+    setSoundEnabled((prev) => !prev);
+  }, []);
 
   // Stable refs for volatile state (avoids re-registering socket handlers)
   const activeConvIdRef = useRef(state.activeConversationId);
@@ -256,6 +296,11 @@ export const DMProvider = ({ children }) => {
 
       // Append to chat if messages are loaded for this conv
       dispatch({ type: A.APPEND_MESSAGE, payload: { convId: conversationId, message } });
+
+      // Play sound ping if sound enabled
+      if (soundEnabledRef.current) {
+        soundFx.playPop();
+      }
 
       // Update conversation preview + bubble to top
       dispatch({
@@ -428,7 +473,7 @@ export const DMProvider = ({ children }) => {
   }, []);
 
   const sendMessage = useCallback(
-    async (convId, text, imageFile = null) => {
+    async (convId, text, imageFile = null, replyTo = null) => {
       if (!user) return;
 
       // Optimistic message
@@ -439,6 +484,12 @@ export const DMProvider = ({ children }) => {
         text: text || '',
         imageUrl: null,
         type: imageFile ? 'image' : 'text',
+        replyTo: replyTo ? {
+          id: replyTo.id,
+          senderName: replyTo.senderName || replyTo.senderId,
+          text: replyTo.text || '',
+          imageUrl: replyTo.imageUrl || null,
+        } : null,
         readBy: [user.uid],
         deletedFor: [],
         createdAt: new Date().toISOString(),
@@ -453,12 +504,18 @@ export const DMProvider = ({ children }) => {
           payload = new FormData();
           if (text) payload.append('text', text);
           payload.append('image', imageFile);
+          if (replyTo) payload.append('replyTo', JSON.stringify(optimistic.replyTo));
         } else {
-          payload = { text };
+          payload = { text, replyTo: optimistic.replyTo };
         }
 
         const res = await apiService.sendMessage(convId, payload);
         const confirmed = res.data.message;
+
+        // Ensure confirmed includes local replyTo if backend didn't save it
+        if (optimistic.replyTo && !confirmed.replyTo) {
+          confirmed.replyTo = optimistic.replyTo;
+        }
 
         // Replace optimistic with confirmed message
         dispatch({ type: A.REPLACE_OPTIMISTIC, payload: { convId, tempId, message: confirmed } });
@@ -516,6 +573,14 @@ export const DMProvider = ({ children }) => {
     [user]
   );
 
+  const toggleReaction = useCallback((convId, messageId, emoji) => {
+    if (!user) return;
+    dispatch({
+      type: A.TOGGLE_REACTION,
+      payload: { convId, messageId, emoji, uid: user.uid },
+    });
+  }, [user]);
+
   // ── Value ──────────────────────────────────────────────────────────────────
   const value = {
     // State
@@ -528,6 +593,7 @@ export const DMProvider = ({ children }) => {
     loadingMessages: state.loadingMessages,
     hasMoreMessages: state.hasMoreMessages,
     error: state.error,
+    soundEnabled,
 
     // Actions
     loadConversations,
@@ -538,6 +604,8 @@ export const DMProvider = ({ children }) => {
     startConversation,
     sendMessage,
     deleteMessage,
+    toggleReaction,
+    toggleSound,
     emitTypingStart,
     emitTypingStop,
   };

@@ -10,29 +10,27 @@ import UserSearchModal from '../components/messaging/UserSearchModal';
 const Messages = () => {
   const { conversationId: routeConvId } = useParams();
   const navigate = useNavigate();
-  const { openConversation, activeConversationId, loadConversations } = useDM();
+  const { openConversation, closeConversation, activeConversationId, loadConversations } = useDM();
 
   const [showSearch, setShowSearch] = useState(false);
   const [inboxQuery, setInboxQuery] = useState('');
   // Mobile: 'list' | 'chat'
   const [mobileView, setMobileView] = useState('list');
 
-  // Open conversation from URL param on mount
+  // Sync conversation with URL route parameter
   useEffect(() => {
     loadConversations();
+  }, [loadConversations]);
+
+  useEffect(() => {
     if (routeConvId) {
       openConversation(routeConvId);
       setMobileView('chat');
+    } else {
+      closeConversation();
+      setMobileView('list');
     }
-  }, []); // eslint-disable-line
-
-  // Sync URL when active conversation changes
-  useEffect(() => {
-    if (activeConversationId && activeConversationId !== routeConvId) {
-      navigate(`/messages/${activeConversationId}`, { replace: true });
-      setMobileView('chat');
-    }
-  }, [activeConversationId]); // eslint-disable-line
+  }, [routeConvId]); // eslint-disable-line
 
   const handleNewChat = () => setShowSearch(true);
 

@@ -62,18 +62,20 @@ const ConversationItem = ({ conversation, isActive, onClick }) => {
             src={conversation.otherUser.avatar}
             alt={conversation.otherUser?.username}
             className={`w-12 h-12 rounded-full object-cover transition-all ${
-              isActive ? 'ring-2 ring-indigo-400 ring-offset-2 dark:ring-offset-gray-800' : ''
+              isActive ? 'ring-2 ring-indigo-500 ring-offset-2 dark:ring-offset-gray-800' : ''
             }`}
           />
         ) : (
           <div
-            className={`w-12 h-12 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white font-semibold text-base transition-all ${
-              isActive ? 'ring-2 ring-indigo-400 ring-offset-2 dark:ring-offset-gray-800' : ''
+            className={`w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-semibold text-base transition-all ${
+              isActive ? 'ring-2 ring-indigo-500 ring-offset-2 dark:ring-offset-gray-800' : ''
             }`}
           >
             {(conversation.otherUser?.username || '?').charAt(0).toUpperCase()}
           </div>
         )}
+        {/* Active online badge */}
+        <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white dark:border-gray-800 rounded-full" />
       </div>
 
       {/* Content */}
