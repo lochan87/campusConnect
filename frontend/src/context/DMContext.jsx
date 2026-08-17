@@ -520,15 +520,23 @@ export const DMProvider = ({ children }) => {
         // Replace optimistic with confirmed message
         dispatch({ type: A.REPLACE_OPTIMISTIC, payload: { convId, tempId, message: confirmed } });
 
-        // Refresh conversation list ordering
-        loadConversations();
+        // Update conversation preview locally (avoid full server round-trip)
+        const nowIso = confirmed.createdAt || new Date().toISOString();
+        dispatch({
+          type: A.ADD_OR_UPDATE_CONVERSATION,
+          payload: {
+            id: convId,
+            lastMessage: { text: text || (imageFile ? '📷 Photo' : ''), senderId: user.uid },
+            updatedAt: nowIso,
+          },
+        });
       } catch (err) {
         // Roll back optimistic message
         dispatch({ type: A.REMOVE_MESSAGE, payload: { convId, messageId: tempId } });
         toast.error('Failed to send message');
       }
     },
-    [user, loadConversations]
+    [user] // removed loadConversations — no longer needed here
   );
 
   const deleteMessage = useCallback(async (convId, messageId, deleteForBoth = false) => {

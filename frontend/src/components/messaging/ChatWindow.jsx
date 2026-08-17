@@ -21,16 +21,18 @@ const getDateLabel = (ts) => {
   return d.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
 };
 
-/* ── Inject date separators between messages ────────────────────────────── */
+/* ── Inject date separators between messages ────────────────────────────────── */
 const withSeparators = (messages) => {
   const out = [];
   let lastLabel = null;
   messages.forEach((msg) => {
     const label = getDateLabel(msg.createdAt);
+    // Always update lastLabel (even for '') so we don't insert a duplicate separator
+    // when a message without a timestamp is followed by one that has today's date
     if (label && label !== lastLabel) {
       out.push({ _type: 'sep', label, key: `sep_${label}` });
-      lastLabel = label;
     }
+    lastLabel = label || lastLabel; // keep last known label so '' doesn't reset it
     out.push({ _type: 'msg', ...msg });
   });
   return out;

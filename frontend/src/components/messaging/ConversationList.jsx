@@ -70,33 +70,39 @@ const ConversationList = ({ onNewChat, searchQuery, onSearchChange }) => {
           )}
         </div>
 
-        {/* Filter Tabs */}
+        {/* Filter Tabs — same spring layoutId pattern as Home Posts/Polls/Events */}
         <div className="flex items-center gap-1 bg-gray-100/80 dark:bg-gray-800/60 p-1 rounded-xl">
-          <button
-            onClick={() => setFilterTab('all')}
-            className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-              filterTab === 'all'
-                ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
-            }`}
-          >
-            All
-          </button>
-          <button
-            onClick={() => setFilterTab('unread')}
-            className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${
-              filterTab === 'unread'
-                ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
-            }`}
-          >
-            <span>Unread</span>
-            {unreadTotal > 0 && (
-              <span className="w-4 h-4 rounded-full bg-indigo-500 text-white text-[9px] font-bold flex items-center justify-center">
-                {unreadTotal}
-              </span>
-            )}
-          </button>
+          {[
+            { id: 'all',    label: 'All' },
+            { id: 'unread', label: 'Unread', badge: unreadTotal > 0 ? unreadTotal : null },
+          ].map((tab) => {
+            const isActive = filterTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setFilterTab(tab.id)}
+                className={`relative flex-1 py-1.5 rounded-lg text-xs font-semibold transition-colors z-10 flex items-center justify-center gap-1.5 ${
+                  isActive
+                    ? 'text-indigo-600 dark:text-indigo-400'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
+                }`}
+              >
+                {isActive && (
+                  <motion.div
+                    layoutId="dmFilterIndicator"
+                    className="absolute inset-0 bg-white dark:bg-gray-700 rounded-lg shadow-sm -z-10"
+                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                  />
+                )}
+                <span>{tab.label}</span>
+                {tab.badge && (
+                  <span className="w-4 h-4 rounded-full bg-indigo-500 text-white text-[9px] font-bold flex items-center justify-center">
+                    {tab.badge > 9 ? '9+' : tab.badge}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
       </div>
 
