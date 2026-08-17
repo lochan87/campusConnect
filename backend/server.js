@@ -54,22 +54,29 @@ app.use(cors({
 
 // Rate limiting
 app.set('trust proxy', 1);
+const isProd = process.env.NODE_ENV === 'production';
+const rateLimitWindowMs = parseInt(process.env.RATE_LIMIT_WINDOW_MS) ||
+  (isProd ? 15 * 60 * 1000 : 60 * 60 * 1000);
+// Hard-cap: env var cannot exceed 500 to prevent accidental bypass
+const rateLimitMax = Math.min(
+  parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || (isProd ? 100 : 500),
+  isProd ? 200 : 500
+);
 const limiter = rateLimit({
-  windowMs: process.env.RATE_LIMIT_WINDOW_MS || (process.env.NODE_ENV === 'production' ? 15 * 60 * 1000 : 60 * 60 * 1000), // 15 minutes in production, 1 hour in development
-  max: process.env.RATE_LIMIT_MAX_REQUESTS || (process.env.NODE_ENV === 'production' ? 100 : 1000), // 100 in production, 1000 in development
+  windowMs: rateLimitWindowMs,
+  max: rateLimitMax,
   message: {
     success: false,
     error: 'Too many requests from this IP, please try again later.',
-    retryAfter: Math.ceil((process.env.RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000) / 1000)
+    retryAfter: Math.ceil(rateLimitWindowMs / 1000)
   },
-  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  standardHeaders: true,
+  legacyHeaders: false,
   handler: (req, res) => {
-    console.log(`🚫 Rate limit exceeded for IP: ${req.ip}, Path: ${req.path}, Method: ${req.method}`);
     res.status(429).json({
       success: false,
       error: 'Too many requests from this IP, please try again later.',
-      retryAfter: Math.ceil((process.env.RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000) / 1000)
+      retryAfter: Math.ceil(rateLimitWindowMs / 1000)
     });
   }
 });

@@ -1,6 +1,7 @@
 const express = require('express');
 const { getFirestore } = require('../config/firebase');
 const { validatePoll } = require('../middleware/validation');
+const { requireAuth } = require('../middleware/auth');
 const router = express.Router();
 
 // GET /api/polls - Get all polls with filters
@@ -96,7 +97,8 @@ router.get('/', async (req, res) => {
 });
 
 // POST /api/polls - Create a new poll
-router.post('/', validatePoll, async (req, res) => {
+// POST /api/polls - Create a new poll (auth required)
+router.post('/', requireAuth, validatePoll, async (req, res) => {
   try {
     console.log('📊 Creating new poll...');
     console.log('Poll data received:', req.body);
@@ -217,7 +219,8 @@ router.post('/', validatePoll, async (req, res) => {
 });
 
 // POST /api/polls/:id/vote - Vote on a poll
-router.post('/:id/vote', async (req, res) => {
+// POST /api/polls/:id/vote (auth required)
+router.post('/:id/vote', requireAuth, async (req, res) => {
   try {
     const db = getFirestore();
     const { id } = req.params;
@@ -391,7 +394,8 @@ router.get('/:id', async (req, res) => {
 });
 
 // PUT /api/polls/:id/close - Close a poll (author only)
-router.put('/:id/close', async (req, res) => {
+// PUT /api/polls/:id/close (auth required — only author)
+router.put('/:id/close', requireAuth, async (req, res) => {
   try {
     const db = getFirestore();
     const { id } = req.params;
@@ -442,7 +446,8 @@ router.put('/:id/close', async (req, res) => {
 });
 
 // DELETE /api/polls/:id - Delete a poll (author only)
-router.delete('/:id', async (req, res) => {
+// DELETE /api/polls/:id (auth required — only author)
+router.delete('/:id', requireAuth, async (req, res) => {
   try {
     const db = getFirestore();
     const { id } = req.params;
@@ -489,7 +494,8 @@ router.delete('/:id', async (req, res) => {
 });
 
 // Admin endpoint to manually trigger cleanup of expired polls
-router.post('/cleanup', async (req, res) => {
+// POST /api/polls/cleanup - Manual cleanup trigger (auth required)
+router.post('/cleanup', requireAuth, async (req, res) => {
   try {
     console.log('🧹 Manual cleanup triggered via API');
     const { cleanupService } = require('../services/cleanupService');

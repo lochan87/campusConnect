@@ -1,5 +1,37 @@
+const { verifyToken } = require('../middleware/auth');
+
 const setupWebSocket = (io) => {
   console.log('🔌 Setting up WebSocket connections');
+
+  // ── Socket authentication middleware ──────────────────────────────────────
+  // Validates token on every new connection before any event handlers fire.
+  io.use((socket, next) => {
+    try {
+      // Client must send token in handshake auth: { token: 'Bearer <token>' }
+      // or as a query param: ?token=<token>
+      const raw =
+        socket.handshake.auth?.token ||
+        socket.handshake.headers?.authorization ||
+        socket.handshake.query?.token;
+
+      if (!raw) {
+        return next(new Error('Authentication required'));
+      }
+
+      const token = raw.startsWith('Bearer ') ? raw.slice(7) : raw;
+      const userId = verifyToken(token);
+
+      if (!userId) {
+        return next(new Error('Invalid or expired token'));
+      }
+
+      // Attach userId to socket for use in event handlers
+      socket.userId = userId;
+      next();
+    } catch (err) {
+      next(new Error('Authentication failed'));
+    }
+  });
 
   io.on('connection', (socket) => {
     // Join campus room

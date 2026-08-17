@@ -14,11 +14,14 @@ class SocketService {
     }
 
     const serverUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
-    
+    const token = localStorage.getItem('authToken');
+
     this.socket = io(serverUrl, {
       transports: ['websocket', 'polling'],
       timeout: 20000,
       forceNew: true,
+      // Send auth token in handshake so server middleware can validate
+      auth: token ? { token: `Bearer ${token}` } : {},
     });
 
     this.setupEventHandlers();

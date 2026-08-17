@@ -5,6 +5,7 @@ const { getFirestore } = require('../config/firebase');
 const geminiService = require('../services/geminiService');
 const imageService = require('../services/storageService');
 const { validatePost } = require('../middleware/validation');
+const { requireAuth } = require('../middleware/auth');
 const router = express.Router();
 
 // Configure multer for image uploads (store in memory)
@@ -66,9 +67,8 @@ router.get('/summary/events', async (req, res) => {
   }
 });
 
-// POST /api/posts/suggest-category - AI-powered category suggestion
-// IMPORTANT: must be registered BEFORE /:id to avoid being matched as id='suggest-category'
-router.post('/suggest-category', async (req, res) => {
+// POST /api/posts/suggest-category - AI-powered category suggestion (auth required to prevent API abuse)
+router.post('/suggest-category', requireAuth, async (req, res) => {
   try {
     const { content } = req.body;
 
@@ -180,7 +180,8 @@ router.get('/', async (req, res) => {
 });
 
 // POST /api/posts - Create a new post
-router.post('/', upload.single('image'), validatePost, async (req, res) => {
+// POST /api/posts - Create a new post (auth required)
+router.post('/', requireAuth, upload.single('image'), validatePost, async (req, res) => {
   try {
     const db = getFirestore();
     
@@ -398,7 +399,8 @@ router.get('/:id', async (req, res) => {
 });
 
 // POST /api/posts/:id/like - Like/unlike a post
-router.post('/:id/like', async (req, res) => {
+// POST /api/posts/:id/like (auth required)
+router.post('/:id/like', requireAuth, async (req, res) => {
   try {
     const db = getFirestore();
     const { id } = req.params;
@@ -517,7 +519,8 @@ router.post('/:id/like', async (req, res) => {
 
 
 // PUT /api/posts/:id - Edit a post (author only)
-router.put('/:id', upload.single('image'), async (req, res) => {
+// PUT /api/posts/:id - Edit post (auth required)
+router.put('/:id', requireAuth, upload.single('image'), async (req, res) => {
   try {
     const db = getFirestore();
     const { id } = req.params;
@@ -621,7 +624,8 @@ router.put('/:id', upload.single('image'), async (req, res) => {
 });
 
 // DELETE /api/posts/:id - Delete a post (author only)
-router.delete('/:id', async (req, res) => {
+// DELETE /api/posts/:id (auth required)
+router.delete('/:id', requireAuth, async (req, res) => {
   try {
     const db = getFirestore();
     const { id } = req.params;
@@ -736,7 +740,8 @@ router.get('/:id/comments', async (req, res) => {
 });
 
 // POST /api/posts/:id/comments - Add a comment to a post
-router.post('/:id/comments', async (req, res) => {
+// POST /api/posts/:id/comments (auth required)
+router.post('/:id/comments', requireAuth, async (req, res) => {
   try {
     const db = getFirestore();
     const { id } = req.params;
@@ -865,7 +870,8 @@ router.post('/:id/comments', async (req, res) => {
 });
 
 // DELETE /api/posts/:postId/comments/:commentId - Delete a comment
-router.delete('/:postId/comments/:commentId', async (req, res) => {
+// DELETE /api/posts/:postId/comments/:commentId (auth required)
+router.delete('/:postId/comments/:commentId', requireAuth, async (req, res) => {
   try {
     const db = getFirestore();
     const { postId, commentId } = req.params;
@@ -947,7 +953,8 @@ router.delete('/:postId/comments/:commentId', async (req, res) => {
 });
 
 // POST /api/posts/:id/report - Report a post
-router.post('/:id/report', async (req, res) => {
+// POST /api/posts/:id/report (auth required)
+router.post('/:id/report', requireAuth, async (req, res) => {
   try {
     const db = getFirestore();
     const { id } = req.params;
