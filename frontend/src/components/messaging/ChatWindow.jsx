@@ -226,7 +226,14 @@ const ChatWindow = ({ onBack }) => {
   const other = conv.otherUser;
 
   return (
-    <div className="flex flex-col h-full relative" style={{ background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)' }}>
+    <div className="flex flex-col h-full relative overflow-hidden bg-[#f4f6fc] dark:bg-[#0f172a]">
+      {/* Ambient wallpaper pattern overlay */}
+      <div
+        className="absolute inset-0 opacity-[0.035] dark:opacity-[0.05] pointer-events-none"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3CG fill='none' fill-rule='evenodd'%3E%3CG fill='%236366f1' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/G%3E%3C/G%3E%3C/svg%3E")`,
+        }}
+      />
       
       {/* ── Profile Drawer Modal ── */}
       <AnimatePresence>
@@ -349,72 +356,75 @@ const ChatWindow = ({ onBack }) => {
       <div
         ref={scrollRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto py-3"
+        className="flex-1 overflow-y-auto py-3 relative z-10"
         style={{ overscrollBehavior: 'contain' }}
       >
-        {/* Load-more spinner */}
-        <AnimatePresence>
-          {isLoading && convMessages.length > 0 && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="flex justify-center py-3">
-              <div className="w-5 h-5 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <div className="px-4 sm:px-6 md:px-8 flex flex-col justify-end min-h-full">
+          {/* Load-more spinner */}
+          <AnimatePresence>
+            {isLoading && convMessages.length > 0 && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                className="flex justify-center py-3">
+                <div className="w-5 h-5 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-        {/* Initial skeleton */}
-        {isLoading && convMessages.length === 0 && <Skeleton />}
+          {/* Initial skeleton */}
+          {isLoading && convMessages.length === 0 && <Skeleton />}
 
-        {/* Empty thread */}
-        {!isLoading && convMessages.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full py-24 px-8 text-center">
-            <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/40 dark:to-purple-900/40 flex items-center justify-center mb-5 shadow-inner">
-              <span className="text-4xl">👋</span>
-            </div>
-            <p className="font-bold text-gray-800 dark:text-gray-200 text-base mb-1">
-              Say hello to {other?.username || 'your contact'}!
-            </p>
-            <p className="text-gray-400 dark:text-gray-500 text-sm leading-relaxed">
-              This is the beginning of your conversation.<br />
-              Everything you share stays private and secure.
-            </p>
-          </div>
-        )}
-
-        {/* Messages + date separators */}
-        <AnimatePresence initial={false}>
-          {grouped.map((item) =>
-            item._type === 'sep' ? (
-              /* Date separator */
-              <div key={item.key} className="flex items-center gap-3 my-5 px-6">
-                <div className="flex-1 h-px bg-gray-200/80 dark:bg-gray-700/80" />
-                <span className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest bg-white dark:bg-gray-800 px-3 py-1 rounded-full shadow-xs border border-gray-200 dark:border-gray-700">
-                  {item.label}
-                </span>
-                <div className="flex-1 h-px bg-gray-200/80 dark:bg-gray-700/80" />
+          {/* Empty thread */}
+          {!isLoading && convMessages.length === 0 && (
+            <div className="flex flex-col items-center justify-center h-full py-24 px-8 text-center my-auto">
+              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/40 dark:to-purple-900/40 flex items-center justify-center mb-5 shadow-inner">
+                <span className="text-4xl">👋</span>
               </div>
-            ) : (
-              <MessageBubble
-                key={item.id}
-                message={item}
-                isMine={item.senderId === user?.uid}
-                currentUserId={user?.uid}
-                onDelete={(msgId, forBoth) => deleteMessage(activeConversationId, msgId, forBoth)}
-                onReply={handleReplyMessage}
-                onReactionToggle={(msgId, emoji) => toggleReaction(activeConversationId, msgId, emoji)}
-              />
-            )
+              <p className="font-bold text-gray-800 dark:text-gray-200 text-base mb-1">
+                Say hello to {other?.username || 'your contact'}!
+              </p>
+              <p className="text-gray-400 dark:text-gray-500 text-sm leading-relaxed">
+                This is the beginning of your conversation.<br />
+                Everything you share stays private and secure.
+              </p>
+            </div>
           )}
-        </AnimatePresence>
 
-        {/* Typing indicator */}
-        <AnimatePresence>
-          {Object.keys(convTyping).length > 0 && (
-            <TypingIndicator key="typing" typers={convTyping} />
-          )}
-        </AnimatePresence>
+          {/* Messages + date separators */}
+          <AnimatePresence initial={false}>
+            {grouped.map((item) =>
+              item._type === 'sep' ? (
+                /* Date separator */
+                <div key={item.key} className="flex items-center gap-3 my-5 px-6">
+                  <div className="flex-1 h-px bg-gray-200/80 dark:bg-gray-700/80" />
+                  <span className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest bg-white dark:bg-gray-800 px-3 py-1 rounded-full shadow-xs border border-gray-200 dark:border-gray-700">
+                    {item.label}
+                  </span>
+                  <div className="flex-1 h-px bg-gray-200/80 dark:bg-gray-700/80" />
+                </div>
+              ) : (
+                <MessageBubble
+                  key={item.id}
+                  message={item}
+                  isMine={item.senderId === user?.uid}
+                  currentUserId={user?.uid}
+                  otherUser={other}
+                  onDelete={(msgId, forBoth) => deleteMessage(activeConversationId, msgId, forBoth)}
+                  onReply={handleReplyMessage}
+                  onReactionToggle={(msgId, emoji) => toggleReaction(activeConversationId, msgId, emoji)}
+                />
+              )
+            )}
+          </AnimatePresence>
 
-        <div ref={bottomRef} className="h-2" />
+          {/* Typing indicator */}
+          <AnimatePresence>
+            {Object.keys(convTyping).length > 0 && (
+              <TypingIndicator key="typing" typers={convTyping} />
+            )}
+          </AnimatePresence>
+
+          <div ref={bottomRef} className="h-2" />
+        </div>
       </div>
 
       {/* Scroll-to-bottom FAB */}

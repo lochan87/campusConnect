@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { FiSend, FiImage, FiX, FiSmile, FiCornerUpLeft } from 'react-icons/fi';
+import { FiSend, FiImage, FiX, FiSmile, FiCornerUpLeft, FiPaperclip } from 'react-icons/fi';
 import { useDM } from '../../context/DMContext';
 
 const TYPING_DEBOUNCE = 1500;
@@ -152,7 +152,7 @@ const MessageInput = ({ conversationId, disabled, replyingTo, onCancelReply }) =
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      className={`flex-shrink-0 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border-t border-gray-200/80 dark:border-gray-700/80 px-3.5 py-3 relative z-20 transition-all ${
+      className={`flex-shrink-0 mx-3 sm:mx-6 mb-3.5 rounded-2xl bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl border border-gray-200/80 dark:border-gray-700/80 shadow-xl px-3.5 py-2.5 relative z-20 transition-all ${
         isDragging ? 'ring-2 ring-indigo-500 bg-indigo-50/50 dark:bg-indigo-900/20' : ''
       }`}
     >

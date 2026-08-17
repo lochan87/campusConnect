@@ -150,7 +150,7 @@ const ContextMenu = ({ message, isMine, onDelete, onReply, onCopy, onReaction, o
 };
 
 /* ── Main message bubble ───────────────────────────────────────────────── */
-const MessageBubble = ({ message, isMine, onDelete, onReply, onReactionToggle, currentUserId }) => {
+const MessageBubble = ({ message, isMine, onDelete, onReply, onReactionToggle, currentUserId, otherUser }) => {
   const [showMenu, setShowMenu] = useState(false);
   const [lightbox, setLightbox] = useState(false);
   const [quickEmojiBar, setQuickEmojiBar] = useState(false);
@@ -185,48 +185,27 @@ const MessageBubble = ({ message, isMine, onDelete, onReply, onReactionToggle, c
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, scale: 0.9 }}
         transition={{ type: 'spring', damping: 28, stiffness: 350 }}
-        className={`group flex items-end gap-1.5 px-3 mb-2.5 relative ${isMine ? 'flex-row-reverse' : 'flex-row'}`}
+        className={`group flex items-end gap-2 px-1 mb-2.5 relative ${isMine ? 'flex-row-reverse' : 'flex-row'}`}
       >
-        {/* Context Action Button (appears on hover) */}
-        <div className={`relative self-center opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 flex items-center gap-1 ${isMine ? 'mr-1' : 'ml-1'}`}>
-          <button
-            onClick={() => setQuickEmojiBar((v) => !v)}
-            className="p-1 rounded-lg text-gray-400 hover:text-indigo-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            title="React"
-          >
-            <FiSmile className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => onReply && onReply(message)}
-            className="p-1 rounded-lg text-gray-400 hover:text-indigo-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            title="Reply"
-          >
-            <FiCornerUpLeft className="w-4 h-4" />
-          </button>
-          <button
-            onClick={(e) => { e.stopPropagation(); setShowMenu((v) => !v); }}
-            className="p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-          >
-            <FiMoreVertical className="w-4 h-4" />
-          </button>
-
-          <AnimatePresence>
-            {(showMenu || quickEmojiBar) && (
-              <ContextMenu
-                message={message}
-                isMine={isMine}
-                onDelete={onDelete}
-                onReply={onReply || (() => {})}
-                onCopy={handleCopy}
-                onReaction={handleReactionClick}
-                onClose={() => { setShowMenu(false); setQuickEmojiBar(false); }}
+        {/* Recipient Avatar (Only for received messages) */}
+        {!isMine && (
+          <div className="flex-shrink-0 self-end mb-0.5">
+            {otherUser?.avatar ? (
+              <img
+                src={otherUser.avatar}
+                alt={otherUser.username || 'User'}
+                className="w-7 h-7 rounded-full object-cover shadow-xs border border-gray-200 dark:border-gray-700"
               />
+            ) : (
+              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold shadow-xs">
+                {(otherUser?.username || '?').charAt(0).toUpperCase()}
+              </div>
             )}
-          </AnimatePresence>
-        </div>
+          </div>
+        )}
 
         {/* Bubble column */}
-        <div className={`flex flex-col max-w-[72%] sm:max-w-[65%] ${isMine ? 'items-end' : 'items-start'}`}>
+        <div className={`flex flex-col max-w-[80%] sm:max-w-[70%] lg:max-w-[540px] ${isMine ? 'items-end' : 'items-start'}`}>
 
           {/* Image */}
           {message.imageUrl && (
@@ -235,7 +214,7 @@ const MessageBubble = ({ message, isMine, onDelete, onReply, onReactionToggle, c
               whileTap={{ scale: 0.98 }}
               onClick={() => setLightbox(true)}
               className={`overflow-hidden rounded-2xl shadow-md mb-1 relative border border-gray-100 dark:border-gray-700 ${
-                isMine ? 'rounded-br-sm' : 'rounded-bl-sm'
+                isMine ? 'rounded-br-xs' : 'rounded-bl-xs'
               }`}
             >
               <img src={message.imageUrl} alt="Attachment"
@@ -249,11 +228,11 @@ const MessageBubble = ({ message, isMine, onDelete, onReply, onReactionToggle, c
               className={`
                 rounded-2xl text-sm leading-relaxed select-text transition-all w-fit max-w-full
                 ${isMine
-                  ? `rounded-br-sm ${isPending
+                  ? `rounded-br-xs ${isPending
                       ? 'bg-indigo-400 dark:bg-indigo-700 text-white/80'
                       : 'bg-gradient-to-br from-indigo-600 via-indigo-500 to-purple-600 text-white shadow-md shadow-indigo-500/20'
                     }`
-                  : 'rounded-bl-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 shadow-xs border border-gray-200/80 dark:border-gray-700'
+                  : 'rounded-bl-xs bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 shadow-xs border border-gray-200/80 dark:border-gray-700'
                 }
               `}
             >
@@ -325,6 +304,44 @@ const MessageBubble = ({ message, isMine, onDelete, onReply, onReactionToggle, c
             </div>
           )}
 
+        </div>
+
+        {/* Context Action Button (appears on hover - placed AFTER bubble) */}
+        <div className={`relative self-center opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 flex items-center gap-1 ${isMine ? 'mr-0.5' : 'ml-0.5'}`}>
+          <button
+            onClick={() => setQuickEmojiBar((v) => !v)}
+            className="p-1 rounded-lg text-gray-400 hover:text-indigo-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            title="React"
+          >
+            <FiSmile className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => onReply && onReply(message)}
+            className="p-1 rounded-lg text-gray-400 hover:text-indigo-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            title="Reply"
+          >
+            <FiCornerUpLeft className="w-4 h-4" />
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); setShowMenu((v) => !v); }}
+            className="p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          >
+            <FiMoreVertical className="w-4 h-4" />
+          </button>
+
+          <AnimatePresence>
+            {(showMenu || quickEmojiBar) && (
+              <ContextMenu
+                message={message}
+                isMine={isMine}
+                onDelete={onDelete}
+                onReply={onReply || (() => {})}
+                onCopy={handleCopy}
+                onReaction={handleReactionClick}
+                onClose={() => { setShowMenu(false); setQuickEmojiBar(false); }}
+              />
+            )}
+          </AnimatePresence>
         </div>
       </motion.div>
     </>
