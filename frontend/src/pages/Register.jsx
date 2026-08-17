@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { 
   FiEye, 
   FiEyeOff, 
@@ -19,12 +20,15 @@ import {
   FiLayers,
   FiArrowRight,
   FiHelpCircle,
-  FiCheckCircle
+  FiCheckCircle,
+  FiX
 } from 'react-icons/fi';
+import { BsSunFill, BsMoonStarsFill } from 'react-icons/bs';
 import toast from 'react-hot-toast';
 
 const Register = () => {
   const { register, loading, error } = useAuth();
+  const { isDarkMode, toggleTheme } = useTheme();
   const navigate = useNavigate();
   
   const [formData, setFormData] = useState({
@@ -752,6 +756,19 @@ const Register = () => {
 
   return (
     <div className="min-h-screen flex relative bg-white dark:bg-gray-900">
+      {/* Theme Toggle */}
+      <button
+        type="button"
+        onClick={toggleTheme}
+        className="fixed top-4 right-4 z-50 p-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 shadow-md transition-all"
+        title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+      >
+        {isDarkMode
+          ? <BsSunFill className="w-4 h-4 text-amber-400" />
+          : <BsMoonStarsFill className="w-4 h-4 text-indigo-500" />
+        }
+      </button>
+
       {/* Left side - Registration form */}
       <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-4">
         <motion.div
@@ -1100,11 +1117,11 @@ const Register = () => {
                     </label>
                     <button
                       type="button"
-                      onClick={openStudentIdHelp}
+                      onClick={() => setShowStudentIdHelp(!showStudentIdHelp)}
                       className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 font-semibold transition-colors flex items-center gap-1.5 bg-blue-50 dark:bg-blue-900/30 px-2.5 py-1 rounded-md border border-blue-200 dark:border-blue-800/50"
                     >
                       <FiSliders className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-                      ID Builder & Details
+                      {showStudentIdHelp ? 'Hide Assistant' : 'ID Builder & Details'}
                     </button>
                   </div>
                   <div className="relative">
@@ -1125,430 +1142,236 @@ const Register = () => {
                   </p>
                 </div>
 
-                {/* Enhanced Student ID Builder & Format Modal */}
+                {/* Inline Student ID Assistant Panel */}
                 {showStudentIdHelp && (
-                  <div
-                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md transition-all duration-300"
-                    onClick={() => setShowStudentIdHelp(false)}
-                  >
-                    {/* Modal Box */}
-                    <div
-                      className="relative bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-xl max-h-[92vh] flex flex-col overflow-hidden border border-gray-200 dark:border-gray-800"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {/* Header */}
-                      <div className="sticky top-0 z-10 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 px-6 py-4 text-white flex items-center justify-between shadow-md shrink-0">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center border border-white/20">
-                            <FiSliders className="w-5 h-5 text-white" />
-                          </div>
-                          <div>
-                            <h3 className="text-lg font-bold tracking-tight text-white flex items-center gap-2">
-                              Student ID Assistant
-                              <span className="text-[10px] bg-white/20 text-white font-medium px-2 py-0.5 rounded-full uppercase tracking-wider">
-                                Builder &amp; Lookup
-                              </span>
-                            </h3>
-                            <p className="text-blue-100 text-xs">Build your valid ID or browse course &amp; department codes</p>
-                          </div>
+                  <div className="rounded-2xl border border-blue-200 dark:border-blue-900/60 bg-white dark:bg-gray-900 shadow-lg overflow-hidden">
+                    {/* Panel Header */}
+                    <div className="flex items-center justify-between px-4 py-3 bg-blue-50 dark:bg-blue-950/40 border-b border-blue-200 dark:border-blue-900/60">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center shrink-0">
+                          <FiSliders className="w-4 h-4" />
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => setShowStudentIdHelp(false)}
-                          className="text-white/80 hover:text-white hover:bg-white/20 rounded-full w-8 h-8 flex items-center justify-center transition-colors text-xl font-bold"
-                          aria-label="Close modal"
-                        >
-                          ×
-                        </button>
+                        <div>
+                          <span className="text-sm font-bold text-gray-900 dark:text-white">Student ID Assistant</span>
+                          <span className="ml-2 text-[10px] bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300 px-1.5 py-0.5 rounded-full font-semibold uppercase tracking-wide">Helper</span>
+                        </div>
                       </div>
+                      <button
+                        type="button"
+                        onClick={() => setShowStudentIdHelp(false)}
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-blue-100 dark:hover:bg-blue-900/60 transition-colors"
+                      >
+                        <FiX className="w-4 h-4" />
+                      </button>
+                    </div>
 
-                      {/* Tab Navigation */}
-                      <div className="flex border-b border-gray-200 dark:border-gray-800 bg-gray-50/80 dark:bg-gray-800/80 px-6 shrink-0">
+                    {/* Pill Tab Switcher */}
+                    <div className="px-4 pt-3 pb-1">
+                      <div className="bg-gray-100 dark:bg-gray-800 p-1 rounded-xl flex gap-1">
                         <button
                           type="button"
                           onClick={() => setActiveHelpTab('directory')}
-                          className={`flex items-center gap-2 py-3 px-4 text-sm font-semibold border-b-2 transition-all ${
+                          className={`flex-1 py-1.5 px-3 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all ${
                             activeHelpTab === 'directory'
-                              ? 'border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400'
-                              : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                              ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
+                              : 'text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200'
                           }`}
                         >
-                          <FiBook className="w-4 h-4" />
-                          Codes &amp; Dept Directory
+                          <FiBook className="w-3.5 h-3.5" />
+                          Codes &amp; Directory
                         </button>
                         <button
                           type="button"
                           onClick={() => setActiveHelpTab('builder')}
-                          className={`flex items-center gap-2 py-3 px-4 text-sm font-semibold border-b-2 transition-all ${
+                          className={`flex-1 py-1.5 px-3 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all ${
                             activeHelpTab === 'builder'
-                              ? 'border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400'
-                              : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                              ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
+                              : 'text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200'
                           }`}
                         >
-                          <FiSliders className="w-4 h-4" />
-                          Interactive ID Builder
+                          <FiSliders className="w-3.5 h-3.5" />
+                          ID Builder
                         </button>
                       </div>
+                    </div>
 
-                      {/* Tab Content Area (Scrollable) */}
-                      <div className="p-6 overflow-y-auto space-y-6 flex-1">
-                        {activeHelpTab === 'builder' && (
-                          <div className="space-y-6">
-                            {/* Interactive Input Form (ABOVE) */}
-                            <div className="space-y-4 bg-gray-50 dark:bg-gray-800/60 p-4 sm:p-5 rounded-2xl border border-gray-200 dark:border-gray-700/80 shadow-sm">
-                              <h4 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Configure Student ID Components</h4>
-                              
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                {/* 1. Year YY */}
-                                <div>
-                                  <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
-                                    1. Admission Year (YY)
-                                  </label>
-                                  <select
-                                    value={builderYear}
-                                    onChange={(e) => setBuilderYear(e.target.value)}
-                                    className="w-full px-3.5 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-colors font-mono"
-                                  >
-                                    <option value="25">2025 (25)</option>
-                                    <option value="24">2024 (24)</option>
-                                    <option value="23">2023 (23)</option>
-                                    <option value="22">2022 (22)</option>
-                                    <option value="21">2021 (21)</option>
-                                    <option value="20">2020 (20)</option>
-                                  </select>
-                                </div>
+                    {/* Tab Content */}
+                    <div className="p-4 space-y-4 max-h-[420px] overflow-y-auto">
 
-                                {/* 2. Course Code CCC */}
-                                <div>
-                                  <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
-                                    2. Course (CCC)
-                                  </label>
-                                  <select
-                                    value={builderCourseCode}
-                                    onChange={(e) => handleBuilderCourseChange(e.target.value)}
-                                    className="w-full px-3.5 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-colors truncate font-mono"
-                                  >
-                                    {Object.entries(courseCodeMapping).map(([code, name]) => (
-                                      <option key={code} value={code}>
-                                        {code} - {name}
-                                      </option>
-                                    ))}
-                                  </select>
-                                </div>
-
-                                {/* 3. Department Code DD */}
-                                <div>
-                                  <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
-                                    3. Department Code (DD)
-                                  </label>
-                                  <select
-                                    value={builderDeptCode}
-                                    onChange={(e) => setBuilderDeptCode(e.target.value)}
-                                    className="w-full px-3.5 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-colors truncate font-mono"
-                                  >
-                                    {(() => {
-                                      const fullCourseName = courseCodeMapping[builderCourseCode];
-                                      const depts = fullCourseName ? departmentCodeMapping[fullCourseName] || {} : {};
-                                      return Object.entries(depts).map(([code, name]) => (
-                                        <option key={code} value={code}>
-                                          {code} - {name}
-                                        </option>
+                      {/* BUILDER TAB */}
+                      {activeHelpTab === 'builder' && (
+                        <div className="space-y-4">
+                          <div className="bg-gray-50 dark:bg-gray-800/60 rounded-xl border border-gray-200 dark:border-gray-700/60 p-3 space-y-3">
+                            <p className="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Configure Student ID Fields</p>
+                            <div className="grid grid-cols-2 gap-2.5">
+                              <div>
+                                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">1. Year (YY)</label>
+                                <select value={builderYear} onChange={(e) => setBuilderYear(e.target.value)}
+                                  className="w-full px-2.5 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-xs focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                                  <option value="25">2025 (25)</option>
+                                  <option value="24">2024 (24)</option>
+                                  <option value="23">2023 (23)</option>
+                                  <option value="22">2022 (22)</option>
+                                  <option value="21">2021 (21)</option>
+                                  <option value="20">2020 (20)</option>
+                                </select>
+                              </div>
+                              <div>
+                                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">2. Course (CCC)</label>
+                                <select value={builderCourseCode} onChange={(e) => handleBuilderCourseChange(e.target.value)}
+                                  className="w-full px-2.5 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-xs focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                                  {Object.entries(courseCodeMapping).map(([code, name]) => (
+                                    <option key={code} value={code}>{code} - {name}</option>
+                                  ))}
+                                </select>
+                              </div>
+                              <div>
+                                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">3. Dept Code (DD)</label>
+                                <select value={builderDeptCode} onChange={(e) => setBuilderDeptCode(e.target.value)}
+                                  className="w-full px-2.5 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-xs focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                                  {(() => {
+                                    const fullCourseName = courseCodeMapping[builderCourseCode];
+                                    const depts = fullCourseName ? departmentCodeMapping[fullCourseName] || {} : {};
+                                    return Object.entries(depts)
+                                      .sort((a, b) => parseInt(a[0], 10) - parseInt(b[0], 10))
+                                      .map(([code, name]) => (
+                                        <option key={code} value={code}>{code} - {name}</option>
                                       ));
-                                    })()}
-                                  </select>
-                                </div>
-
-                                {/* 4. Roll Number NNN */}
-                                <div>
-                                  <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
-                                    4. Roll Number (NNN)
-                                  </label>
-                                  <input
-                                    type="text"
-                                    maxLength={3}
-                                    value={builderRollNo}
-                                    onChange={(e) => {
-                                      const clean = e.target.value.replace(/\D/g, '').slice(0, 3);
-                                      setBuilderRollNo(clean);
-                                    }}
-                                    onBlur={() => {
-                                      if (builderRollNo) {
-                                        setBuilderRollNo(builderRollNo.padStart(3, '0'));
-                                      } else {
-                                        setBuilderRollNo('001');
-                                      }
-                                    }}
-                                    placeholder="001"
-                                    className="w-full px-3.5 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-colors font-mono"
-                                  />
-                                </div>
+                                  })()}
+                                </select>
+                              </div>
+                              <div>
+                                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">4. Roll No (NNN)</label>
+                                <input type="text" maxLength={3} value={builderRollNo}
+                                  onChange={(e) => setBuilderRollNo(e.target.value.replace(/\D/g, '').slice(0, 3))}
+                                  onBlur={() => setBuilderRollNo((builderRollNo || '001').padStart(3, '0'))}
+                                  placeholder="001"
+                                  className="w-full px-2.5 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-xs font-mono focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
                               </div>
                             </div>
+                          </div>
 
-                            {/* Live ID Card Preview (BELOW) */}
+                          {/* Live Preview */}
+                          {(() => {
+                            const currentCourseName = courseCodeMapping[builderCourseCode] || 'Select Course';
+                            const currentDepts = departmentCodeMapping[currentCourseName] || {};
+                            const currentDeptName = currentDepts[builderDeptCode] || 'Select Department';
+                            const formattedRoll = (builderRollNo || '001').padStart(3, '0');
+                            const fullGeneratedId = `${builderYear}${builderCourseCode}${builderDeptCode}${formattedRoll}`.toUpperCase();
+                            return (
+                              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-800 rounded-xl border border-blue-200/70 dark:border-gray-700 p-3.5 space-y-3">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[11px] font-bold text-blue-900 dark:text-blue-300 uppercase tracking-wider flex items-center gap-1.5">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                    Generated ID
+                                  </span>
+                                  <span className="text-[10px] font-mono text-gray-400 dark:text-gray-500">YYCCCDDNNN</span>
+                                </div>
+                                <div className="flex items-end justify-center gap-2 flex-wrap">
+                                  {[
+                                    { val: builderYear, label: 'Year', color: 'bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-500/20 dark:text-amber-300 dark:border-amber-500/40' },
+                                    { val: builderCourseCode, label: 'Course', color: 'bg-blue-100 text-blue-900 border-blue-300 dark:bg-blue-500/20 dark:text-blue-300 dark:border-blue-500/40' },
+                                    { val: builderDeptCode, label: 'Dept', color: 'bg-emerald-100 text-emerald-900 border-emerald-300 dark:bg-emerald-500/20 dark:text-emerald-300 dark:border-emerald-500/40' },
+                                    { val: formattedRoll, label: 'Roll', color: 'bg-purple-100 text-purple-900 border-purple-300 dark:bg-purple-500/20 dark:text-purple-300 dark:border-purple-500/40' },
+                                  ].map(({ val, label, color }) => (
+                                    <div key={label} className="text-center">
+                                      <span className={`inline-block px-2.5 py-1 rounded-lg font-mono text-lg font-bold border shadow-sm ${color}`}>{val}</span>
+                                      <p className="text-[9px] text-gray-500 dark:text-gray-400 font-medium mt-0.5">{label}</p>
+                                    </div>
+                                  ))}
+                                </div>
+                                <div className="bg-white/70 dark:bg-gray-700/60 rounded-lg p-2.5 text-xs space-y-1 border border-blue-100 dark:border-gray-600">
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-500 dark:text-gray-400">Course:</span>
+                                    <span className="font-semibold text-blue-700 dark:text-blue-300 truncate max-w-[60%]">{currentCourseName}</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-500 dark:text-gray-400">Department:</span>
+                                    <span className="font-semibold text-emerald-700 dark:text-emerald-300 truncate max-w-[60%]" title={currentDeptName}>{currentDeptName}</span>
+                                  </div>
+                                </div>
+                                <div className="flex gap-2">
+                                  <button type="button" onClick={() => handleApplyGeneratedId(fullGeneratedId)}
+                                    className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-2 px-3 rounded-lg font-semibold text-xs flex items-center justify-center gap-1.5 shadow-sm transition-all active:scale-95">
+                                    <FiCheckCircle className="w-3.5 h-3.5" /> Use This ID
+                                  </button>
+                                  <button type="button" onClick={() => handleCopyId(fullGeneratedId)}
+                                    className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors">
+                                    {copiedId ? <FiCheck className="w-3.5 h-3.5 text-green-600" /> : <FiCopy className="w-3.5 h-3.5" />}
+                                    {copiedId ? 'Copied' : 'Copy'}
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })()}
+                        </div>
+                      )}
+
+                      {/* DIRECTORY TAB */}
+                      {activeHelpTab === 'directory' && (
+                        <div className="space-y-3">
+                          <div className="grid grid-cols-4 gap-1.5">
+                            {[
+                              { code: 'YY', name: 'Year', eg: '24 → 2024', color: 'bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800/60', text: 'text-amber-700 dark:text-amber-300' },
+                              { code: 'CCC', name: 'Course', eg: 'BEN → B.E', color: 'bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800/60', text: 'text-blue-700 dark:text-blue-300' },
+                              { code: 'DD', name: 'Dept', eg: '08 → CSE', color: 'bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800/60', text: 'text-emerald-700 dark:text-emerald-300' },
+                              { code: 'NNN', name: 'Roll No', eg: '001', color: 'bg-purple-50 border-purple-200 dark:bg-purple-950/30 dark:border-purple-800/60', text: 'text-purple-700 dark:text-purple-300' },
+                            ].map(({ code, name, eg, color, text }) => (
+                              <div key={code} className={`${color} border rounded-xl p-2 text-center`}>
+                                <span className={`font-mono font-bold text-sm ${text}`}>{code}</span>
+                                <p className={`text-[10px] font-semibold ${text}`}>{name}</p>
+                                <p className="text-[9px] text-gray-500 dark:text-gray-400">{eg}</p>
+                              </div>
+                            ))}
+                          </div>
+
+                          <div>
+                            <label className="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider block mb-1">
+                              Select Course to View Dept Codes:
+                            </label>
+                            <select value={guideSelectedCourse} onChange={(e) => setGuideSelectedCourse(e.target.value)}
+                              className="w-full px-3 py-2 text-xs border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                              {Object.entries(courseCodeMapping).map(([code, name]) => (
+                                <option key={code} value={code}>[{code}] {name}</option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div>
+                            <p className="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">
+                              Dept Codes (DD) for {courseCodeMapping[guideSelectedCourse] || guideSelectedCourse}:
+                            </p>
                             {(() => {
-                              const currentCourseName = courseCodeMapping[builderCourseCode] || 'Select Course';
-                              const currentDepts = departmentCodeMapping[currentCourseName] || {};
-                              const currentDeptName = currentDepts[builderDeptCode] || 'Select Department';
-                              const formattedRoll = (builderRollNo || '001').padStart(3, '0');
-                              const fullGeneratedId = `${builderYear}${builderCourseCode}${builderDeptCode}${formattedRoll}`.toUpperCase();
-
+                              const fullCourseName = courseCodeMapping[guideSelectedCourse];
+                              const depts = fullCourseName ? departmentCodeMapping[fullCourseName] || {} : {};
+                              const deptEntries = Object.entries(depts)
+                                .sort((a, b) => parseInt(a[0], 10) - parseInt(b[0], 10));
+                              if (deptEntries.length === 0) {
+                                return <p className="text-xs text-gray-400 py-3 text-center">No departments found for this course.</p>;
+                              }
                               return (
-                                <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-2xl p-5 border border-indigo-500/30 shadow-xl relative overflow-hidden">
-                                  {/* Background decorative elements */}
-                                  <div className="absolute -right-8 -bottom-8 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl pointer-events-none" />
-                                  <div className="absolute -left-8 -top-8 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl pointer-events-none" />
-
-                                  <div className="flex items-center justify-between mb-3 border-b border-white/10 pb-2">
-                                    <div className="flex items-center gap-2">
-                                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                                      <span className="text-[11px] font-semibold tracking-wider text-indigo-200 uppercase">Live Student ID Preview</span>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                                  {deptEntries.map(([dCode, dName]) => (
+                                    <div key={dCode}
+                                      onClick={() => { handleBuilderCourseChange(guideSelectedCourse); setBuilderDeptCode(dCode); setActiveHelpTab('builder'); }}
+                                      className="flex items-center gap-2 p-2 bg-gray-50 hover:bg-blue-50 dark:bg-gray-800/60 dark:hover:bg-gray-700/80 rounded-lg border border-gray-200/80 dark:border-gray-700/60 hover:border-blue-300 dark:hover:border-blue-600 cursor-pointer transition-all group">
+                                      <span className="bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 font-mono font-bold text-[11px] px-1.5 py-0.5 rounded border border-emerald-200/60 dark:border-emerald-800/60 shrink-0">
+                                        {dCode}
+                                      </span>
+                                      <span className="text-xs text-gray-700 dark:text-gray-300 font-medium truncate group-hover:text-blue-600 dark:group-hover:text-blue-400" title={dName}>
+                                        {dName}
+                                      </span>
                                     </div>
-                                    <span className="text-xs text-indigo-300 font-mono">Format: YY-CCC-DD-NNN</span>
-                                  </div>
-
-                                  {/* Big formatted ID display */}
-                                  <div className="my-4 flex items-center justify-center gap-1.5 sm:gap-2 flex-wrap">
-                                    <span className="bg-amber-500/20 text-amber-300 border border-amber-500/40 px-3 py-1.5 rounded-xl font-mono text-xl sm:text-2xl font-bold tracking-wider shadow-inner" title="Year (YY)">
-                                      {builderYear}
-                                    </span>
-                                    <span className="bg-blue-500/20 text-blue-300 border border-blue-500/40 px-3 py-1.5 rounded-xl font-mono text-xl sm:text-2xl font-bold tracking-wider shadow-inner" title="Course Code (CCC)">
-                                      {builderCourseCode}
-                                    </span>
-                                    <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-3 py-1.5 rounded-xl font-mono text-xl sm:text-2xl font-bold tracking-wider shadow-inner" title="Department Code (DD)">
-                                      {builderDeptCode}
-                                    </span>
-                                    <span className="bg-purple-500/20 text-purple-300 border border-purple-500/40 px-3 py-1.5 rounded-xl font-mono text-xl sm:text-2xl font-bold tracking-wider shadow-inner" title="Roll Number (NNN)">
-                                      {formattedRoll}
-                                    </span>
-                                  </div>
-
-                                  {/* Dynamic details description */}
-                                  <div className="bg-white/5 rounded-xl p-3.5 space-y-1.5 text-xs border border-white/10">
-                                    <div className="flex justify-between items-center text-gray-300">
-                                      <span className="text-gray-400">Course:</span>
-                                      <span className="font-semibold text-blue-300">{currentCourseName}</span>
-                                    </div>
-                                    <div className="flex justify-between items-center text-gray-300">
-                                      <span className="text-gray-400">Department:</span>
-                                      <span className="font-semibold text-emerald-300 truncate max-w-[260px]" title={currentDeptName}>{currentDeptName}</span>
-                                    </div>
-                                    <div className="flex justify-between items-center text-gray-300">
-                                      <span className="text-gray-400">Admission Year:</span>
-                                      <span className="font-semibold text-amber-300">20{builderYear}</span>
-                                    </div>
-                                  </div>
-
-                                  {/* Action Buttons */}
-                                  <div className="mt-4 flex items-center gap-3">
-                                    <button
-                                      type="button"
-                                      onClick={() => handleApplyGeneratedId(fullGeneratedId)}
-                                      className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white py-2.5 px-4 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all shadow-lg hover:shadow-blue-500/25 active:scale-95"
-                                    >
-                                      <FiCheckCircle className="w-4 h-4" />
-                                      Use This Student ID
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleCopyId(fullGeneratedId)}
-                                      className="bg-white/10 hover:bg-white/20 text-white px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors flex items-center gap-1.5 border border-white/15"
-                                    >
-                                      {copiedId ? <FiCheck className="w-4 h-4 text-green-400" /> : <FiCopy className="w-4 h-4" />}
-                                      {copiedId ? 'Copied!' : 'Copy'}
-                                    </button>
-                                  </div>
+                                  ))}
                                 </div>
                               );
                             })()}
                           </div>
-                        )}
-
-                        {activeHelpTab === 'directory' && (
-                          <div className="space-y-5">
-                            {/* Format Legend */}
-                            <div>
-                              <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Student ID Structure</p>
-                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-2.5 text-center">
-                                  <span className="font-mono font-bold text-amber-700 dark:text-amber-300 text-base">YY</span>
-                                  <p className="text-[11px] font-semibold text-amber-800 dark:text-amber-200">Year</p>
-                                  <p className="text-[10px] text-amber-600 dark:text-amber-400">e.g. 24 for 2024</p>
-                                </div>
-                                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-2.5 text-center">
-                                  <span className="font-mono font-bold text-blue-700 dark:text-blue-300 text-base">CCC</span>
-                                  <p className="text-[11px] font-semibold text-blue-800 dark:text-blue-200">Course</p>
-                                  <p className="text-[10px] text-blue-600 dark:text-blue-400">e.g. BEN for B.E</p>
-                                </div>
-                                <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl p-2.5 text-center">
-                                  <span className="font-mono font-bold text-emerald-700 dark:text-emerald-300 text-base">DD</span>
-                                  <p className="text-[11px] font-semibold text-emerald-800 dark:text-emerald-200">Department</p>
-                                  <p className="text-[10px] text-emerald-600 dark:text-emerald-400">e.g. 08 for CSE</p>
-                                </div>
-                                <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-xl p-2.5 text-center">
-                                  <span className="font-mono font-bold text-purple-700 dark:text-purple-300 text-base">NNN</span>
-                                  <p className="text-[11px] font-semibold text-purple-800 dark:text-purple-200">Roll No</p>
-                                  <p className="text-[10px] text-purple-600 dark:text-purple-400">e.g. 001</p>
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Search Filter */}
-                            <div className="relative">
-                              <FiSearch className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                              <input
-                                type="text"
-                                value={codeSearchQuery}
-                                onChange={(e) => setCodeSearchQuery(e.target.value)}
-                                placeholder="Search course code, name or department..."
-                                className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500"
-                              />
-                            </div>
-
-                            {/* Course selection for department directory */}
-                            {!codeSearchQuery && (
-                              <div className="flex items-center gap-3">
-                                <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider shrink-0">
-                                  Filter by Course:
-                                </label>
-                                <select
-                                  value={guideSelectedCourse}
-                                  onChange={(e) => setGuideSelectedCourse(e.target.value)}
-                                  className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-medium"
-                                >
-                                  {Object.entries(courseCodeMapping).map(([code, name]) => (
-                                    <option key={code} value={code}>
-                                      [{code}] {name}
-                                    </option>
-                                  ))}
-                                </select>
-                              </div>
-                            )}
-
-                            {/* Department Serial Codes Table / Grid */}
-                            <div>
-                              <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-                                {codeSearchQuery 
-                                  ? `Search Results for "${codeSearchQuery}"` 
-                                  : `Department Codes (DD) for ${courseCodeMapping[guideSelectedCourse] || guideSelectedCourse}`}
-                              </p>
-
-                              {(() => {
-                                if (codeSearchQuery.trim()) {
-                                  const query = codeSearchQuery.toLowerCase();
-                                  const results = [];
-
-                                  Object.entries(courseCodeMapping).forEach(([cCode, cName]) => {
-                                    const depts = departmentCodeMapping[cName] || {};
-                                    Object.entries(depts).forEach(([dCode, dName]) => {
-                                      if (
-                                        cCode.toLowerCase().includes(query) ||
-                                        cName.toLowerCase().includes(query) ||
-                                        dCode.includes(query) ||
-                                        dName.toLowerCase().includes(query)
-                                      ) {
-                                        results.push({ cCode, cName, dCode, dName });
-                                      }
-                                    });
-                                  });
-
-                                  if (results.length === 0) {
-                                    return (
-                                      <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-6">
-                                        No matching course or department codes found.
-                                      </p>
-                                    );
-                                  }
-
-                                  return (
-                                    <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
-                                      {results.map((r, i) => (
-                                        <div
-                                          key={i}
-                                          onClick={() => {
-                                            handleBuilderCourseChange(r.cCode);
-                                            setBuilderDeptCode(r.dCode);
-                                            setActiveHelpTab('builder');
-                                          }}
-                                          className="flex items-center justify-between p-2.5 bg-gray-50 hover:bg-blue-50 dark:bg-gray-800 dark:hover:bg-gray-700/80 rounded-xl border border-gray-200 dark:border-gray-700 cursor-pointer transition-colors"
-                                        >
-                                          <div className="flex items-center gap-2.5">
-                                            <span className="bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 font-mono font-bold text-xs px-2 py-1 rounded-md">
-                                              {r.cCode}
-                                            </span>
-                                            <span className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 font-mono font-bold text-xs px-2 py-1 rounded-md">
-                                              DD: {r.dCode}
-                                            </span>
-                                            <span className="text-xs text-gray-800 dark:text-gray-200 font-medium">
-                                              {r.dName}
-                                            </span>
-                                          </div>
-                                          <span className="text-[11px] text-blue-600 dark:text-blue-400 font-semibold hover:underline">
-                                            Use in Builder →
-                                          </span>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  );
-                                }
-
-                                const fullCourseName = courseCodeMapping[guideSelectedCourse];
-                                const depts = fullCourseName ? departmentCodeMapping[fullCourseName] || {} : {};
-                                const deptEntries = Object.entries(depts);
-
-                                if (deptEntries.length === 0) {
-                                  return (
-                                    <p className="text-xs text-gray-500 dark:text-gray-400 py-4">
-                                      No department mapping available for this course.
-                                    </p>
-                                  );
-                                }
-
-                                return (
-                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[300px] overflow-y-auto pr-1">
-                                    {deptEntries.map(([dCode, dName]) => (
-                                      <div
-                                        key={dCode}
-                                        onClick={() => {
-                                          handleBuilderCourseChange(guideSelectedCourse);
-                                          setBuilderDeptCode(dCode);
-                                          setActiveHelpTab('builder');
-                                        }}
-                                        className="flex items-center gap-2.5 p-2.5 bg-gray-50 hover:bg-blue-50 dark:bg-gray-800/80 dark:hover:bg-gray-700/80 rounded-xl border border-gray-200 dark:border-gray-700 cursor-pointer transition-colors"
-                                      >
-                                        <span className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 font-mono font-bold text-xs px-2 py-1 rounded-md shrink-0">
-                                          {dCode}
-                                        </span>
-                                        <span className="text-xs text-gray-800 dark:text-gray-200 font-medium truncate" title={dName}>
-                                          {dName}
-                                        </span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                );
-                              })()}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Footer */}
-                      <div className="sticky bottom-0 bg-gray-50 dark:bg-gray-800/90 px-6 py-3 border-t border-gray-200 dark:border-gray-800 flex items-center justify-between shrink-0">
-                        <p className="text-[11px] text-gray-500 dark:text-gray-400">
-                          {activeHelpTab === 'builder' ? 'Click "Use This Student ID" to populate form' : 'Click any department to select it'}
-                        </p>
-                        <button
-                          type="button"
-                          onClick={() => setShowStudentIdHelp(false)}
-                          className="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 py-1.5 px-4 rounded-xl font-semibold text-xs transition-colors"
-                        >
-                          Close
-                        </button>
-                      </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
-
                 {/* Course */}
                 <div>
                   <label htmlFor="course" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">

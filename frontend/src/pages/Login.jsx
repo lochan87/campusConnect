@@ -2,11 +2,14 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { FiEye, FiEyeOff, FiMail, FiLock, FiLoader } from 'react-icons/fi';
+import { BsSunFill, BsMoonStarsFill } from 'react-icons/bs';
 import toast from 'react-hot-toast';
 
 const Login = () => {
   const { login, demoLogin, loading, error } = useAuth();
+  const { isDarkMode, toggleTheme } = useTheme();
   const navigate = useNavigate();
   
   const [formData, setFormData] = useState({
@@ -59,6 +62,19 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex bg-white dark:bg-gray-900">
+      {/* Theme Toggle */}
+      <button
+        type="button"
+        onClick={toggleTheme}
+        className="fixed top-4 right-4 z-50 p-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 shadow-md transition-all"
+        title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+      >
+        {isDarkMode
+          ? <BsSunFill className="w-4 h-4 text-amber-400" />
+          : <BsMoonStarsFill className="w-4 h-4 text-indigo-500" />
+        }
+      </button>
+
       {/* Left side - Login form */}
       <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-4">
         <motion.div
