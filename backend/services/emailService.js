@@ -1,24 +1,26 @@
 const nodemailer = require('nodemailer');
 const path = require('path');
 
-// Path to the logo file — resolved from this file's location
-const LOGO_PATH = path.resolve(__dirname, '../../frontend/public/favicon.png');
+// ── Transporter: created ONCE at module load (reuses SMTP connection, saves 2-4s) ──
+const transporter = nodemailer.createTransport({
+  host: 'smtp.gmail.com',
+  port: 587,
+  secure: false, // STARTTLS — Render free tier blocks port 465
+  auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
+  pool: true,
+  maxConnections: 3,
+});
 
-const createTransporter = () =>
-  nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false, // false = STARTTLS (required on Render free tier — port 465 is blocked)
-    auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
-  });
-
-// ─── Shared logo attachment (CID) ───────────────────────────────────────────
-// Using CID is the most reliable cross-client way to embed images in emails.
+// ── Logo attachment ─────────────────────────────────────────────────────────────
+// logo.png lives in backend/assets/ — it's committed to the backend repo and
+// therefore available on Render (unlike frontend/public/ which is on Vercel).
 const logoAttachment = {
   filename: 'logo.png',
-  path: LOGO_PATH,
+  path: path.resolve(__dirname, '../assets/logo.png'),
   cid: 'campusconnect_logo',   // referenced in HTML as cid:campusconnect_logo
 };
+
+
 
 // ─── Shared CSS (light theme — works in ALL email clients) ──────────────────
 const sharedStyles = `
@@ -51,7 +53,7 @@ const wrap = (innerHtml) => `
 const header = (title, subtitle) => `
   <!-- Purple gradient header -->
   <div style="background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%);padding:40px 40px 36px;text-align:center;">
-    <!-- Logo via CID -->
+    <!-- Logo via CID Buffer (works on Render — no file path needed) -->
     <img src="cid:campusconnect_logo" width="72" height="72" alt="CampusConnect"
       style="border-radius:16px;display:block;margin:0 auto 16px;border:3px solid rgba(255,255,255,0.3);box-shadow:0 4px 20px rgba(0,0,0,0.3);" />
     <p style="font-size:11px;font-weight:700;letter-spacing:3px;color:rgba(255,255,255,0.7);text-transform:uppercase;margin-bottom:12px;">CampusConnect</p>
@@ -64,7 +66,6 @@ const header = (title, subtitle) => `
 // PASSWORD RESET EMAIL
 // ═══════════════════════════════════════════════════════════════════════════
 const sendPasswordResetEmail = async (toEmail, resetLink, displayName = '') => {
-  const transporter = createTransporter();
   const firstName = displayName ? displayName.split(' ')[0] : 'there';
 
   const html = `<!DOCTYPE html>
@@ -160,7 +161,6 @@ const sendPasswordResetEmail = async (toEmail, resetLink, displayName = '') => {
 // WELCOME EMAIL — sent once on first registration
 // ═══════════════════════════════════════════════════════════════════════════
 const sendWelcomeEmail = async (toEmail, displayName = '', username = '') => {
-  const transporter = createTransporter();
   const firstName = displayName ? displayName.split(' ')[0] : 'there';
   const handle = username || toEmail.split('@')[0];
 
