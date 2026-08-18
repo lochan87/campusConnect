@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import StudentIdModal from '../components/ui/StudentIdModal';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { apiService } from '../services/api';
@@ -67,6 +68,7 @@ const Settings = () => {
   // Delete account state
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [showStudentIdModal, setShowStudentIdModal] = useState(false);
 
   useEffect(() => {
     // Fetch current user profile to get username
@@ -831,11 +833,19 @@ const Settings = () => {
                 <div className="space-y-4 sm:space-y-6">
                   <div>
                     <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2 sm:mb-4">Change Student ID</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-300 mb-4 sm:mb-6">
+                    <p className="text-sm text-gray-600 dark:text-gray-300 mb-3 sm:mb-4">
                       Update your Student ID. You'll need to enter your current password to verify this change.
                       <br />
                       <span className="text-blue-600 dark:text-blue-400 font-medium">Note: Course and department will be automatically updated based on your new Student ID.</span>
                     </p>
+                    <button
+                      type="button"
+                      onClick={() => setShowStudentIdModal(true)}
+                      className="mb-4 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 font-semibold transition-colors flex items-center gap-1.5 bg-blue-50 dark:bg-blue-900/30 px-3 py-1.5 rounded-lg border border-blue-200 dark:border-blue-800/50"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                      View ID Directory &amp; Builder
+                    </button>
                   </div>
 
                   <form onSubmit={handleStudentIdSubmit} className="space-y-4">
@@ -1018,6 +1028,12 @@ const Settings = () => {
             </div>
           </motion.div>
         </div>
+      )}
+      {/* Student ID Directory & Builder Modal */}
+      {showStudentIdModal && (
+        <StudentIdModal
+          onClose={() => setShowStudentIdModal(false)}
+        />
       )}
     </div>
   );

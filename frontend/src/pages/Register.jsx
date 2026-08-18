@@ -25,6 +25,7 @@ import {
 } from 'react-icons/fi';
 import { BsSunFill, BsMoonStarsFill } from 'react-icons/bs';
 import toast from 'react-hot-toast';
+import StudentIdModal from '../components/ui/StudentIdModal';
 
 const Register = () => {
   const { register, loading, error } = useAuth();
@@ -1117,7 +1118,7 @@ const Register = () => {
                     </label>
                     <button
                       type="button"
-                      onClick={() => setShowStudentIdHelp(!showStudentIdHelp)}
+                      onClick={() => setShowStudentIdHelp(true)}
                       className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 font-semibold transition-colors flex items-center gap-1.5 bg-blue-50 dark:bg-blue-900/30 px-2.5 py-1 rounded-md border border-blue-200 dark:border-blue-800/50"
                     >
                       <FiSliders className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
@@ -1142,251 +1143,13 @@ const Register = () => {
                   </p>
                 </div>
 
-                {/* Inline Student ID Assistant Panel */}
+                {/* Student ID Modal popup */}
                 {showStudentIdHelp && (
-                  <div className="rounded-2xl border border-blue-200 dark:border-blue-900/60 bg-white dark:bg-gray-900 shadow-lg overflow-hidden">
-                    {/* Panel Header */}
-                    <div className="flex items-center justify-between px-4 py-3 bg-blue-50 dark:bg-blue-950/40 border-b border-blue-200 dark:border-blue-900/60">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center shrink-0">
-                          <FiSliders className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <span className="text-sm font-bold text-gray-900 dark:text-white">Student ID Assistant</span>
-                          <span className="ml-2 text-[10px] bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300 px-1.5 py-0.5 rounded-full font-semibold uppercase tracking-wide">Helper</span>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setShowStudentIdHelp(false)}
-                        className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-blue-100 dark:hover:bg-blue-900/60 transition-colors"
-                      >
-                        <FiX className="w-4 h-4" />
-                      </button>
-                    </div>
-
-                    {/* Pill Tab Switcher */}
-                    <div className="px-4 pt-3 pb-1">
-                      <div className="bg-gray-100 dark:bg-gray-800 p-1 rounded-xl flex gap-1">
-                        <button
-                          type="button"
-                          onClick={() => setActiveHelpTab('directory')}
-                          className={`flex-1 py-1.5 px-3 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all ${
-                            activeHelpTab === 'directory'
-                              ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
-                              : 'text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200'
-                          }`}
-                        >
-                          <FiBook className="w-3.5 h-3.5" />
-                          Codes &amp; Directory
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setActiveHelpTab('builder')}
-                          className={`flex-1 py-1.5 px-3 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all ${
-                            activeHelpTab === 'builder'
-                              ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
-                              : 'text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200'
-                          }`}
-                        >
-                          <FiSliders className="w-3.5 h-3.5" />
-                          ID Builder
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Tab Content */}
-                    <div className="p-4 max-h-[420px] overflow-y-auto">
-                      <AnimatePresence mode="wait">
-
-                        {/* BUILDER TAB */}
-                        {activeHelpTab === 'builder' && (
-                          <motion.div
-                            key="builder"
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
-                            transition={{ type: 'spring', damping: 25, stiffness: 280 }}
-                            className="space-y-4"
-                          >
-                          <div className="bg-gray-50 dark:bg-gray-800/60 rounded-xl border border-gray-200 dark:border-gray-700/60 p-3 space-y-3">
-                            <p className="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Configure Student ID Fields</p>
-                            <div className="grid grid-cols-2 gap-2.5">
-                              <div>
-                                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">1. Year (YY)</label>
-                                <select value={builderYear} onChange={(e) => setBuilderYear(e.target.value)}
-                                  className="w-full px-2.5 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-xs focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
-                                  <option value="25">2025 (25)</option>
-                                  <option value="24">2024 (24)</option>
-                                  <option value="23">2023 (23)</option>
-                                  <option value="22">2022 (22)</option>
-                                  <option value="21">2021 (21)</option>
-                                  <option value="20">2020 (20)</option>
-                                </select>
-                              </div>
-                              <div>
-                                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">2. Course (CCC)</label>
-                                <select value={builderCourseCode} onChange={(e) => handleBuilderCourseChange(e.target.value)}
-                                  className="w-full px-2.5 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-xs focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
-                                  {Object.entries(courseCodeMapping).map(([code, name]) => (
-                                    <option key={code} value={code}>{code} - {name}</option>
-                                  ))}
-                                </select>
-                              </div>
-                              <div>
-                                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">3. Dept Code (DD)</label>
-                                <select value={builderDeptCode} onChange={(e) => setBuilderDeptCode(e.target.value)}
-                                  className="w-full px-2.5 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-xs focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
-                                  {(() => {
-                                    const fullCourseName = courseCodeMapping[builderCourseCode];
-                                    const depts = fullCourseName ? departmentCodeMapping[fullCourseName] || {} : {};
-                                    return Object.entries(depts)
-                                      .sort((a, b) => parseInt(a[0], 10) - parseInt(b[0], 10))
-                                      .map(([code, name]) => (
-                                        <option key={code} value={code}>{code} - {name}</option>
-                                      ));
-                                  })()}
-                                </select>
-                              </div>
-                              <div>
-                                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">4. Roll No (NNN)</label>
-                                <input type="text" maxLength={3} value={builderRollNo}
-                                  onChange={(e) => setBuilderRollNo(e.target.value.replace(/\D/g, '').slice(0, 3))}
-                                  onBlur={() => setBuilderRollNo((builderRollNo || '001').padStart(3, '0'))}
-                                  placeholder="001"
-                                  className="w-full px-2.5 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-xs font-mono focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Live Preview */}
-                          {(() => {
-                            const currentCourseName = courseCodeMapping[builderCourseCode] || 'Select Course';
-                            const currentDepts = departmentCodeMapping[currentCourseName] || {};
-                            const currentDeptName = currentDepts[builderDeptCode] || 'Select Department';
-                            const formattedRoll = (builderRollNo || '001').padStart(3, '0');
-                            const fullGeneratedId = `${builderYear}${builderCourseCode}${builderDeptCode}${formattedRoll}`.toUpperCase();
-                            return (
-                              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-800 rounded-xl border border-blue-200/70 dark:border-gray-700 p-3.5 space-y-3">
-                                <div className="flex items-center justify-between">
-                                  <span className="text-[11px] font-bold text-blue-900 dark:text-blue-300 uppercase tracking-wider flex items-center gap-1.5">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                    Generated ID
-                                  </span>
-                                  <span className="text-[10px] font-mono text-gray-400 dark:text-gray-500">YYCCCDDNNN</span>
-                                </div>
-                                <div className="flex items-end justify-center gap-2 flex-wrap">
-                                  {[
-                                    { val: builderYear, label: 'Year', color: 'bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-500/20 dark:text-amber-300 dark:border-amber-500/40' },
-                                    { val: builderCourseCode, label: 'Course', color: 'bg-blue-100 text-blue-900 border-blue-300 dark:bg-blue-500/20 dark:text-blue-300 dark:border-blue-500/40' },
-                                    { val: builderDeptCode, label: 'Dept', color: 'bg-emerald-100 text-emerald-900 border-emerald-300 dark:bg-emerald-500/20 dark:text-emerald-300 dark:border-emerald-500/40' },
-                                    { val: formattedRoll, label: 'Roll', color: 'bg-purple-100 text-purple-900 border-purple-300 dark:bg-purple-500/20 dark:text-purple-300 dark:border-purple-500/40' },
-                                  ].map(({ val, label, color }) => (
-                                    <div key={label} className="text-center">
-                                      <span className={`inline-block px-2.5 py-1 rounded-lg font-mono text-lg font-bold border shadow-sm ${color}`}>{val}</span>
-                                      <p className="text-[9px] text-gray-500 dark:text-gray-400 font-medium mt-0.5">{label}</p>
-                                    </div>
-                                  ))}
-                                </div>
-                                <div className="bg-white/70 dark:bg-gray-700/60 rounded-lg p-2.5 text-xs space-y-1 border border-blue-100 dark:border-gray-600">
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-500 dark:text-gray-400">Course:</span>
-                                    <span className="font-semibold text-blue-700 dark:text-blue-300 truncate max-w-[60%]">{currentCourseName}</span>
-                                  </div>
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-500 dark:text-gray-400">Department:</span>
-                                    <span className="font-semibold text-emerald-700 dark:text-emerald-300 truncate max-w-[60%]" title={currentDeptName}>{currentDeptName}</span>
-                                  </div>
-                                </div>
-                                <div className="flex gap-2">
-                                  <button type="button" onClick={() => handleApplyGeneratedId(fullGeneratedId)}
-                                    className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-2 px-3 rounded-lg font-semibold text-xs flex items-center justify-center gap-1.5 shadow-sm transition-all active:scale-95">
-                                    <FiCheckCircle className="w-3.5 h-3.5" /> Use This ID
-                                  </button>
-                                  <button type="button" onClick={() => handleCopyId(fullGeneratedId)}
-                                    className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors">
-                                    {copiedId ? <FiCheck className="w-3.5 h-3.5 text-green-600" /> : <FiCopy className="w-3.5 h-3.5" />}
-                                    {copiedId ? 'Copied' : 'Copy'}
-                                  </button>
-                                </div>
-                              </div>
-                            );
-                          })()}
-                          </motion.div>
-                        )}
-
-                        {/* DIRECTORY TAB */}
-                        {activeHelpTab === 'directory' && (
-                          <motion.div
-                            key="directory"
-                            initial={{ opacity: 0, y: -10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: 10 }}
-                            transition={{ type: 'spring', damping: 25, stiffness: 280 }}
-                            className="space-y-3"
-                          >
-                          <div className="grid grid-cols-4 gap-1.5">
-                            {[
-                              { code: 'YY', name: 'Year', eg: '24 → 2024', color: 'bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800/60', text: 'text-amber-700 dark:text-amber-300' },
-                              { code: 'CCC', name: 'Course', eg: 'BEN → B.E', color: 'bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800/60', text: 'text-blue-700 dark:text-blue-300' },
-                              { code: 'DD', name: 'Dept', eg: '08 → CSE', color: 'bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800/60', text: 'text-emerald-700 dark:text-emerald-300' },
-                              { code: 'NNN', name: 'Roll No', eg: '001', color: 'bg-purple-50 border-purple-200 dark:bg-purple-950/30 dark:border-purple-800/60', text: 'text-purple-700 dark:text-purple-300' },
-                            ].map(({ code, name, eg, color, text }) => (
-                              <div key={code} className={`${color} border rounded-xl p-2 text-center`}>
-                                <span className={`font-mono font-bold text-sm ${text}`}>{code}</span>
-                                <p className={`text-[10px] font-semibold ${text}`}>{name}</p>
-                                <p className="text-[9px] text-gray-500 dark:text-gray-400">{eg}</p>
-                              </div>
-                            ))}
-                          </div>
-
-                          <div>
-                            <label className="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider block mb-1">
-                              Select Course to View Dept Codes:
-                            </label>
-                            <select value={guideSelectedCourse} onChange={(e) => setGuideSelectedCourse(e.target.value)}
-                              className="w-full px-3 py-2 text-xs border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
-                              {Object.entries(courseCodeMapping).map(([code, name]) => (
-                                <option key={code} value={code}>[{code}] {name}</option>
-                              ))}
-                            </select>
-                          </div>
-
-                          <div>
-                            <p className="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">
-                              Dept Codes (DD) for {courseCodeMapping[guideSelectedCourse] || guideSelectedCourse}:
-                            </p>
-                            {(() => {
-                              const fullCourseName = courseCodeMapping[guideSelectedCourse];
-                              const depts = fullCourseName ? departmentCodeMapping[fullCourseName] || {} : {};
-                              const deptEntries = Object.entries(depts)
-                                .sort((a, b) => parseInt(a[0], 10) - parseInt(b[0], 10));
-                              if (deptEntries.length === 0) {
-                                return <p className="text-xs text-gray-400 py-3 text-center">No departments found for this course.</p>;
-                              }
-                              return (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                                  {deptEntries.map(([dCode, dName]) => (
-                                    <div key={dCode}
-                                      onClick={() => { handleBuilderCourseChange(guideSelectedCourse); setBuilderDeptCode(dCode); setActiveHelpTab('builder'); }}
-                                      className="flex items-center gap-2 p-2 bg-gray-50 hover:bg-blue-50 dark:bg-gray-800/60 dark:hover:bg-gray-700/80 rounded-lg border border-gray-200/80 dark:border-gray-700/60 hover:border-blue-300 dark:hover:border-blue-600 cursor-pointer transition-all group">
-                                      <span className="bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 font-mono font-bold text-[11px] px-1.5 py-0.5 rounded border border-emerald-200/60 dark:border-emerald-800/60 shrink-0">
-                                        {dCode}
-                                      </span>
-                                      <span className="text-xs text-gray-700 dark:text-gray-300 font-medium truncate group-hover:text-blue-600 dark:group-hover:text-blue-400" title={dName}>
-                                        {dName}
-                                      </span>
-                                    </div>
-                                  ))}
-                                </div>
-                              );
-                            })()}
-                           </div>  {/* closes dept codes section */}
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  </div>
+                  <StudentIdModal
+                    onClose={() => setShowStudentIdHelp(false)}
+                    onApply={handleApplyGeneratedId}
+                    initialStudentId={formData.studentId}
+                  />
                 )}
                 {/* Course */}
                 <div>
