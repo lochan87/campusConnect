@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { FiEdit2, FiSearch, FiX } from 'react-icons/fi';
 import { useDM } from '../../context/DMContext';
 import ConversationItem from './ConversationItem';
 
 const ConversationList = ({ onNewChat, searchQuery, onSearchChange }) => {
   const { conversations, activeConversationId, openConversation, loadingConversations } = useDM();
+  const navigate = useNavigate();
   const [filterTab, setFilterTab] = useState('all'); // 'all' | 'unread'
 
   const filtered = conversations.filter((c) => {
@@ -168,7 +170,10 @@ const ConversationList = ({ onNewChat, searchQuery, onSearchChange }) => {
               <ConversationItem
                 conversation={conv}
                 isActive={conv.id === activeConversationId}
-                onClick={() => openConversation(conv.id)}
+                onClick={() => {
+                  openConversation(conv.id);
+                  navigate(`/messages/${conv.id}`);
+                }}
               />
             </motion.div>
           ))}

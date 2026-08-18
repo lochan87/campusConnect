@@ -181,14 +181,20 @@ const AppContent = () => {
                   <Route path="/leaderboard" element={<Leaderboard />} />
                   <Route path="/settings" element={<Settings />} />
                   <Route path="/search" element={<Search />} />
-                  <Route path="/messages" element={<Messages />} />
-                  <Route path="/messages/:conversationId" element={<Messages />} />
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
               </AnimatePresence>
             </Suspense>
           </div>
         </main>
+
+        {/* Messages — rendered outside the padded main so its fixed overlay covers the full viewport */}
+        <Suspense fallback={null}>
+          <Routes>
+            <Route path="/messages" element={<Messages />} />
+            <Route path="/messages/:conversationId" element={<Messages />} />
+          </Routes>
+        </Suspense>
       </div>
 
       {/* Feature #7 — Back to Top + new-post badge */}

@@ -6,7 +6,9 @@ const LOGO_PATH = path.resolve(__dirname, '../../frontend/public/favicon.png');
 
 const createTransporter = () =>
   nodemailer.createTransport({
-    service: process.env.EMAIL_SERVICE || 'gmail',
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false, // false = STARTTLS (required on Render free tier — port 465 is blocked)
     auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
   });
 

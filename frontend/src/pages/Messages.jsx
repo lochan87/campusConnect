@@ -45,7 +45,7 @@ const Messages = () => {
   };
 
   return (
-    <div className="fixed inset-0 top-16 md:top-16 bg-slate-100 dark:bg-slate-950 p-0 xl:p-4 overflow-hidden z-10 flex items-center justify-center">
+    <div className="fixed inset-0 top-28 md:top-16 bg-slate-100 dark:bg-slate-950 p-0 xl:p-4 overflow-hidden z-10 flex items-center justify-center">
       <div className="w-full max-w-[1440px] h-full xl:h-[calc(100vh-5.5rem)] flex bg-white dark:bg-gray-900 xl:rounded-3xl xl:border xl:border-gray-200/80 dark:xl:border-gray-800 xl:shadow-2xl overflow-hidden relative">
         {/* ── Conversation list pane ── */}
         <div
