@@ -1,25 +1,26 @@
 const nodemailer = require('nodemailer');
 const path = require('path');
+const fs = require('fs');
 
-// ── Transporter: created ONCE at module load (reuses SMTP connection, saves 2-4s) ──
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false, // STARTTLS — Render free tier blocks port 465
-  auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
-  pool: true,
-  maxConnections: 3,
-});
+// ── Transporter factory ──────────────────────────────────────────────────────
+// Gmail does NOT support persistent pooled connections on Render's free tier —
+// pool:true causes refused connections. Create a fresh transporter per send instead.
+const createTransporter = () =>
+  nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false, // STARTTLS — Render free tier blocks port 465
+    auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
+    tls: { rejectUnauthorized: false }, // handles SSL quirks on Render
+  });
 
-// ── Logo attachment ─────────────────────────────────────────────────────────────
-// logo.png lives in backend/assets/ — it's committed to the backend repo and
-// therefore available on Render (unlike frontend/public/ which is on Vercel).
-const logoAttachment = {
-  filename: 'logo.png',
-  path: path.resolve(__dirname, '../assets/logo.png'),
-  cid: 'campusconnect_logo',   // referenced in HTML as cid:campusconnect_logo
-};
-
+// ── Logo attachment ──────────────────────────────────────────────────────────
+// logo.png is committed inside backend/assets/ so it ships to Render.
+// If the file is missing for any reason, we fall back to no logo (no crash).
+const LOGO_PATH = path.resolve(__dirname, '../assets/logo.png');
+const logoAttachment = fs.existsSync(LOGO_PATH)
+  ? { filename: 'logo.png', path: LOGO_PATH, cid: 'campusconnect_logo' }
+  : null;
 
 
 // ─── Shared CSS (light theme — works in ALL email clients) ──────────────────
@@ -146,12 +147,12 @@ const sendPasswordResetEmail = async (toEmail, resetLink, displayName = '') => {
 </body>
 </html>`;
 
-  await transporter.sendMail({
+  await createTransporter().sendMail({
     from: `"CampusConnect" <${process.env.EMAIL_USER}>`,
     to: toEmail,
     subject: '🔐 Reset your CampusConnect Password',
     html,
-    attachments: [logoAttachment],
+    attachments: [logoAttachment].filter(Boolean),
     text: `Hi ${firstName},\n\nReset your CampusConnect Password (expires in 1 hour):\n${resetLink}\n\nIgnore this if you didn't request it.\n\n— CampusConnect`,
   });
 };
@@ -268,12 +269,12 @@ const sendWelcomeEmail = async (toEmail, displayName = '', username = '') => {
 </body>
 </html>`;
 
-  await transporter.sendMail({
+  await createTransporter().sendMail({
     from: `"CampusConnect" <${process.env.EMAIL_USER}>`,
     to: toEmail,
     subject: `🎓 Welcome to CampusConnect, ${firstName}!`,
     html,
-    attachments: [logoAttachment],
+    attachments: [logoAttachment].filter(Boolean),
     text: `Hi ${firstName},\n\nWelcome to CampusConnect! Your account (@${handle}) is all set.\n\nVisit: ${process.env.FRONTEND_URL || 'http://localhost:3000'}\n\n— CampusConnect`,
   });
 };
