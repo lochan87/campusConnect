@@ -501,6 +501,120 @@ router.get('/:id', async (req, res) => {
 });
 
 
+// PUT /api/users/change-password - Change user password (must be BEFORE /:id to avoid route conflict)
+router.put('/change-password', requireAuth, async (req, res) => {
+  try {
+    const userId = req.user.uid; // Always use uid from verified token
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields'
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        error: 'New password must be at least 6 characters'
+      });
+    }
+
+    const auth = getAuth();
+    try {
+      await auth.updateUser(userId, { password: newPassword });
+      res.json({ success: true, message: 'Password updated successfully' });
+    } catch (authError) {
+      console.error('❌ Firebase Auth error:', authError);
+      if (authError.code === 'auth/user-not-found') {
+        return res.status(404).json({ success: false, error: 'User not found' });
+      }
+      if (authError.code === 'auth/weak-password') {
+        return res.status(400).json({ success: false, error: 'Password is too weak' });
+      }
+      throw authError;
+    }
+  } catch (error) {
+    console.error('❌ Error changing password:', error);
+    res.status(500).json({ success: false, error: 'Failed to change password' });
+  }
+});
+
+// PUT /api/users/change-email - Change user email (must be BEFORE /:id)
+router.put('/change-email', requireAuth, async (req, res) => {
+  try {
+    const userId = req.user.uid;
+    const { newEmail, password } = req.body;
+
+    if (!newEmail || !password) {
+      return res.status(400).json({ success: false, error: 'Missing required fields' });
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newEmail)) {
+      return res.status(400).json({ success: false, error: 'Invalid email format' });
+    }
+
+    const auth = getAuth();
+    try {
+      // Check if email already in use
+      try {
+        await auth.getUserByEmail(newEmail);
+        return res.status(400).json({ success: false, error: 'Email address is already in use' });
+      } catch (checkError) {
+        if (checkError.code !== 'auth/user-not-found') throw checkError;
+      }
+      await auth.updateUser(userId, { email: newEmail });
+      const db = getFirestore();
+      await db.collection('users').doc(userId).update({
+        email: newEmail,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      });
+      res.json({ success: true, message: 'Email updated successfully' });
+    } catch (authError) {
+      console.error('❌ Firebase Auth error:', authError);
+      if (authError.code === 'auth/user-not-found') return res.status(404).json({ success: false, error: 'User not found' });
+      if (authError.code === 'auth/email-already-exists') return res.status(400).json({ success: false, error: 'Email address is already in use' });
+      if (authError.code === 'auth/invalid-email') return res.status(400).json({ success: false, error: 'Invalid email address' });
+      throw authError;
+    }
+  } catch (error) {
+    console.error('❌ Error changing email:', error);
+    res.status(500).json({ success: false, error: 'Failed to change email' });
+  }
+});
+
+// PUT /api/users/change-student-id - Change student ID (must be BEFORE /:id)
+router.put('/change-student-id', requireAuth, async (req, res) => {
+  try {
+    const { studentId } = req.body;
+    const userId = req.user.uid;
+    const db = getFirestore();
+
+    if (!studentId) {
+      return res.status(400).json({ success: false, error: 'Student ID is required' });
+    }
+    const studentIdRegex = /^[0-9]{2}[A-Z]{3}[0-9]{5}$/;
+    if (!studentIdRegex.test(studentId)) {
+      return res.status(400).json({ success: false, error: 'Invalid Student ID format. Expected: YYCCCDDNNN (e.g., 22BEN03073)' });
+    }
+    const { course, department } = autoSelectCourseAndDepartment(studentId);
+    if (!course || !department) {
+      return res.status(400).json({ success: false, error: 'Unable to determine course or department from Student ID' });
+    }
+    const campusId = generateCampusId(studentId);
+    await db.collection('users').doc(userId).update({
+      studentId, course, department, campusId,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+    res.json({ success: true, message: 'Student ID updated successfully', data: { studentId, course, department, campusId } });
+  } catch (error) {
+    console.error('❌ Error changing student ID:', error);
+    res.status(500).json({ success: false, error: 'Failed to change student ID' });
+  }
+});
+
 // PUT /api/users/:id - Update user profile
 router.put('/:id', async (req, res) => {
   try {
@@ -1091,231 +1205,6 @@ router.get('/digest/:campusId', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to generate campus digest'
-    });
-  }
-});
-
-// PUT /api/users/change-password - Change user password
-router.put('/change-password', async (req, res) => {
-  try {
-    const { userId, currentPassword, newPassword } = req.body;
-    
-    if (!userId || !currentPassword || !newPassword) {
-      return res.status(400).json({
-        success: false,
-        error: 'Missing required fields'
-      });
-    }
-
-    if (newPassword.length < 6) {
-      return res.status(400).json({
-        success: false,
-        error: 'New password must be at least 6 characters'
-      });
-    }
-    
-    const auth = getAuth();
-    
-    try {
-      // In a real implementation, you would verify the current password
-      // For this demo, we'll just update the password directly
-      await auth.updateUser(userId, {
-        password: newPassword
-      });
-      
-      res.json({
-        success: true,
-        message: 'Password updated successfully'
-      });
-
-    } catch (authError) {
-      console.error('❌ Firebase Auth error:', authError);
-      
-      if (authError.code === 'auth/user-not-found') {
-        return res.status(404).json({
-          success: false,
-          error: 'User not found'
-        });
-      }
-      
-      if (authError.code === 'auth/weak-password') {
-        return res.status(400).json({
-          success: false,
-          error: 'Password is too weak'
-        });
-      }
-      
-      throw authError;
-    }
-
-  } catch (error) {
-    console.error('❌ Error changing password:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to change password'
-    });
-  }
-});
-
-// PUT /api/users/change-email - Change user email
-router.put('/change-email', async (req, res) => {
-  try {
-    const { userId, newEmail, password } = req.body;
-    
-    if (!userId || !newEmail || !password) {
-      return res.status(400).json({
-        success: false,
-        error: 'Missing required fields'
-      });
-    }
-
-    // Basic email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(newEmail)) {
-      return res.status(400).json({
-        success: false,
-        error: 'Invalid email format'
-      });
-    }
-    
-    const auth = getAuth();
-    
-    try {
-      // Check if the new email is already in use
-      try {
-        await auth.getUserByEmail(newEmail);
-        return res.status(400).json({
-          success: false,
-          error: 'Email address is already in use'
-        });
-      } catch (checkError) {
-        // If user is not found, email is available (this is what we want)
-        if (checkError.code !== 'auth/user-not-found') {
-          throw checkError;
-        }
-      }
-      
-      // Update the user's email in Firebase Auth
-      await auth.updateUser(userId, {
-        email: newEmail
-      });
-      
-      // Update email in Firestore user profile
-      const userRef = db.collection('users').doc(userId);
-      await userRef.update({
-        email: newEmail,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp()
-      });
-      
-      res.json({
-        success: true,
-        message: 'Email updated successfully'
-      });
-
-    } catch (authError) {
-      console.error('❌ Firebase Auth error:', authError);
-      
-      if (authError.code === 'auth/user-not-found') {
-        return res.status(404).json({
-          success: false,
-          error: 'User not found'
-        });
-      }
-      
-      if (authError.code === 'auth/email-already-exists') {
-        return res.status(400).json({
-          success: false,
-          error: 'Email address is already in use'
-        });
-      }
-      
-      if (authError.code === 'auth/invalid-email') {
-        return res.status(400).json({
-          success: false,
-          error: 'Invalid email address'
-        });
-      }
-      
-      throw authError;
-    }
-
-  } catch (error) {
-    console.error('❌ Error changing email:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to change email'
-    });
-  }
-});
-
-// Function to generate campus ID - simple shared format for all users
-const generateCampusId = (studentId) => {
-  // Simple shared campus ID for all users
-  return 'CC_Name';
-};
-
-// PUT /api/users/change-student-id - Change student ID with auto-update
-router.put('/change-student-id', requireAuth, async (req, res) => {
-  try {
-    const { studentId } = req.body;
-    const userId = req.user.uid;
-    const db = getFirestore();
-    
-    if (!studentId) {
-      return res.status(400).json({
-        success: false,
-        error: 'Student ID is required'
-      });
-    }
-
-    // Validate student ID format (YYCCCDDNNN - 10 characters)
-    const studentIdRegex = /^[0-9]{2}[A-Z]{3}[0-9]{5}$/;
-    if (!studentIdRegex.test(studentId)) {
-      return res.status(400).json({
-        success: false,
-        error: 'Invalid Student ID format. Expected format: YYCCCDDNNN (e.g., 22BEN03073)'
-      });
-    }
-
-    // Auto-select course and department based on student ID
-    const { course, department } = autoSelectCourseAndDepartment(studentId);
-    
-    if (!course || !department) {
-      return res.status(400).json({
-        success: false,
-        error: 'Unable to determine course or department from Student ID'
-      });
-    }
-
-    // Generate new campus ID based on student ID
-    const campusId = generateCampusId(studentId);
-    
-    // Update user document
-    const userRef = db.collection('users').doc(userId);
-    await userRef.update({
-      studentId,
-      course,
-      department,
-      campusId,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp()
-    });
-    
-    res.json({
-      success: true,
-      message: 'Student ID updated successfully',
-      data: {
-        studentId,
-        course,
-        department,
-        campusId
-      }
-    });
-
-  } catch (error) {
-    console.error('❌ Error changing student ID:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to change student ID'
     });
   }
 });

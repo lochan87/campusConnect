@@ -1,5 +1,5 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // Layout components (always needed — keep eager)
@@ -50,6 +50,7 @@ const PageLoader = () => (
 
 const AppContent = () => {
   const { user, loading } = useAuth();
+  const { pathname } = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Keyboard navigation for sidebar
@@ -159,42 +160,38 @@ const AppContent = () => {
           />
         )}
 
-        {/* Main content - independent scroll area with navbar spacing */}
+        {/* Main content */}
         <main
           id="main-scroll-container"
-          className="flex-1 overflow-y-auto pt-28 md:pt-16 bg-gray-50 dark:bg-gray-900"
+          className={`flex-1 relative ${
+            pathname.startsWith('/messages')
+              ? 'overflow-hidden pt-28 md:pt-16'
+              : 'overflow-y-auto pt-28 md:pt-16 bg-gray-50 dark:bg-gray-900'
+          }`}
           onScroll={() => sidebarOpen && setSidebarOpen(false)}
         >
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <Suspense fallback={<PageLoader />}>
-              <AnimatePresence mode="wait">
-                <Routes>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/profile/:userId" element={<Profile />} />
-                  <Route path="/profile" element={<Profile />} />
-                  <Route path="/create-post" element={<CreatePost />} />
-                  <Route path="/create-poll" element={<CreatePoll />} />
-                  <Route path="/create-event" element={<CreateEvent />} />
-                  <Route path="/events/edit/:eventId" element={<CreateEvent />} />
-                  <Route path="/event/:eventId" element={<EventDetail />} />
-                  <Route path="/post/:postId" element={<PostDetail />} />
-                  <Route path="/leaderboard" element={<Leaderboard />} />
-                  <Route path="/settings" element={<Settings />} />
-                  <Route path="/search" element={<Search />} />
-                  <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
-              </AnimatePresence>
-            </Suspense>
-          </div>
+          <Suspense fallback={<PageLoader />}>
+            <AnimatePresence mode="wait">
+              <Routes>
+                <Route path="/" element={<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6"><Home /></div>} />
+                <Route path="/profile/:userId" element={<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6"><Profile /></div>} />
+                <Route path="/profile" element={<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6"><Profile /></div>} />
+                <Route path="/create-post" element={<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6"><CreatePost /></div>} />
+                <Route path="/create-poll" element={<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6"><CreatePoll /></div>} />
+                <Route path="/create-event" element={<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6"><CreateEvent /></div>} />
+                <Route path="/events/edit/:eventId" element={<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6"><CreateEvent /></div>} />
+                <Route path="/event/:eventId" element={<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6"><EventDetail /></div>} />
+                <Route path="/post/:postId" element={<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6"><PostDetail /></div>} />
+                <Route path="/leaderboard" element={<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6"><Leaderboard /></div>} />
+                <Route path="/settings" element={<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6"><Settings /></div>} />
+                <Route path="/search" element={<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6"><Search /></div>} />
+                <Route path="/messages" element={<Messages />} />
+                <Route path="/messages/:conversationId" element={<Messages />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </AnimatePresence>
+          </Suspense>
         </main>
-
-        {/* Messages — rendered outside the padded main so its fixed overlay covers the full viewport */}
-        <Suspense fallback={null}>
-          <Routes>
-            <Route path="/messages" element={<Messages />} />
-            <Route path="/messages/:conversationId" element={<Messages />} />
-          </Routes>
-        </Suspense>
       </div>
 
       {/* Feature #7 — Back to Top + new-post badge */}

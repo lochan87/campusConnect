@@ -431,11 +431,11 @@ const Settings = () => {
   };
 
   const tabs = [
-    { id: 'photo',     label: 'Profile Photo',    icon: FiCamera },
-    { id: 'username',  label: 'Change Username',  icon: FiUser },
-    { id: 'password',  label: 'Change Password',  icon: FiLock },
-    { id: 'email',     label: 'Change Email',     icon: FiMail },
-    { id: 'studentId', label: 'Change Student ID', icon: FiCreditCard }
+    { id: 'photo',     label: 'Profile Photo',     mobileLabel: 'Photo',     icon: FiCamera },
+    { id: 'username',  label: 'Change Username',   mobileLabel: 'Username',  icon: FiUser },
+    { id: 'password',  label: 'Change Password',   mobileLabel: 'Password',  icon: FiLock },
+    { id: 'email',     label: 'Change Email',      mobileLabel: 'Email',     icon: FiMail },
+    { id: 'studentId', label: 'Change Student ID', mobileLabel: 'Student ID', icon: FiCreditCard },
   ];
 
   return (
@@ -455,20 +455,22 @@ const Settings = () => {
           <nav className="flex w-full">
             {tabs.map((tab) => {
               const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
               return (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex-1 px-2 sm:px-4 py-3 sm:py-4 text-xs sm:text-sm font-medium border-b-2 transition-colors ${
-                    activeTab === tab.id
-                      ? 'border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
-                      : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
-                  }`}
+                  className={`flex-1 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5
+                    px-1 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-medium border-b-2 transition-colors
+                    ${
+                      isActive
+                        ? 'border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                        : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    }`}
                 >
-                  <div className="flex items-center justify-center gap-1.5">
-                    <Icon className="w-4 h-4 flex-shrink-0" />
-                    <span className="whitespace-nowrap">{tab.label}</span>
-                  </div>
+                  <Icon className="w-4 h-4 flex-shrink-0" />
+                  <span className="sm:hidden text-[10px] leading-tight text-center">{tab.mobileLabel}</span>
+                  <span className="hidden sm:inline whitespace-nowrap">{tab.label}</span>
                 </button>
               );
             })}
